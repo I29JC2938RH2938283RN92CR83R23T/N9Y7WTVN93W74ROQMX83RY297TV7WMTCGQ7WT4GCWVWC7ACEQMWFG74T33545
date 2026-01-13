@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Speedo - Dashboard</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+Sinhala:wght@400;700&family=Noto+Sans+Tamil:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        /* --- General Styles --- */
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            font-family: 'Poppins', 'Noto Sans Sinhala', 'Noto Sans Tamil', sans-serif;
+            background-color: #f0f0f0;
+            overflow: hidden;
+        }
+
+        .hidden { display: none !important; }
+
+        :root {
+            --primary-red: #D50000;
+            --text-dark: #333;
+            --shadow: 0 4px 15px rgba(0,0,0,0.15);
+        }
+
+        /* --- MAP LAYER --- */
+        #map-container {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 1;
+            background: #e5e5e5;
+        }
+        
+        .leaflet-control-attribution { display: none; }
+
+        /* --- UI LAYER --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .pointer-auto { pointer-events: auto; }
+
+        /* 1. PROFILE PILL (Top Left) */
+        .header-pill {
+            position: absolute;
+            top: 15px; left: 15px;
+            background: white;
+            padding: 5px 15px 5px 5px; /* Less padding left for image */
+            border-radius: 40px;
+            box-shadow: var(--shadow);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            max-width: 60%;
+        }
+
+        .header-pill:active { transform: scale(0.97); }
+
+        .pill-img {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #f0f0f0;
+        }
+
+        .pill-text-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .pill-hello { font-size: 13px; font-weight: 700; color: var(--text-dark); line-height: 1.1; }
+        .pill-greeting { font-size: 10px; color: #888; font-weight: 500; line-height: 1.1; margin-top: 2px; }
+
+        /* 2. LANGUAGE BUTTON (Top Right) */
+        .lang-btn {
+            position: absolute;
+            top: 15px; right: 15px;
+            width: 42px; height: 42px;
+            background: white;
+            border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-dark);
+        }
+
+        .lang-btn:active { transform: scale(0.95); background: #f9f9f9; }
+
+        .lang-dropdown {
+            position: absolute;
+            top: 65px; right: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 8px;
+            display: flex; flex-direction: column;
+            gap: 5px;
+            width: 120px;
+            transform-origin: top right;
+            transition: 0.2s;
+        }
+        .lang-dropdown.closed { opacity: 0; transform: scale(0.9); pointer-events: none; }
+        .lang-opt { padding: 8px; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+        .lang-opt.active { background: #fff0f0; color: var(--primary-red); font-weight: 600; }
+
+        /* 3. CENTER MENU BUTTON (Bottom Center) */
+        .menu-btn {
+            position: absolute;
+            bottom: 40px; 
+            left: 50%;
+            transform: translateX(-50%); /* Center Horizontally */
+            background: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            display: flex; 
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            cursor: pointer;
+            color: var(--text-dark);
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 20;
+        }
+        
+        .menu-btn i { color: var(--primary-red); font-size: 18px; }
+        .menu-btn:active { transform: translateX(-50%) scale(0.95); }
+
+        /* Hide animation for Menu Button */
+        .menu-btn.hidden-down {
+            transform: translate(-50%, 100px); /* Move down off screen */
+            opacity: 0;
+        }
+
+        /* 4. BOTTOM MENU SHEET */
+        .bottom-sheet {
+            position: absolute;
+            bottom: 0; left: 0;
+            width: 100%;
+            background: white;
+            border-radius: 25px 25px 0 0;
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.15);
+            padding: 30px 20px 50px 20px;
+            box-sizing: border-box;
+            transform: translateY(120%);
+            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+            z-index: 25; /* Above Menu Button */
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .bottom-sheet.open { transform: translateY(0); }
+
+        .service-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 28%;
+            cursor: pointer;
+        }
+
+        .service-img-box {
+            width: 100%;
+            aspect-ratio: 1 / 1; /* Square Ratio */
+            border-radius: 18px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            background: #f8f8f8;
+            border: 1px solid #eee;
+        }
+
+        .service-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+
+        .service-item:active .service-img-box img { transform: scale(1.05); }
+
+        .service-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            text-align: center;
+        }
+
+        /* Overlay */
+        #menu-overlay {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            z-index: 22; display: none; background: rgba(0,0,0,0.05);
+        }
+        #menu-overlay.active { display: block; }
+
+        /* --- SKELETON LOADER --- */
+        #ui-skeleton {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none;
+        }
+        .sk-pill {
+            position: absolute; top: 15px; left: 15px; width: 140px; height: 48px; border-radius: 40px; background: #eee;
+        }
+        .sk-lang {
+            position: absolute; top: 15px; right: 15px; width: 42px; height: 42px; border-radius: 50%; background: #eee;
+        }
+        .sk-menu {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 110px; height: 50px; border-radius: 50px; background: #eee;
+        }
+        .shimmer {
+            animation: shimmer 1.5s infinite linear;
+            background: linear-gradient(to right, #eeeeee 8%, #e0e0e0 18%, #eeeeee 33%);
+            background-size: 800px 104px;
+        }
+        @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
+
+    </style>
+</head>
+<body>
+
+    <!-- MAP -->
+    <div id="map-container"></div>
+
+    <!-- UI LAYER -->
+    <div id="ui-layer" class="hidden">
+        
+        <!-- Top Left: Profile Pill (Click -> Profile) -->
+        <div class="header-pill pointer-auto" onclick="window.location.href='profile.html'">
+            <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" class="pill-img" id="ui-profile-img" alt="User">
+            <div class="pill-text-col">
+                <span class="pill-hello"><span data-i18n="hello">Hello</span> <span id="ui-name">...</span></span>
+                <span class="pill-greeting" id="ui-greeting">...</span>
+            </div>
+        </div>
+
+        <!-- Top Right: Language -->
+        <div class="lang-btn pointer-auto" onclick="toggleLangMenu()">
+            <i class="fa-solid fa-earth-americas"></i>
+        </div>
+
+        <div class="lang-dropdown closed pointer-auto" id="lang-menu">
+            <div class="lang-opt active" onclick="setLanguage('en')" id="opt-en">English</div>
+            <div class="lang-opt" onclick="setLanguage('si')" id="opt-si">සිංහල</div>
+            <div class="lang-opt" onclick="setLanguage('ta')" id="opt-ta">தமிழ்</div>
+        </div>
+
+        <!-- Bottom Center: Menu Button -->
+        <div class="menu-btn pointer-auto" id="main-menu-btn" onclick="openMenu()">
+            <i class="fa-solid fa-bars"></i>
+            <span>Menu</span>
+        </div>
+
+        <!-- Menu Overlay (Click to close) -->
+        <div id="menu-overlay" onclick="closeMenu()"></div>
+
+        <!-- Bottom Sheet -->
+        <div class="bottom-sheet pointer-auto" id="bottom-sheet">
+            
+            <!-- 1. RIDE -->
+            <div class="service-item">
+                <div class="service-img-box">
+                    <img src="https://i.ibb.co/cSDnbNVB/car-final-2.jpg" alt="Ride">
+                </div>
+                <span class="service-label" data-i18n="ride">Ride</span>
+            </div>
+
+            <!-- 2. FOOD -->
+            <div class="service-item" onclick="window.location.href='foods.html'">
+                <div class="service-img-box">
+                    <img src="https://i.ibb.co/8gGtW9xc/bag-final-1.jpg" alt="Food">
+                </div>
+                <span class="service-label" data-i18n="food">Food</span>
+            </div>
+
+            <!-- 3. FLASH -->
+            <div class="service-item">
+                <div class="service-img-box">
+                    <img src="https://i.ibb.co/67BshY3t/delivery-guy.png" alt="Flash">
+                </div>
+                <span class="service-label" data-i18n="flash">Flash</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- SKELETON LOADER -->
+    <div id="ui-skeleton">
+        <div class="sk-pill shimmer"></div>
+        <div class="sk-lang shimmer"></div>
+        <div class="sk-menu shimmer"></div>
+    </div>
+
+    <!-- LEAFLET JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4",
+            authDomain: "speedo-acb7c.firebaseapp.com",
+            databaseURL: "https://speedo-acb7c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "speedo-acb7c",
+            storageBucket: "speedo-acb7c.firebasestorage.app",
+            messagingSenderId: "31066493782",
+            appId: "1:31066493782:web:e3e9dfa209fa855bc17cf7"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // VARS
+        let map;
+        let currentUser = null;
+        let currentLang = localStorage.getItem('speedo_lang') || 'en';
+
+        const i18n = {
+            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash" },
+            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්" },
+            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்" }
+        };
+
+        // --- INIT ---
+        window.addEventListener('load', async () => {
+            const stored = localStorage.getItem('speedo_user');
+            if(!stored) { window.location.href = "index.html"; return; }
+            currentUser = JSON.parse(stored);
+
+            initMap();
+            
+            setTimeout(() => {
+                revealUI();
+                updateLanguageUI();
+            }, 800);
+        });
+
+        // --- MAP ---
+        function initMap() {
+            // Colombo
+            map = L.map('map-container', { 
+                zoomControl: false,
+                minZoom: 12,
+                maxZoom: 19,
+                attributionControl: false
+            }).setView([6.9271, 79.8612], 15);
+
+            // OpenStreetMap with High Cache Buffer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                // keepBuffer: 20 keeps 20 screens worth of tiles in memory
+                keepBuffer: 20, 
+                updateWhenIdle: false // Load while panning for smoothness
+            }).addTo(map);
+        }
+
+        // --- UI REVEAL ---
+        function revealUI() {
+            document.getElementById('ui-skeleton').classList.add('hidden');
+            document.getElementById('ui-layer').classList.remove('hidden');
+
+            const firstName = currentUser.fullName ? currentUser.fullName.split(' ')[0] : 'User';
+            document.getElementById('ui-name').innerText = firstName;
+
+            if(currentUser.profilePic) {
+                document.getElementById('ui-profile-img').src = currentUser.profilePic;
+            }
+        }
+
+        // --- MENU LOGIC ---
+        window.openMenu = function() {
+            document.getElementById('bottom-sheet').classList.add('open');
+            document.getElementById('menu-overlay').classList.add('active');
+            // Hide Menu Button
+            document.getElementById('main-menu-btn').classList.add('hidden-down');
+        }
+
+        window.closeMenu = function() {
+            document.getElementById('bottom-sheet').classList.remove('open');
+            document.getElementById('menu-overlay').classList.remove('active');
+            // Show Menu Button
+            document.getElementById('main-menu-btn').classList.remove('hidden-down');
+        }
+
+        // --- LANG & TIME ---
+        window.toggleLangMenu = () => document.getElementById('lang-menu').classList.toggle('closed');
+
+        window.setLanguage = function(lang) {
+            currentLang = lang;
+            localStorage.setItem('speedo_lang', lang);
+            document.getElementById('lang-menu').classList.add('closed');
+            updateLanguageUI();
+        }
+
+        function updateLanguageUI() {
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if(i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
+            });
+            updateGreeting();
+            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
+            document.getElementById('opt-'+currentLang).classList.add('active');
+        }
+
+        function updateGreeting() {
+            const h = new Date().getHours();
+            let key = 'morning';
+            if(h >= 12 && h < 17) key = 'afternoon';
+            else if(h >= 17) key = 'evening';
+            document.getElementById('ui-greeting').innerText = i18n[currentLang][key];
+        }
+
+        setInterval(updateGreeting, 60000);
+
+    </script>
+</body>
+</html>

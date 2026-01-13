@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Speedo</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Crypto JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        /* --- General Styles --- */
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Poppins', sans-serif;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        .hidden { display: none !important; }
+
+        /* --- 1. Splash Screen --- */
+        #splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        #splash-screen img {
+            width: 150px;
+            height: auto;
+            border-radius: 20px;
+        }
+
+        /* --- 2. Global Loader --- */
+        #global-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 20000;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top: 4px solid #D50000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- 3. Bricked Screen --- */
+        #bricked-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            color: red;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10000;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        /* --- 4. Modal --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            z-index: 15000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-card {
+            background: white;
+            width: 85%;
+            max-width: 320px;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .email-box {
+            background: #f4f4f4;
+            padding: 10px 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            border: 1px solid #ddd;
+        }
+
+        .copy-btn {
+            background: none;
+            border: none;
+            color: #D50000;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .close-modal-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        /* --- 5. Auth Container --- */
+        #auth-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background: white;
+        }
+
+        .auth-view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s;
+        }
+
+        .form-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* Vertically Centers Content */
+            align-items: center;     /* Horizontally Centers Content */
+            width: 100%;
+            padding: 20px 30px;
+            box-sizing: border-box;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+
+        /* Titles */
+        h1.title {
+            color: #D50000;
+            font-size: 28px;
+            font-weight: 700;
+            margin: 0 0 5px 0;
+            text-align: center;
+        }
+
+        p.subtitle {
+            color: #555;
+            font-size: 14px;
+            margin: 0 0 25px 0;
+            text-align: center;
+        }
+
+        /* Inputs */
+        .input-group {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 15px;
+            font-size: 16px;
+            outline: none;
+            box-sizing: border-box;
+            color: #333;
+            background: #fff;
+            transition: 0.3s;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .input-group input:focus {
+            border-color: #D50000;
+            background: #fffbfb;
+        }
+
+        /* Buttons */
+        .btn-red {
+            width: 100%;
+            background-color: #D50000;
+            color: white;
+            padding: 16px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(213, 0, 0, 0.3);
+            transition: 0.2s;
+        }
+
+        .btn-red:active { transform: scale(0.97); }
+
+        .btn-secondary {
+            background-color: #f0f0f0;
+            color: #333;
+            box-shadow: none;
+        }
+
+        .toggle-link, .forgot-link {
+            margin-top: 15px;
+            font-size: 13px;
+            color: #D50000;
+            cursor: pointer;
+            font-weight: 600;
+            text-align: center;
+        }
+        
+        .forgot-link { color: #666; font-weight: 400; text-decoration: underline; }
+
+        .error-msg {
+            color: #D50000;
+            font-size: 13px;
+            margin-bottom: 10px;
+            text-align: center;
+            min-height: 20px;
+            font-weight: 500;
+        }
+
+        /* Login Illustration */
+        .illustration-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 20px;
+        }
+        .illustration {
+            width: 80%;
+            max-width: 400px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        /* --- CAROUSEL REGISTER STYLES --- */
+        /* Changed: Removed flex-start so it defaults to center from .form-content */
+        #register-view .form-content {
+            justify-content: center; 
+            padding-top: 0;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #eee;
+            transition: 0.3s;
+        }
+
+        .progress-dot.active { background-color: #D50000; width: 25px; border-radius: 10px; }
+
+        .carousel-step {
+            display: none;
+            width: 100%;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .carousel-step.active-step { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- NUMPAD STYLES --- */
+        .numpad-container {
+            width: 100%;
+            /* Changed: Removed margin-top: auto so it sits right under input */
+            margin-top: 20px; 
+            padding-bottom: 0;
+        }
+
+        .numpad-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 350px;
+            margin: 0 auto;
+        }
+
+        .num-btn {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            height: 60px;
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.1s;
+            user-select: none;
+        }
+
+        .num-btn:active { background-color: #ffebee; border-color: #D50000; color: #D50000; }
+        
+        .num-btn i { font-size: 20px; }
+
+        /* Special Input for Numpad */
+        #reg-mobile {
+            font-size: 28px;
+            letter-spacing: 2px;
+            border: none;
+            border-bottom: 2px solid #D50000;
+            border-radius: 0;
+            padding: 10px;
+            background: transparent;
+        }
+        #reg-mobile:focus { background: transparent; }
+
+        /* Nav Buttons for Carousel */
+        .carousel-nav {
+            width: 100%;
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        /* --- Animations Class --- */
+        .slide-center { transform: translateX(0); opacity: 1; z-index: 2; }
+        .slide-left { transform: translateX(-100%); opacity: 0; z-index: 1; }
+        .slide-right { transform: translateX(100%); opacity: 0; z-index: 1; }
+
+    </style>
+</head>
+<body>
+
+    <!-- SPLASH & LOADERS -->
+    <div id="splash-screen"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg" alt="Logo"></div>
+    <div id="global-loader" class="hidden"><div class="spinner"></div></div>
+    <div id="bricked-screen" class="hidden"><i class="fa-solid fa-ban fa-3x" style="margin-bottom: 20px;"></i><h1>App blocked</h1></div>
+
+    <!-- FORGOT MODAL -->
+    <div id="forgot-modal" class="modal-overlay hidden" onclick="closeForgotPassword(event)">
+        <div class="modal-card">
+            <span class="close-modal-btn" onclick="closeForgotPassword(event)">&times;</span>
+            <h3>Customer Service</h3>
+            <p>Please contact support to reset.</p>
+            <div class="email-box">
+                <span class="email-text" id="support-email">test@gmail.com</span>
+                <button class="copy-btn" onclick="copyEmail()"><i class="fa-regular fa-copy" id="copy-icon"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUTH CONTAINER -->
+    <div id="auth-container" class="hidden">
+        
+        <!-- LOGIN VIEW (Standard) -->
+        <div id="login-view" class="auth-view slide-center">
+            <div class="form-content">
+                <h1 class="title">Welcome Back</h1>
+                <p class="subtitle">Enter your details to ride.</p>
+                <div class="error-msg" id="login-error"></div>
+
+                <div class="input-group">
+                    <input type="tel" id="login-mobile" placeholder="Mobile (07xxxxxxxx)">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-password" placeholder="Password">
+                </div>
+
+                <button class="btn-red" onclick="handleLogin()">Log In</button>
+                <div class="forgot-link" onclick="openForgotPassword()">Forgot Password?</div>
+                <div class="toggle-link" onclick="switchToRegister()">No account? Register</div>
+            </div>
+            <div class="illustration-container">
+                <img src="https://i.ibb.co/GQTw6DdP/download.jpg" class="illustration" alt="City">
+            </div>
+        </div>
+
+        <!-- REGISTER VIEW (Carousel - Centered) -->
+        <div id="register-view" class="auth-view slide-right">
+            <div class="form-content">
+                
+                <!-- Progress Dots -->
+                <div class="progress-bar-container">
+                    <div class="progress-dot active" id="dot-1"></div>
+                    <div class="progress-dot" id="dot-2"></div>
+                    <div class="progress-dot" id="dot-3"></div>
+                </div>
+
+                <h1 class="title" id="reg-title">Number</h1>
+                <div class="error-msg" id="register-error"></div>
+
+                <!-- STEP 1: MOBILE (With Custom Keypad) -->
+                <div class="carousel-step active-step" id="step-1">
+                    <p class="subtitle">Enter your mobile number</p>
+                    <div class="input-group">
+                        <!-- Readonly to prevent native keyboard -->
+                        <input type="text" id="reg-mobile" placeholder="07xxxxxxxx" readonly>
+                    </div>
+
+                    <!-- Custom Numpad -->
+                    <div class="numpad-container">
+                        <div class="numpad-grid">
+                            <div class="num-btn" onclick="addNum('1')">1</div>
+                            <div class="num-btn" onclick="addNum('2')">2</div>
+                            <div class="num-btn" onclick="addNum('3')">3</div>
+                            <div class="num-btn" onclick="addNum('4')">4</div>
+                            <div class="num-btn" onclick="addNum('5')">5</div>
+                            <div class="num-btn" onclick="addNum('6')">6</div>
+                            <div class="num-btn" onclick="addNum('7')">7</div>
+                            <div class="num-btn" onclick="addNum('8')">8</div>
+                            <div class="num-btn" onclick="addNum('9')">9</div>
+                            <div class="num-btn" style="background:transparent; border:none;"></div>
+                            <div class="num-btn" onclick="addNum('0')">0</div>
+                            <div class="num-btn" onclick="backspace()" style="color:#D50000;"><i class="fa-solid fa-delete-left"></i></div>
+                        </div>
+                    </div>
+                    
+                    <div class="carousel-nav">
+                        <button class="btn-red btn-secondary" onclick="switchToLogin()">Login</button>
+                        <button class="btn-red" onclick="nextStep(2)">Next</button>
+                    </div>
+                </div>
+
+                <!-- STEP 2: PASSWORD -->
+                <div class="carousel-step" id="step-2">
+                    <p class="subtitle">Create a secure password</p>
+                    <div class="input-group">
+                        <input type="password" id="reg-password" placeholder="Password">
+                    </div>
+                    
+                    <div class="carousel-nav">
+                        <button class="btn-red btn-secondary" onclick="prevStep(1)">Back</button>
+                        <button class="btn-red" onclick="nextStep(3)">Next</button>
+                    </div>
+                </div>
+
+                <!-- STEP 3: CONFIRM -->
+                <div class="carousel-step" id="step-3">
+                    <p class="subtitle">Confirm your password</p>
+                    <div class="input-group">
+                        <input type="password" id="reg-confirm-password" placeholder="Confirm Password">
+                    </div>
+
+                    <div class="carousel-nav">
+                        <button class="btn-red btn-secondary" onclick="prevStep(2)">Back</button>
+                        <button class="btn-red" onclick="handleRegister()">Sign Up</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4",
+            authDomain: "speedo-acb7c.firebaseapp.com",
+            databaseURL: "https://speedo-acb7c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "speedo-acb7c",
+            storageBucket: "speedo-acb7c.firebasestorage.app",
+            messagingSenderId: "31066493782",
+            appId: "1:31066493782:web:e3e9dfa209fa855bc17cf7",
+            measurementId: "G-ND3GRGL0WQ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // UI Elements
+        const splashScreen = document.getElementById('splash-screen');
+        const loader = document.getElementById('global-loader');
+        const brickedScreen = document.getElementById('bricked-screen');
+        const authContainer = document.getElementById('auth-container');
+        const loginView = document.getElementById('login-view');
+        const registerView = document.getElementById('register-view');
+        const forgotModal = document.getElementById('forgot-modal');
+
+        // Helpers
+        function showLoader() { loader.classList.remove('hidden'); }
+        function hideLoader() { loader.classList.add('hidden'); }
+
+        // --- KEYPAD LOGIC ---
+        window.addNum = function(num) {
+            const input = document.getElementById('reg-mobile');
+            if (input.value.length < 10) {
+                input.value += num;
+            }
+        }
+        window.backspace = function() {
+            const input = document.getElementById('reg-mobile');
+            input.value = input.value.slice(0, -1);
+        }
+
+        // --- CAROUSEL LOGIC ---
+        let currentStep = 1;
+
+        window.nextStep = function(targetStep) {
+            const errDiv = document.getElementById('register-error');
+            errDiv.innerText = "";
+
+            if (targetStep === 2) {
+                const mobile = document.getElementById('reg-mobile').value;
+                if (!mobile.startsWith("07") || mobile.length !== 10) {
+                    errDiv.innerText = "Enter valid mobile (07xxxxxxxx)";
+                    return;
+                }
+                document.getElementById('reg-title').innerText = "Password";
+            }
+            if (targetStep === 3) {
+                const pass = document.getElementById('reg-password').value;
+                if (pass.length < 4) {
+                    errDiv.innerText = "Password too short";
+                    return;
+                }
+                document.getElementById('reg-title').innerText = "Confirm";
+            }
+
+            showStep(targetStep);
+        }
+
+        window.prevStep = function(targetStep) {
+            document.getElementById('register-error').innerText = "";
+            if(targetStep === 1) document.getElementById('reg-title').innerText = "Number";
+            if(targetStep === 2) document.getElementById('reg-title').innerText = "Password";
+            showStep(targetStep);
+        }
+
+        function showStep(step) {
+            // Hide all
+            document.getElementById('step-1').classList.remove('active-step');
+            document.getElementById('step-2').classList.remove('active-step');
+            document.getElementById('step-3').classList.remove('active-step');
+            
+            // Reset dots
+            document.getElementById('dot-1').classList.remove('active');
+            document.getElementById('dot-2').classList.remove('active');
+            document.getElementById('dot-3').classList.remove('active');
+
+            // Show target
+            document.getElementById(`step-${step}`).classList.add('active-step');
+            document.getElementById(`dot-${step}`).classList.add('active');
+            
+            currentStep = step;
+        }
+
+        // --- VIEW SWITCHING ---
+        window.switchToRegister = function() {
+            loginView.classList.replace('slide-center', 'slide-left');
+            registerView.classList.replace('slide-right', 'slide-center');
+            document.getElementById('login-error').innerText = "";
+            
+            // Reset Carousel
+            document.getElementById('reg-mobile').value = "";
+            document.getElementById('reg-password').value = "";
+            document.getElementById('reg-confirm-password').value = "";
+            showStep(1);
+            document.getElementById('reg-title').innerText = "Number";
+        }
+
+        window.switchToLogin = function() {
+            registerView.classList.replace('slide-center', 'slide-right');
+            loginView.classList.replace('slide-left', 'slide-center');
+            document.getElementById('register-error').innerText = "";
+        }
+
+        // --- FORGOT PASSWORD ---
+        window.openForgotPassword = () => forgotModal.classList.remove('hidden');
+        window.closeForgotPassword = (e) => {
+            if(e.target === forgotModal || e.target.classList.contains('close-modal-btn')) {
+                forgotModal.classList.add('hidden');
+            }
+        }
+        window.copyEmail = () => {
+            navigator.clipboard.writeText(document.getElementById('support-email').innerText);
+            document.getElementById('copy-icon').className = "fa-solid fa-check";
+            setTimeout(() => document.getElementById('copy-icon').className = "fa-regular fa-copy", 1500);
+        }
+
+        // --- INITIALIZATION ---
+        window.addEventListener('load', async () => {
+            await new Promise(r => setTimeout(r, 2000));
+            const dbRef = ref(db);
+            try {
+                const snapshot = await get(child(dbRef, "bricked_status"));
+                if (snapshot.exists() && snapshot.val() === true) {
+                    splashScreen.classList.add('hidden');
+                    brickedScreen.classList.remove('hidden');
+                } else {
+                    if (!snapshot.exists()) await set(ref(db, 'bricked_status'), false);
+                    if (localStorage.getItem('speedo_user')) window.location.href = "main.html";
+                    else {
+                        splashScreen.classList.add('hidden');
+                        authContainer.classList.remove('hidden');
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                splashScreen.classList.add('hidden');
+                authContainer.classList.remove('hidden');
+            }
+        });
+
+        // --- AUTH HANDLERS ---
+        window.handleLogin = async function() {
+            const mobile = document.getElementById('login-mobile').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+            const errDiv = document.getElementById('login-error');
+
+            if (!mobile || !password) return errDiv.innerText = "Please fill all fields.";
+            showLoader();
+
+            try {
+                const hash = CryptoJS.SHA256(password).toString();
+                const snapshot = await get(ref(db, 'users'));
+                let userFound = false, userData = null;
+
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const data = child.val();
+                        if (data.mobile === mobile && data.password === hash) {
+                            userFound = true;
+                            userData = data;
+                        }
+                    });
+                }
+
+                if (userFound) {
+                    localStorage.setItem('speedo_user', JSON.stringify(userData));
+                    window.location.href = "main.html";
+                } else {
+                    errDiv.innerText = "Invalid credentials.";
+                    hideLoader();
+                }
+            } catch (e) {
+                console.error(e);
+                errDiv.innerText = "Connection Error.";
+                hideLoader();
+            }
+        }
+
+        window.handleRegister = async function() {
+            const mobile = document.getElementById('reg-mobile').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+            const confirmPass = document.getElementById('reg-confirm-password').value.trim();
+            const errDiv = document.getElementById('register-error');
+
+            if (password !== confirmPass) return errDiv.innerText = "Passwords do not match.";
+            
+            showLoader();
+
+            try {
+                const snapshot = await get(ref(db, 'users'));
+                let mobileExists = false;
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => { if (child.val().mobile === mobile) mobileExists = true; });
+                }
+
+                if (mobileExists) {
+                    errDiv.innerText = "Number already exists.";
+                    hideLoader();
+                    return;
+                }
+
+                const newUser = {
+                    uid: 'user_' + Date.now(),
+                    mobile: mobile,
+                    password: CryptoJS.SHA256(password).toString(),
+                    joinedAt: new Date().toISOString()
+                };
+
+                await set(ref(db, 'users/' + newUser.uid), newUser);
+                localStorage.setItem('speedo_user', JSON.stringify(newUser));
+                window.location.href = "main.html";
+            } catch (e) {
+                console.error(e);
+                errDiv.innerText = "Registration Failed.";
+                hideLoader();
+            }
+        }
+    </script>
+</body>
+</html>
