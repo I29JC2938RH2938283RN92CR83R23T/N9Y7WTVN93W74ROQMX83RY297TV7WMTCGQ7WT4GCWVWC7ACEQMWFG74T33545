@@ -938,7 +938,7 @@
                         // If any user with this phone exists who is NOT the current user
                         const duplicateUser = Object.keys(users).find(uid => uid !== currentUser.uid);
                         if(duplicateUser) {
-                            showToast("Phone number already found", "error");
+                            showToast("Phone number already registered", "error");
                             return;
                         }
                     }
