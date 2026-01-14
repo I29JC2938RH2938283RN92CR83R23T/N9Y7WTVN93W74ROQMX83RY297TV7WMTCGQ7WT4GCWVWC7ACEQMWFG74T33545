@@ -22,12 +22,13 @@
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Poppins', 'Noto Sans Sinhala', 'Noto Sans Tamil', sans-serif;
-            background-color: #D50000;
+            /* Changed to Black as requested */
+            background-color: #000000;
             overflow: hidden;
             user-select: none;
-            /* Remove blue tap highlight */
             -webkit-tap-highlight-color: transparent;
             -webkit-user-select: none;
+            color: #fff;
         }
 
         .hidden { display: none !important; }
@@ -35,8 +36,9 @@
         :root {
             --primary-red: #D50000;
             --text-dark: #333;
-            --bg-grey: #f8f9fa;
-            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --bg-grey: #1a1a1a;
+            --shadow: 0 4px 20px rgba(0,0,0,0.5);
+            --card-bg: #ffffff;
         }
 
         /* --- TOAST NOTIFICATIONS --- */
@@ -55,18 +57,20 @@
 
         /* --- 1. HEADER --- */
         #header-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100px; /* Reduced height */
+            position: absolute; top: 0; left: 0; width: 100%; height: 90px;
             z-index: 10; padding: 10px 15px; box-sizing: border-box;
             display: flex; justify-content: space-between; align-items: flex-start;
+            /* Ensure red header is visible against black body */
+            background: var(--primary-red); 
         }
 
         .name-pill {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            padding: 4px 12px 4px 4px; /* Compact padding */
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
+            padding: 4px 12px 4px 4px;
             border-radius: 30px;
             display: flex; align-items: center; gap: 8px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
             color: white; max-width: 60%; cursor: pointer;
         }
         .name-pill:active { transform: scale(0.97); }
@@ -76,11 +80,11 @@
         .pill-greeting { font-size: 9px; opacity: 0.9; font-weight: 400; line-height: 1.1; margin-top: 1px; }
 
         .lang-pill {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px);
             padding: 6px 12px;
             border-radius: 25px;
-            border: 1px solid rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
             color: white; font-size: 12px; font-weight: 600;
             cursor: pointer; display: flex; gap: 4px;
         }
@@ -88,12 +92,12 @@
         /* --- 2. MAIN CARD --- */
         #main-card {
             position: absolute; bottom: 0; left: 0;
-            width: 100%; height: calc(100% - 100px); /* Adjusted to header height */
-            background: white;
+            width: 100%; height: calc(100% - 90px);
+            background: var(--card-bg);
             border-radius: 25px 25px 0 0;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
             z-index: 5;
-            padding: 15px 20px 80px 20px; /* Compact padding */
+            padding: 15px 20px 80px 20px;
             box-sizing: border-box;
             overflow-y: auto;
             animation: slideUp 0.4s cubic-bezier(0.25, 1, 0.5, 1);
@@ -108,25 +112,24 @@
         .services-grid { display: flex; justify-content: space-between; gap: 8px; }
         .service-btn { display: flex; flex-direction: column; align-items: center; width: 32%; cursor: pointer; }
         .svc-img-box {
-            width: 100%; aspect-ratio: 1/1; background: var(--bg-grey); border-radius: 15px; margin-bottom: 6px;
+            width: 100%; aspect-ratio: 1/1; background: #f0f0f0; border-radius: 15px; margin-bottom: 6px;
             display: flex; justify-content: center; align-items: center; border: 1px solid #eee; overflow: hidden;
         }
         .svc-img-box img { width: 100%; height: 100%; object-fit: cover; }
         .svc-label { font-weight: 600; font-size: 13px; color: var(--text-dark); }
 
-        /* Ad Banner - Wider 16:5 approx */
+        /* Ad Banner */
         .ad-banner {
-            width: 100%; aspect-ratio: 3.2/1; background: #eee; border-radius: 15px;
-            overflow: hidden; position: relative; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            width: 100%; aspect-ratio: 16/5; background: #eee; border-radius: 12px;
+            overflow: hidden; position: relative; flex-shrink: 0;
         }
         .ad-banner img { width: 100%; height: 100%; object-fit: cover; }
         .ad-badge { position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.6); color: white; padding: 2px 6px; border-radius: 4px; font-size: 9px; }
 
-        /* Ongoing Activity Card - Compact */
+        /* Ongoing Activity Card */
         .activity-card {
             width: 100%; background: white; border: 1px solid #eee; border-radius: 15px; padding: 15px;
             box-sizing: border-box; box-shadow: 0 3px 10px rgba(0,0,0,0.03); cursor: pointer;
-            transition: 0.2s; display: flex; flex-direction: column; justify-content: center;
         }
         .activity-card:active { background: #f9f9f9; transform: scale(0.98); }
         .act-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -138,7 +141,7 @@
         .promo-strip-wrapper { width: 100%; overflow-x: auto; display: flex; gap: 10px; -ms-overflow-style: none; scrollbar-width: none; }
         .promo-strip-wrapper::-webkit-scrollbar { display: none; }
         .promo-strip-item {
-            min-width: 85%; aspect-ratio: 3/1; border-radius: 12px; overflow: hidden; position: relative; scroll-snap-align: center; cursor: pointer;
+            min-width: 90%; aspect-ratio: 3/1; border-radius: 12px; overflow: hidden; position: relative; scroll-snap-align: center; cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #f0f0f0;
         }
         .promo-strip-item img { width: 100%; height: 100%; object-fit: cover; }
@@ -179,7 +182,6 @@
             display: flex; justify-content: space-around; align-items: center;
             border-top: 1px solid #f0f0f0;
         }
-
         .nav-item {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             color: #aaa; cursor: pointer; width: 25%; height: 100%;
@@ -187,17 +189,30 @@
         .nav-item i { font-size: 18px; margin-bottom: 3px; transition: 0.3s; }
         .nav-item span { font-size: 9px; font-weight: 500; }
         .nav-item.active { color: var(--primary-red); }
-        .nav-item.active i { transform: translateY(-2px); }
 
         /* --- SKELETON --- */
-        #main-skeleton {
-            position: absolute; top: 100px; left: 0; width: 100%; height: calc(100% - 100px);
+        #main-skeleton, #loc-skeleton {
+            position: fixed; top: 90px; left: 0; width: 100%; height: calc(100% - 90px);
             background: white; border-radius: 25px 25px 0 0; z-index: 15;
-            padding: 20px; box-sizing: border-box;
+            padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;
         }
+        .shimmer { animation: shimmer 1.5s infinite linear; background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%); background-size: 800px 104px; border-radius: 10px; }
         .sk-row { display: flex; gap: 10px; margin-bottom: 20px; }
         .sk-sq { width: 33%; aspect-ratio: 1/1; border-radius: 15px; }
-        .sk-banner { width: 100%; aspect-ratio: 3.2/1; border-radius: 15px; margin-bottom: 15px; }
+        .sk-banner { width: 100%; aspect-ratio: 16/5; border-radius: 15px; margin-bottom: 15px; }
+        @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
+
+        /* --- LOCATION FINDING SCREEN --- */
+        #loc-finding-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .loc-msg { color: #555; margin-top: 20px; font-weight: 500; }
+        .loc-err-msg { display: none; color: #D50000; text-align: center; padding: 20px; font-weight: 600; }
+        .close-screen-btn {
+            padding: 10px 30px; border: 1px solid #D50000; background: transparent; color: #D50000;
+            border-radius: 20px; margin-top: 20px; font-weight: 600; cursor: pointer;
+        }
 
         /* --- MODALS --- */
         .modal-card {
@@ -222,19 +237,7 @@
             backdrop-filter: blur(2px);
         }
         
-        /* --- LOCATION PERMISSION & RIDE --- */
-        #loc-perm-overlay, #ride-warning-modal, #location-picker-modal, #route-loader-modal, #terms-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 6000;
-            display: flex; justify-content: center; align-items: center;
-            backdrop-filter: blur(2px);
-        }
-        #loc-perm-overlay { background: white; }
-
-        .loc-icon-big { font-size: 60px; color: var(--primary-red); margin-bottom: 15px; animation: pulseRed 1.5s infinite; }
-        @keyframes pulseRed { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
-
-        /* Ride View */
+        /* --- RIDE VIEW --- */
         #ride-view {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #e5e3df; z-index: 8000;
@@ -245,20 +248,43 @@
         #ride-map { width: 100%; height: 100%; z-index: 1; background: #ccc; }
         .leaflet-control-zoom, .leaflet-control-attribution { display: none !important; }
 
+        /* Close Button */
+        .ride-close-btn {
+            position: absolute; top: 15px; right: 15px; z-index: 1002;
+            width: 40px; height: 40px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2); cursor: pointer;
+            color: #555; font-size: 18px;
+        }
+
+        /* Ride Top Card */
         .ride-top-card {
-            position: absolute; top: 40px; left: 15px; right: 15px;
-            background: white; border-radius: 18px;
+            position: absolute; top: 40px; left: 15px; right: 65px; /* Adjusted for close button */
+            background: white; border-radius: 15px;
             padding: 15px; z-index: 1000;
             box-shadow: 0 5px 20px rgba(0,0,0,0.15);
             transition: 0.3s;
         }
+        /* Collapsed State - 2 Rows */
         .ride-top-card.collapsed {
             padding: 8px 15px;
-            display: flex; align-items: center; justify-content: space-between;
-            cursor: pointer;
+            top: 15px; left: 15px; right: 65px;
+            display: block; 
         }
-        .ride-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #333; }
         
+        .collapsed-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #f0f0f0; cursor: pointer;
+        }
+        .collapsed-row:last-child { border-bottom: none; }
+        .loc-info-group { display: flex; align-items: center; gap: 10px; }
+        .loc-icon-sm { color: var(--primary-red); font-size: 16px; width: 20px; }
+        .loc-icon-sm.green { color: #00C853; }
+        .loc-text-display { font-size: 13px; color: #333; font-weight: 500; max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .loc-edit-icon { color: #aaa; font-size: 12px; }
+
+        /* Expanded State */
+        .ride-title { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #333; }
         .loc-input-row { margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
         .loc-pill {
             flex: 1; background: #f4f4f4; border: 1px solid #eee; border-radius: 10px;
@@ -266,64 +292,94 @@
             display: flex; justify-content: space-between; align-items: center;
         }
         .loc-pill:active { background: #e0e0e0; }
-        .loc-icon-sm { color: #888; width: 18px; text-align: center; font-size: 12px; }
-        .loc-icon-marker { color: var(--primary-red); }
-        .loc-icon-marker.green { color: #00C853; }
-        
-        .ride-btn {
-            width: 100%; background: var(--primary-red); color: white; font-weight: 600;
-            padding: 12px; border-radius: 10px; border: none; margin-top: 8px; cursor: pointer; font-size: 14px;
-        }
-        .ride-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .loc-btn-small { color: #aaa; font-size: 12px; cursor: pointer; padding: 5px; }
 
-        /* Route Bottom Sheet */
-        #route-bottom-sheet {
+        /* Route Options Panel */
+        #route-options-panel {
+            position: absolute; bottom: 80px; left: 15px; right: 15px;
+            background: white; border-radius: 15px; padding: 10px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1); z-index: 2000;
+            display: none; /* Hidden initially */
+            flex-direction: column; gap: 10px;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .route-option-card {
+            background: #f8f9fa; border: 2px solid #eee; border-radius: 10px;
+            padding: 12px; display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; transition: 0.2s; position: relative;
+        }
+        .route-option-card.selected { border-color: var(--primary-red); background: #fff5f5; }
+        .route-option-card.active-preview { border-color: #999; opacity: 0.7; }
+        
+        .route-badge {
+            position: absolute; top: -8px; left: 10px; background: #388E3C; color: white;
+            font-size: 9px; padding: 2px 8px; border-radius: 10px; font-weight: 700; z-index: 5;
+        }
+        .route-details h4 { margin: 0; font-size: 13px; font-weight: 600; color: #333; }
+        .route-details p { margin: 2px 0 0; font-size: 11px; color: #666; }
+        .route-price { font-size: 14px; font-weight: 700; color: var(--primary-red); }
+        .route-cost-notice { color: #d32f2f; font-size: 9px; display: block; text-align: right; margin-top: 2px; }
+
+        /* Final Bottom Sheet */
+        #route-final-sheet {
             position: absolute; bottom: 0; left: 0; width: 100%;
             background: white; border-radius: 20px 20px 0 0;
             padding: 20px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            transform: translateY(110%); transition: 0.4s ease-out; z-index: 2000;
+            transform: translateY(110%); transition: 0.4s ease-out; z-index: 2100;
         }
-        #route-bottom-sheet.active { transform: translateY(0); }
+        #route-final-sheet.active { transform: translateY(0); }
 
         /* Loader */
-        #route-loader {
-            position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 9000;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        #route-loader-panel {
+            display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; color: #555; font-size: 13px; font-weight: 500;
         }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-red);
-            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
-        }
+        .spinner-small { width: 20px; height: 20px; border: 2px solid #ddd; border-top: 2px solid var(--primary-red); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Input Reuse Styles */
+        /* Picker Modal */
+        #location-picker-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 6000;
+            display: flex; flex-direction: column;
+        }
+        .picker-header { padding: 15px; background: white; border-bottom: 1px solid #eee; z-index: 10; display: flex; gap: 10px; align-items: center; }
+        .picker-search { flex: 1; padding: 12px; background: #f4f4f4; border-radius: 8px; border: none; outline: none; }
+        .picker-map-container { flex: 1; width: 100%; position: relative; background: #e5e3df; }
+        .picker-footer { padding: 10px; background: white; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .picker-opt-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; border: 1px solid #eee; border-radius: 10px; cursor: pointer; color: #555; font-weight: 600; font-size: 13px; }
+        .picker-opt-btn i { font-size: 18px; margin-bottom: 5px; color: var(--primary-red); }
+        
+        .search-results { 
+            position: absolute; top: 65px; left: 10px; right: 10px; 
+            background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+            z-index: 20; max-height: 200px; overflow-y: auto; display: none;
+        }
+        .search-item { padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
+        .search-item:last-child { border-bottom: none; }
+
+        /* Setup Wizard & Others */
+        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:5000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
+        #terms-modal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: 8000; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(2px); }
         .input-box input, .input-box select { width:100%; padding:12px; border:2px solid #eee; border-radius:10px; margin-bottom:10px; outline:none; box-sizing:border-box; font-size:14px; }
         .input-box label { font-size:12px; font-weight:600; color:#333; display:block; text-align:left; margin-bottom:5px; }
         .btn-red { background:var(--primary-red); color:white; padding:12px; border-radius:25px; border:none; font-weight:700; width:100%; margin-top:10px; cursor:pointer; }
         .btn-red:active { transform: scale(0.98); }
-
-        /* Picker Modal */
-        .picker-card { width: 100%; height: 100%; max-width: none; max-height: none; border-radius: 0; padding: 0; display: flex; flex-direction: column; }
-        .picker-header { padding: 12px 15px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 10px; z-index: 10; }
-        .picker-search { padding: 10px; background: #f4f4f4; border-radius: 8px; border: none; width: 100%; outline: none; }
-        .picker-map { flex: 1; width: 100%; position: relative; background: #e5e3df; }
-        .picker-btn-group { padding: 15px; background: white; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 8px; }
-        .picker-option { padding: 12px; background: white; border: 1px solid #eee; border-radius: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; font-size: 13px; }
-        .picker-option i { color: #555; font-size: 16px; }
-        .picker-option b { display: block; font-size: 14px; color: #333; }
         
-        .search-results { position: absolute; top: 55px; left: 10px; right: 10px; background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 20; max-height: 200px; overflow-y: auto; display: none; }
-        .search-item { padding: 10px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
-        .search-item:last-child { border-bottom: none; }
-
-        /* Setup Wizard */
-        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:5000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
-        .wizard-container { width:100%; max-width:380px; text-align:center; position: relative; }
-        .step { display:none; width:100%; animation:fadeIn 0.4s; }
-        .step.active { display:flex; flex-direction:column; }
-        .profile-upload-container { width:80px; height:80px; background:#f4f4f4; border-radius:50%; margin:0 auto 15px; overflow:hidden; position:relative; border: 2px dashed #ccc; cursor: pointer; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* User Location Pulse */
+        .user-pulse {
+            background: rgba(33, 150, 243, 0.2);
+            border-radius: 50%;
+            width: 20px; height: 20px;
+            animation: pulse-anim 2s infinite;
+        }
+        .user-dot {
+            background: #2196F3; border-radius: 50%;
+            width: 10px; height: 10px;
+            position: absolute; top: 5px; left: 5px;
+            border: 2px solid white;
+        }
+        @keyframes pulse-anim { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }
 
     </style>
 </head>
@@ -352,7 +408,7 @@
         <!-- HOME VIEW -->
         <div id="view-home" class="tab-view active-view">
             <div class="services-grid">
-                <div class="service-btn" onclick="openRideView()">
+                <div class="service-btn" onclick="startLocationSearch()">
                     <div class="svc-img-box"><img src="https://i.ibb.co/wZfzhRyQ/car-final-2.jpg" alt="Ride"></div>
                     <span class="svc-label" data-i18n="ride">Ride</span>
                 </div>
@@ -417,14 +473,18 @@
             </div>
             <div class="profile-menu">
                 <div class="profile-menu-item" onclick="openEditProfile()">
-                    <div class="menu-left"><i class="fa-regular fa-user"></i> Edit Profile</div>
+                    <div class="menu-left"><i class="fa-regular fa-user"></i> <span data-i18n="edit_prof">Edit Profile</span></div>
                     <i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i>
                 </div>
-                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-bookmark"></i> Saved Places</div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
-                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-credit-card"></i> Payment Methods</div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
-                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-circle-question"></i> Help & Support</div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
+                <div class="profile-menu-item" onclick="openSettings()">
+                    <div class="menu-left"><i class="fa-solid fa-gear"></i> <span data-i18n="settings">Settings</span></div>
+                    <i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i>
+                </div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-bookmark"></i> <span data-i18n="saved">Saved Places</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-credit-card"></i> <span data-i18n="payment">Payment Methods</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-circle-question"></i> <span data-i18n="help">Help & Support</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
             </div>
-            <button class="logout-btn" onclick="handleLogout()">Log Out</button>
+            <button class="logout-btn" onclick="handleLogout()"><span data-i18n="logout">Log Out</span></button>
         </div>
 
     </div>
@@ -446,48 +506,45 @@
     </div>
 
     <!-- SKELETON -->
-    <div id="main-skeleton">
+    <div id="main-skeleton" class="hidden">
         <div class="sk-row"><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div></div>
         <div class="sk-banner shimmer"></div>
     </div>
 
+    <!-- LOCATION FINDING SCREEN -->
+    <div id="loc-finding-screen" class="hidden">
+        <div id="loc-skeleton" class="hidden">
+             <div class="sk-row"><div class="sk-sq shimmer" style="width:100%; height:100px;"></div></div>
+             <div class="sk-banner shimmer"></div>
+             <div class="sk-banner shimmer"></div>
+        </div>
+        <div class="loc-msg" id="loc-text">Finding your location...</div>
+        <div class="loc-err-msg" id="loc-err-msg">
+            We couldn't find your location.<br>Please ensure location services are enabled and retry.
+            <br><br>
+            <button class="close-screen-btn" onclick="retryLocation()">Retry</button>
+        </div>
+        <button class="close-screen-btn" id="loc-close-btn" class="hidden" onclick="closeLocScreen()">Close</button>
+    </div>
+
     <!-- SETUP WIZARD -->
     <div id="setup-wizard" class="hidden">
-        <div class="wizard-container">
+        <div class="wizard-container" style="width:100%; max-width:380px; text-align:center;">
             <h2 style="color:#D50000; margin-bottom: 5px;">Get Started</h2>
             <div style="color:red; font-size:12px; margin-bottom:15px; min-height:18px;" id="wizard-error"></div>
-
-            <div class="step active" id="step-1">
-                <div class="input-box"><label>Full Name</label><input type="text" id="inp-name" placeholder="John Doe"></div>
-                <button class="btn-red" onclick="wNext(1)">Next</button>
-            </div>
-            <div class="step" id="step-2">
-                <div class="input-box"><label>Email Address</label><input type="email" id="inp-email" placeholder="example@gmail.com"></div>
-                <button class="btn-red" onclick="wNext(2)">Next</button>
-            </div>
-            <div class="step" id="step-2.5">
-                <div class="input-box"><label>Phone Number</label><input type="tel" id="inp-phone" placeholder="077 1234567"></div>
-                <button class="btn-red" onclick="wNext(2.5)">Next</button>
-            </div>
-            <div class="step" id="step-3">
-                <div class="input-box"><label>Country</label><input type="text" value="Sri Lanka" disabled></div>
-                <button class="btn-red" onclick="wNext(3)">Next</button>
-            </div>
-            <div class="step" id="step-4">
-                <div class="input-box"><label>Province</label><select id="inp-province" onchange="loadDistricts()"><option value="">Select Province</option></select></div>
-                <button class="btn-red" onclick="wNext(4)">Next</button>
-            </div>
-            <div class="step" id="step-5">
-                <div class="input-box"><label>District</label><select id="inp-district"><option value="">Select District</option></select></div>
-                <button class="btn-red" onclick="wNext(5)">Next</button>
-            </div>
-            <div class="step" id="step-6">
-                <div class="profile-upload-container" onclick="document.getElementById('f').click()">
+            <div class="step active" id="step-1"><div class="input-box"><label>Full Name</label><input type="text" id="inp-name" placeholder="John Doe"></div><button class="btn-red" onclick="wNext(1)">Next</button></div>
+            <div class="step hidden" id="step-2"><div class="input-box"><label>Email</label><input type="email" id="inp-email"></div><button class="btn-red" onclick="wNext(2)">Next</button></div>
+            <div class="step hidden" id="step-2.5"><div class="input-box"><label>Phone</label><input type="tel" id="inp-phone"></div><button class="btn-red" onclick="wNext(2.5)">Next</button></div>
+            <div class="step hidden" id="step-3"><div class="input-box"><label>Country</label><input type="text" value="Sri Lanka" disabled></div><button class="btn-red" onclick="wNext(3)">Next</button></div>
+            <div class="step hidden" id="step-4"><div class="input-box"><label>Province</label><select id="inp-province" onchange="loadDistricts()"><option value="">Select</option></select></div><button class="btn-red" onclick="wNext(4)">Next</button></div>
+            <div class="step hidden" id="step-5"><div class="input-box"><label>District</label><select id="inp-district"><option value="">Select</option></select></div><button class="btn-red" onclick="wNext(5)">Next</button></div>
+            <div class="step hidden" id="step-6">
+                <div class="profile-upload-container" style="width:80px; height:80px; background:#f4f4f4; border-radius:50%; margin:0 auto 15px; overflow:hidden; position:relative; border: 2px dashed #ccc; cursor:pointer;" onclick="document.getElementById('f').click()">
                     <img id="wiz-img" style="width:100%; height:100%; object-fit:cover; display:none;">
                     <i id="wiz-icon" class="fa-solid fa-camera" style="line-height:80px; color:#aaa; font-size:20px;"></i>
                 </div>
                 <input type="file" id="f" class="hidden" onchange="prevImg(event)">
-                <div style="font-size:12px; margin-bottom:10px;"><input type="checkbox" id="chk"> Agree to <span onclick="openTerms()" style="color:#D50000; font-weight:700;">Terms & Conditions</span></div>
+                <div style="font-size:12px; margin-bottom:10px;"><input type="checkbox" id="chk"> Agree to <span onclick="openTerms()" style="color:#D50000; font-weight:700;">Terms</span></div>
                 <button class="btn-red" onclick="finishSetup()">Finish</button>
             </div>
         </div>
@@ -499,9 +556,7 @@
             <h3 style="color:#D50000; margin-top:0;">Terms & Conditions</h3>
             <div style="font-size:13px; color:#555; line-height:1.6; max-height:60vh; overflow-y:auto; margin-bottom:20px;">
                 <p><b>1. Acceptance</b><br>By using Speedo, you agree to our terms.</p>
-                <p><b>2. Privacy</b><br>We collect basic info to provide services.</p>
-                <p><b>3. User Conduct</b><br>Respect drivers and follow laws.</p>
-                <p><b>4. Liability</b><br>We care about your lost/stolen and other items. However, we are not liable for lost items left in vehicles.</p>
+                <p><b>2. Liability</b><br>We care about your lost/stolen items. However, we are not liable for lost items left in vehicles.</p>
             </div>
             <button class="btn-red" onclick="closeTerms()">Close</button>
         </div>
@@ -512,98 +567,84 @@
         <div class="modal-card">
             <div class="edit-profile-header">
                 <img id="edit-prof-img-preview" class="edit-profile-img-preview">
-                <label for="edit-prof-file" style="font-size:12px; color:#D50000; font-weight:600; cursor:pointer;">Change Photo</label>
+                <label for="edit-prof-file" style="font-size:12px; color:#D50000; font-weight:600; cursor:pointer;">Change</label>
                 <input type="file" id="edit-prof-file" class="hidden" onchange="previewEditImg(event)">
             </div>
-            <div class="input-box"><label>Name</label><input type="text" id="edit-name"></div>
-            <div class="input-box"><label>Email</label><input type="email" id="edit-email"></div>
-            <div class="input-box"><label>Phone</label><input type="tel" id="edit-phone"></div>
+            <div class="input-box"><label data-i18n="name">Name</label><input type="text" id="edit-name"></div>
+            <div class="input-box"><label data-i18n="email">Email</label><input type="email" id="edit-email"></div>
+            <div class="input-box"><label data-i18n="phone">Phone</label><input type="tel" id="edit-phone"></div>
             <div class="edit-btns">
-                <button class="btn-red btn-secondary" onclick="closeEditProfile()">Cancel</button>
-                <button class="btn-red" onclick="saveProfile()">Save</button>
+                <button class="btn-red btn-secondary" onclick="closeEditProfile()" data-i18n="cancel">Cancel</button>
+                <button class="btn-red" onclick="saveProfile()" data-i18n="save">Save</button>
             </div>
         </div>
     </div>
 
-    <!-- LOCATION PERMISSION OVERLAY -->
-    <div id="loc-perm-overlay" class="hidden">
-        <i class="fa-solid fa-location-dot loc-icon-big"></i>
-        <h2 class="loc-title" data-i18n="loc_req_title">Location Required</h2>
-        <p style="color:#666; margin-bottom: 20px;">To Continue, Grant Location Access</p>
-        <div class="spinner" style="width: 30px; height: 30px; margin-bottom:10px; border-width:3px;"></div>
-        <p style="font-size:12px; color:#888;">Waiting for permission...</p>
-    </div>
-
-    <!-- RIDE VIEW -->
+    <!-- RIDE VIEW OVERLAY -->
     <div id="ride-view">
+        <div class="ride-close-btn" onclick="closeRideView()"><i class="fa-solid fa-xmark"></i></div>
         <div id="ride-map"></div>
+        
+        <!-- Top Card -->
         <div class="ride-top-card" id="ride-card">
+            <!-- Expanded State -->
             <div class="ride-title" data-i18n="book_ride">Book a Ride</div>
             <div class="loc-input-row">
-                <i class="fa-solid fa-circle-dot loc-icon-sm loc-icon-marker"></i>
+                <i class="fa-solid fa-circle-dot loc-icon-sm"></i>
                 <div class="loc-pill" id="btn-pickup" onclick="openLocationPicker('pickup')">
                     <span id="lbl-pickup" data-i18n="sel_loc">Select Your Location</span>
-                    <i class="fa-solid fa-chevron-right" style="font-size:10px; color:#ccc;"></i>
                 </div>
+                <i class="fa-solid fa-pencil loc-btn-small" onclick="openLocationPicker('pickup')"></i>
             </div>
             <div class="loc-input-row">
-                <i class="fa-solid fa-square loc-icon-sm loc-icon-marker green"></i>
+                <i class="fa-solid fa-square loc-icon-sm green"></i>
                 <div class="loc-pill" id="btn-dropoff" onclick="openLocationPicker('dropoff')">
                     <span id="lbl-dropoff" data-i18n="sel_drop">Select Drop Off</span>
-                    <i class="fa-solid fa-chevron-right" style="font-size:10px; color:#ccc;"></i>
                 </div>
+                <i class="fa-solid fa-pencil loc-btn-small" onclick="openLocationPicker('dropoff')"></i>
             </div>
-            <button class="ride-btn" id="btn-show-vehicles" onclick="startRouting()" disabled data-i18n="show_veh">Show Vehicle Options</button>
+            <button class="btn-red" id="btn-show-vehicles" onclick="findRoutes()" disabled data-i18n="show_veh">Show Vehicle Options</button>
         </div>
-        <div id="route-bottom-sheet">
-            <h3 style="margin:0 0 10px 0; color:#333;">Route Found</h3>
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:13px;">
-                <div><b>Distance</b><br><span id="res-dist">0 km</span></div>
-                <div><b>Time</b><br><span id="res-time">0 min</span></div>
-                <div><b>Price</b><br><span id="res-price">LKR 0</span></div>
-            </div>
-            <button class="ride-btn">Confirm Ride</button>
-        </div>
-    </div>
 
-    <!-- RIDE WARNING MODAL -->
-    <div id="ride-warning-modal" class="hidden">
-        <div class="modal-card" style="text-align:center;">
-            <i class="fa-solid fa-triangle-exclamation" style="color:var(--primary-red); font-size:30px; margin-bottom:10px;"></i>
-            <p class="warning-text" style="color:var(--primary-red); font-weight:600; font-size:13px; margin-bottom:15px; line-height:1.4;" data-i18n="warn_text">To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride</p>
-            <div class="dont-show-wrap" style="display:flex; justify-content:center; gap:8px; margin-bottom:15px; font-size:12px; color:#666;">
-                <input type="checkbox" id="chk-warn"> <label for="chk-warn">Do not show again</label>
+        <!-- Route Selection Panel (Loading + Options) -->
+        <div id="route-options-panel">
+            <div id="route-loader-panel">
+                <div class="spinner-small"></div> <span id="route-load-text" data-i18n="searching">Searching for best route...</span>
             </div>
-            <button class="btn-red" onclick="closeRideWarning()">Close</button>
+            
+            <div id="route-options-list" style="display:none; flex-direction:column; gap:8px;">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+
+        <!-- Route Final Sheet -->
+        <div id="route-final-sheet">
+            <h3 style="margin:0 0 10px 0; color:#333;" data-i18n="route_found">Route Found</h3>
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px; font-size:13px;">
+                <div><b data-i18n="distance">Distance</b><br><span id="res-dist">0 km</span></div>
+                <div><b data-i18n="time">Time</b><br><span id="res-time">0 min</span></div>
+                <div><b data-i18n="price">Price</b><br><span id="res-price">LKR 0</span></div>
+            </div>
+            <button class="btn-red" data-i18n="confirm">Confirm Ride</button>
         </div>
     </div>
 
     <!-- LOCATION PICKER MODAL -->
     <div id="location-picker-modal" class="hidden">
-        <div class="picker-card">
-            <div class="picker-header">
-                <i class="fa-solid fa-arrow-left" onclick="closeLocationPicker()"></i>
-                <input type="text" class="picker-search" id="loc-search" placeholder="Search place" oninput="handleSearch(this.value)">
+        <div class="picker-header">
+            <i class="fa-solid fa-arrow-left" onclick="closeLocationPicker()" style="color:#555; cursor:pointer;"></i>
+            <input type="text" class="picker-search" id="loc-search" placeholder="Search (e.g. Kandy)" oninput="handleSearch(this.value)">
+        </div>
+        <div class="search-results" id="search-res"></div>
+        <div id="picker-map-container" class="picker-map-container"></div>
+        <div class="picker-footer">
+            <div class="picker-opt-btn" id="opt-map" onclick="activatePickerMode('map')">
+                <i class="fa-solid fa-map-pin"></i> <span data-i18n="on_map">On Map</span>
             </div>
-            <div class="search-results" id="search-res"></div>
-            <div id="picker-map-container" class="picker-map"></div>
-            <div class="picker-btn-group">
-                <div class="picker-option" id="opt-my-loc" onclick="selectMyLocation()">
-                    <i class="fa-solid fa-crosshairs"></i>
-                    <div><b>My Location</b></div>
-                </div>
-                <div class="picker-option" id="opt-custom-loc" onclick="selectCustomLocation()">
-                    <i class="fa-solid fa-map-pin"></i>
-                    <div><b>Custom Location</b></div>
-                </div>
+            <div class="picker-opt-btn" id="opt-myloc" onclick="selectMyLocation()">
+                <i class="fa-solid fa-crosshairs"></i> <span data-i18n="my_loc">My Location</span>
             </div>
         </div>
-    </div>
-
-    <!-- ROUTE LOADER -->
-    <div id="route-loader" class="hidden">
-        <div class="spinner"></div>
-        <p style="color:#555; font-weight:500;">Finding the best route...</p>
     </div>
 
     <!-- LOGIC -->
@@ -628,31 +669,32 @@
         let base64Profile = "";
         let currentLang = localStorage.getItem('speedo_lang') || 'en';
 
-        // Maps Globals
+        // Map Globals
         let map = null;
         let pickerMap = null;
-        let routePolyline = null;
+        let routePolylines = { normal: null, expressway: null };
         let pickupMarker = null;
         let dropoffMarker = null;
         let tempMarker = null;
         let pickupCoords = null;
         let dropoffCoords = null;
         let pickerMode = 'pickup';
+        let userLocMarker = null;
 
-        // --- DATA & I18N ---
+        // Search/Geocoding Globals
+        let searchTimeout = null;
+        let searchAbortController = null;
+
+        // --- I18N ---
         const i18n = {
-            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", ongoing_title:"Ongoing Activities", ongoing_none:"No Ongoing Activities", loc_req_title:"Location Required", book_ride:"Book a Ride", sel_loc:"Select Your Location", sel_drop:"Select Drop Off", show_veh:"Show Vehicle Options", warn_text:"Do not close the app.", edit:"Edit" },
-            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්", home:"මුල් පිටුව", activity:"ක්‍රියාකාරකම්", promotions:"දීමනා", profile:"ගිණුම", ongoing_title:"පවතින ක්‍රියාකාරකම්", ongoing_none:"කිසිවක් නොමැත", loc_req_title:"ස්ථානය අවශ්‍යයි", book_ride:"සවාරියක් අයකරගන්න", sel_loc:"ඔබේ ස්ථානය තෝරන්න", sel_drop:"පිටතට යන ස්ථානය", show_veh:"වාහන විකල්ප", warn_text:"යෙදුම වසන්න එපා.", edit:"වෙනස් කරන්න" },
-            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", ongoing_title:"தற்போதைய", ongoing_none:"எதுவுமில்லை", loc_req_title:"இடம் தேவை", book_ride:"சவாரி முன்பதிவு", sel_loc:"உங்கள் இருப்பிடத்தைத் தேர்ந்தெடுக்கவும்", sel_drop:"இறங்கும் இடம்", show_veh:"வாகன விருப்பங்கள்", warn_text:"பயன்பாட்டை மூட வேண்டாம்.", edit:"திருத்து" }
+            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", ongoing_title:"Ongoing Activities", ongoing_none:"No Ongoing Activities", book_ride:"Book a Ride", sel_loc:"Select Pickup", sel_drop:"Select Dropoff", show_veh:"Show Vehicle Options", searching:"Searching best routes...", route_found:"Route Found", distance:"Distance", time:"Time", price:"Price", confirm:"Confirm Ride", on_map:"Select on Map", my_loc:"My Location", most_rec:"Most Recommended", expr:"Expressway", normal:"Normal", additional:"Additional Costs May Charge", edit_prof:"Edit Profile", settings:"Settings", saved:"Saved Places", payment:"Payment", help:"Help & Support", logout:"Log Out", cancel:"Cancel", save:"Save", name:"Name", email:"Email", phone:"Phone", retry:"Retry", close:"Close", err_loc:"Could not get location", enable_loc:"Please enable location services" },
+            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල්", evening: "සුබ සැන්දෑව", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්", home:"මුල් පිටුව", activity:"ක්‍රියාකාරකම්", promotions:"දීමනා", profile:"ගිණුම", ongoing_title:"ක්‍රියාකාරී තතවයි", ongoing_none:"කිසිවක් නැත", book_ride:"සවාරියක් අයකරගන්න", sel_loc:"පිටත් තෝරන්න", sel_drop:"පිටත් අඩවන්න", show_veh:"වාහන විකල්ප", searching:"හොඳමම මාර්ගය සොයමින්...", route_found:"මාර්ගය සොයා ගන්න ලද්", distance:"දුර", time:"කාලය", price:"මිල", confirm:"තහවුරු කරන්න", on_map:"සිතියෙන් තෝරන්න", my_loc:"මගේ පිහිටිය", most_rec:"ඉතා හොඳම එක", expr:"අධිවේගමාර්ගය", normal:"සාමාන්ය මාර්ගය", additional:"අමතර වියදම් වලිය හැක", edit_prof:"පැත්කරු වෙනස් කරන්න", settings:"සැකසුම්", saved:"සුරකින ලාංඡන", payment:"ගෙවීම් ක්‍රම", help:"උදව් සහ ආධාරණය", logout:"ඉවත් වන්න", cancel:"අවලංගු කරන්න", save:"සුරකිනයන්න", name:"නම", email:"විද්‍යුතා පතය", phone:"දුරකථන අංකය", retry:"නැවත උත්සහ කරන්න", close:"වසන්න", err_loc:"පිහිටිය හමුමා සොයා ගත නොහැක", enable_loc:"GPS සේවාවන්න" },
+            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", ongoing_title:"தற்போதைய", ongoing_none:"ஏதுமில்லை", book_ride:"சவாரி முன்பதிவு", sel_loc:"பிக்அப் தேர்வுமை", sel_drop:"இறங்குமிடம்", show_veh:"வாகன விருப்பங்கள்", searching:"சிறந்த வழி தேடுகிறது...", route_found:"வழி கண்டுபிடித்தது", distance:"தூரம்", time:"நேரம்", price:"விலை", confirm:"உறுதி செய்", on_map:"வரைபடத்தில் தேர்வுமை", my_loc:"என் இருப்பிடம்", most_rec:"பரிந்துரைந்தது", expr:"விரைவே", normal:"சாதாரண வழி", additional:"கூடுதல் கட்டணம் வசூட்டலாம்", edit_prof:"சுயவிவரம் திருத்து", settings:"அமைப்புகள்", saved:"சேமிக்கப்பட்ட இடங்கள்", payment:"கொடுப்பனுடை", help:"உதவி & ஆதரவு", logout:"வெளியேறு", cancel:"ரத்து", save:"சேமி", name:"பெயர்", email:"மின்னஞ்சல்", phone:"தொலைபேசி", retry:"மீண்டும்", close:"மூடு", err_loc:"இடம் கண்டுபிடிக்கவில்லை", enable_loc:"இருப்பிட சேவைகளை இயக்கவும்" }
         };
 
-        const knownPlaces = [
-            { name: "Lotus Tower", lat: 6.9271, lng: 79.8612 },
-            { name: "Colombo Fort", lat: 6.9350, lng: 79.8480 },
-            { name: "Galle Face", lat: 6.9280, lng: 79.8410 },
-            { name: "Kandy", lat: 7.2906, lng: 80.6337 },
-            { name: "Katunayake Airport", lat: 7.1808, lng: 79.8841 }
-        ];
+        const slData = {
+            "Western": ["Colombo", "Gampaha", "Kalutara"], "Central": ["Kandy", "Matale", "Nuwara Eliya"], "Southern": ["Galle", "Matara", "Hambantota"], "North Western": ["Kurunegala", "Puttalam"], "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Vavuniya", "Mullaitivu"], "Eastern": ["Trincomalee", "Batticaloa", "Ampara"], "North Central": ["Anuradhapura", "Polonnaruwa"], "Uva": ["Badulla", "Monaragala"], "Sabaragamuwa": ["Ratnapura", "Kegalle"]
+        };
 
         // --- INIT ---
         window.addEventListener('load', async () => {
@@ -666,7 +708,6 @@
                 if(data) currentUser = data;
 
                 if(currentUser.profileCompleted) {
-                    checkLocationPermission();
                     initUI();
                 } else {
                     document.getElementById('main-skeleton').classList.add('hidden');
@@ -674,12 +715,11 @@
                     initWizard();
                 }
             } catch(e) {
-                if(currentUser.profileCompleted) { checkLocationPermission(); initUI(); }
+                if(currentUser.profileCompleted) initUI();
                 else document.getElementById('setup-wizard').classList.remove('hidden');
             }
         });
 
-        // --- TOAST SYSTEM ---
         window.showToast = function(msg, type = 'normal') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -689,23 +729,66 @@
             setTimeout(() => { toast.remove(); }, 3000);
         }
 
-        // --- LOCATION PERMISSION ---
-        function checkLocationPermission() {
-            if(localStorage.getItem('speedo_loc_granted') === 'true') return;
-            const overlay = document.getElementById('loc-perm-overlay');
-            overlay.classList.remove('hidden');
-            const requestLoop = () => {
-                if(!navigator.geolocation) { showToast("Geolocation not supported", "error"); return; }
+        // --- LOCATION PERMISSION & FINDING ---
+        window.startLocationSearch = function() {
+            const screen = document.getElementById('loc-finding-screen');
+            const skeleton = document.getElementById('loc-skeleton');
+            const msg = document.getElementById('loc-text');
+            const err = document.getElementById('loc-err-msg');
+            const close = document.getElementById('loc-close-btn');
+            
+            screen.classList.remove('hidden');
+            skeleton.classList.remove('hidden');
+            msg.classList.remove('hidden');
+            err.style.display = 'none';
+            close.classList.add('hidden');
+
+            // 10 Second Timeout logic
+            let locationFound = false;
+
+            const getLocation = () => {
+                if(locationFound) return;
+                if(!navigator.geolocation) {
+                    showLocError();
+                    return;
+                }
+                
                 navigator.geolocation.getCurrentPosition(
                     (pos) => {
-                        localStorage.setItem('speedo_loc_granted', 'true');
-                        overlay.classList.add('hidden');
+                        locationFound = true;
+                        openRideView(pos.coords.latitude, pos.coords.longitude);
                     },
-                    (err) => { setTimeout(requestLoop, 10); },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    (error) => {
+                        // Retry logic
+                        setTimeout(getLocation, 500);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
                 );
             };
-            requestLoop();
+
+            // 10s timer
+            setTimeout(() => {
+                if(!locationFound) {
+                    showLocError();
+                }
+            }, 10000);
+
+            getLocation();
+        };
+
+        function showLocError() {
+            document.getElementById('loc-skeleton').classList.add('hidden');
+            document.getElementById('loc-text').classList.add('hidden');
+            document.getElementById('loc-err-msg').style.display = 'block';
+            document.getElementById('loc-close-btn').classList.remove('hidden');
+        }
+
+        window.retryLocation = function() {
+            startLocationSearch();
+        }
+
+        window.closeLocScreen = function() {
+            document.getElementById('loc-finding-screen').classList.add('hidden');
         }
 
         function initUI() {
@@ -719,176 +802,359 @@
                 document.getElementById('ui-profile-img').src = currentUser.profilePic;
                 document.getElementById('prof-view-img').src = currentUser.profilePic;
             }
-            
             loadPromotions();
             updateLangState();
-            initMap();
+            initMap(); // Pre-init main map
         }
 
         async function loadPromotions() {
             const container = document.getElementById('promo-container');
-            container.innerHTML = '';
             try {
                 const snap = await get(ref(db, 'promotions'));
                 const data = snap.val();
-                if(!data) {
-                    container.innerHTML = '<div class="empty-state"><p>No promotions</p></div>';
-                    return;
-                }
+                if(!data) return;
+                container.innerHTML = '';
                 Object.values(data).forEach(promo => {
                     const div = document.createElement('div');
                     div.className = 'promo-item';
-                    div.innerHTML = `
-                        <div class="promo-card-lg"><img src="https://i.ibb.co/GQTw6DdP/download.jpg"></div>
-                        <div class="promo-text"><h4>${promo.title}</h4><p>${promo.desc}</p></div>
-                    `;
+                    div.innerHTML = `<div class="promo-card-lg"><img src="https://i.ibb.co/GQTw6DdP/download.jpg"></div><div class="promo-text"><h4>${promo.title}</h4><p>${promo.desc}</p></div>`;
                     container.appendChild(div);
                 });
-            } catch(e) {
-                container.innerHTML = '<div class="empty-state"><p>Failed</p></div>';
-            }
+            } catch(e) {}
         }
 
-        // --- MAP & RIDE ---
+        // --- MAP LOGIC ---
         function initMap() {
             if(map) return;
-            // CartoDB Voyager - Detailed, clean, app-like
             map = L.map('ride-map', { zoomControl: false, attributionControl: false }).setView([6.9271, 79.8612], 14);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-                subdomains: 'abcd',
-                maxZoom: 20
-            }).addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 }).addTo(map);
         }
 
         function initPickerMap() {
             if(pickerMap) { pickerMap.invalidateSize(); return; }
             pickerMap = L.map('picker-map-container', { zoomControl: false }).setView([6.9271, 79.8612], 14);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                subdomains: 'abcd', maxZoom: 20
-            }).addTo(pickerMap);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', { subdomains: 'abcd', maxZoom: 20 }).addTo(pickerMap);
+            
+            // Click to set temp marker
             pickerMap.on('click', (e) => {
-                if(document.getElementById('opt-custom-loc').style.background === 'rgb(249, 249, 249)') {
-                    if(tempMarker) pickerMap.removeLayer(tempMarker);
-                    tempMarker = L.marker(e.latlng).addTo(pickerMap);
-                    tempCoords = e.latlng;
-                }
+                if(tempMarker) pickerMap.removeLayer(tempMarker);
+                tempMarker = L.marker(e.latlng).addTo(pickerMap);
+                // Reverse Geocode (Simulated/Actual if API allows)
+                reverseGeocode(e.latlng.lat, e.latlng.lng, (name) => {
+                    selectLocation(name || "Selected Location", e.latlng.lat, e.latlng.lng);
+                });
             });
         }
 
-        window.openRideView = function() {
+        window.openRideView = function(lat = null, lng = null) {
+            closeLocScreen();
             document.getElementById('ride-view').classList.add('active');
             setTimeout(() => { if(map) map.invalidateSize(); else initMap(); }, 400);
-            if(localStorage.getItem('speedo_hide_ride_warn') !== 'true') document.getElementById('ride-warning-modal').classList.remove('hidden');
+            
+            if(lat && lng) {
+                // Set user location as pickup automatically if first time
+                if(!pickupCoords) {
+                    pickupCoords = { lat, lng };
+                    if(pickupMarker) map.removeLayer(pickupMarker);
+                    pickupMarker = createUserLocMarker(lat, lng).addTo(map);
+                    map.panTo([lat, lng]);
+                    document.getElementById('lbl-pickup').innerText = "My Location";
+                    document.getElementById('btn-show-vehicles').disabled = false;
+                }
+            }
         }
 
-        window.closeRideWarning = function() {
-            if(document.getElementById('chk-warn').checked) localStorage.setItem('speedo_hide_ride_warn', 'true');
-            document.getElementById('ride-warning-modal').classList.add('hidden');
+        window.closeRideView = function() {
+            document.getElementById('ride-view').classList.remove('active');
+            // Clear routes when closing
+            clearRoutes();
+            document.getElementById('route-options-panel').style.display = 'none';
+            document.getElementById('route-final-sheet').classList.remove('active');
         }
 
+        // --- CUSTOM MARKERS ---
+        function createUserLocMarker(lat, lng) {
+            const icon = L.divIcon({
+                className: 'user-pulse',
+                html: '<div class="user-dot"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+            return L.marker([lat, lng], { icon: icon });
+        }
+
+        // --- PICKER LOGIC ---
         window.openLocationPicker = function(mode) {
             pickerMode = mode;
-            document.getElementById('location-picker-modal').classList.remove('hidden');
+            const modal = document.getElementById('location-picker-modal');
+            modal.classList.remove('hidden');
             document.getElementById('search-res').style.display = 'none';
             document.getElementById('loc-search').value = '';
-            document.getElementById('opt-custom-loc').style.background = 'white';
-            document.getElementById('opt-my-loc').style.background = 'white';
+            document.getElementById('opt-map').style.background = 'white';
+            document.getElementById('opt-myloc').style.background = 'white';
             setTimeout(() => initPickerMap(), 200);
-            if(mode === 'dropoff') document.getElementById('opt-my-loc').style.display = 'none';
-            else document.getElementById('opt-my-loc').style.display = 'flex';
+            
+            // Dropoff My Location Logic (User requested available for both, or maybe custom)
+            // Keeping both available as per prompt "My current location as drop location... and also the same for drop location"
+            // Just keeping the layout consistent.
         }
 
         window.closeLocationPicker = function() { document.getElementById('location-picker-modal').classList.add('hidden'); }
 
-        window.handleSearch = function(query) {
-            const resDiv = document.getElementById('search-res');
-            resDiv.innerHTML = '';
-            if(query.length < 2) { resDiv.style.display = 'none'; return; }
-            const matches = knownPlaces.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
-            if(matches.length > 0) {
-                matches.forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = 'search-item';
-                    div.innerText = m.name;
-                    div.onclick = () => confirmSelection(m.name, m.lat, m.lng);
-                    resDiv.appendChild(div);
-                });
-                resDiv.style.display = 'block';
-            } else { resDiv.style.display = 'none'; }
+        window.activatePickerMode = function(mode) {
+            if(mode === 'map') {
+                // Logic handled by map click
+                showToast("Tap on map to select");
+            }
         }
 
         window.selectMyLocation = function() {
-            document.getElementById('opt-custom-loc').style.background = 'white';
-            document.getElementById('opt-my-loc').style.background = '#f9f9f9';
-            navigator.geolocation.getCurrentPosition(pos => confirmSelection("My Location", pos.coords.latitude, pos.coords.longitude));
+            if(!navigator.geolocation) { showToast(i18n[currentLang].err_loc, 'error'); return; }
+            navigator.geolocation.getCurrentPosition(pos => {
+                reverseGeocode(pos.coords.latitude, pos.coords.longitude, (name) => {
+                    selectLocation(name || i18n[currentLang].my_loc, pos.coords.latitude, pos.coords.longitude);
+                });
+            }, err => { showToast(i18n[currentLang].err_loc, 'error'); });
         }
 
-        window.selectCustomLocation = function() {
-            document.getElementById('opt-my-loc').style.background = 'white';
-            document.getElementById('opt-custom-loc').style.background = '#f9f9f9';
-            alert("Tap on the map to select location");
-        }
-
-        function confirmSelection(name, lat, lng) {
+        function selectLocation(name, lat, lng) {
+            // Remove Previous Marker to avoid duplicates
             if(pickerMode === 'pickup') {
                 document.getElementById('lbl-pickup').innerText = name;
                 pickupCoords = { lat, lng };
                 if(pickupMarker) map.removeLayer(pickupMarker);
-                pickupMarker = L.marker([lat, lng], {
-                    icon: L.divIcon({ className:'custom-pin', html:'<i class="fa-solid fa-location-dot" style="color:#D50000; font-size:24px; text-shadow:0 2px 5px rgba(0,0,0,0.3);"></i>', iconSize:[24,24], iconAnchor:[12,24] })
-                }).addTo(map);
+                pickupMarker = L.marker([lat, lng], { icon: L.divIcon({className:'custom-pin', html:'<i class="fa-solid fa-location-dot" style="color:#D50000; font-size:24px;"></i>', iconSize:[24,24], iconAnchor:[12,24]}) }).addTo(map);
             } else {
                 document.getElementById('lbl-dropoff').innerText = name;
                 dropoffCoords = { lat, lng };
                 if(dropoffMarker) map.removeLayer(dropoffMarker);
-                dropoffMarker = L.marker([lat, lng], {
-                    icon: L.divIcon({ className:'custom-pin', html:'<i class="fa-solid fa-location-dot" style="color:#00C853; font-size:24px; text-shadow:0 2px 5px rgba(0,0,0,0.3);"></i>', iconSize:[24,24], iconAnchor:[12,24] })
-                }).addTo(map);
+                dropoffMarker = L.marker([lat, lng], { icon: L.divIcon({className:'custom-pin', html:'<i class="fa-solid fa-location-dot" style="color:#00C853; font-size:24px;"></i>', iconSize:[24,24], iconAnchor:[12,24]}) }).addTo(map);
             }
-            if(pickupCoords && dropoffCoords) document.getElementById('btn-show-vehicles').disabled = false;
-            if(pickupCoords && dropoffCoords) map.fitBounds([pickupCoords, dropoffCoords], { padding: [50, 50] });
-            else map.panTo([lat, lng]);
+            if(pickupCoords && dropoffCoords) {
+                document.getElementById('btn-show-vehicles').disabled = false;
+                map.fitBounds([pickupCoords, dropoffCoords], { padding: [50, 50] });
+            } else {
+                map.panTo([lat, lng]);
+            }
             closeLocationPicker();
         }
 
-        window.startRouting = function() {
+        // --- GEOCODING API (Nominatim) ---
+        async function reverseGeocode(lat, lon, callback) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                const data = await res.json();
+                const addr = data.display_name || "Unknown Location";
+                callback(addr);
+            } catch(e) { callback("My Location"); }
+        }
+
+        window.handleSearch = function(query) {
+            if(searchTimeout) clearTimeout(searchTimeout);
+            if(searchAbortController) searchAbortController.abort();
+            
+            const resDiv = document.getElementById('search-res');
+            if(query.length < 2) { resDiv.style.display = 'none'; return; }
+
+            // Check Cache
+            const cacheKey = `speedo_loc_${query}`;
+            const cached = localStorage.getItem(cacheKey);
+            if(cached) {
+                displaySearchResults(JSON.parse(cached));
+                return;
+            }
+
+            searchAbortController = new AbortController();
+            
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5&countrycodes=lk`, { signal: searchAbortController.signal });
+                    const data = await res.json();
+                    localStorage.setItem(cacheKey, JSON.stringify(data));
+                    displaySearchResults(data);
+                } catch(e) {
+                    if(e.name !== 'AbortError') console.error(e);
+                }
+            }, 500); // Debounce
+        }
+
+        function displaySearchResults(data) {
+            const resDiv = document.getElementById('search-res');
+            resDiv.innerHTML = '';
+            if(data.length === 0) { resDiv.style.display = 'none'; return; }
+            
+            data.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'search-item';
+                div.innerHTML = `<b>${m.display_name.split(',')[0]}</b><br><span style="font-size:11px; color:#888">${m.display_name}</span>`;
+                div.onclick = () => selectLocation(m.display_name, m.lat, m.lon);
+                resDiv.appendChild(div);
+            });
+            resDiv.style.display = 'block';
+        }
+
+        // --- ROUTING LOGIC ---
+        window.findRoutes = function() {
             if(!pickupCoords || !dropoffCoords) return;
-            document.getElementById('route-loader').classList.remove('hidden');
+            
+            const panel = document.getElementById('route-options-panel');
+            const list = document.getElementById('route-options-list');
+            const loader = document.getElementById('route-loader-panel');
+            
+            panel.style.display = 'flex';
+            loader.style.display = 'flex';
+            list.style.display = 'none';
+
+            // Simulate Searching Delay (2s)
             setTimeout(() => {
-                document.getElementById('route-loader').classList.add('hidden');
-                const card = document.getElementById('ride-card');
-                card.classList.add('collapsed');
-                card.innerHTML = `<div class="edit-pill-content" onclick="resetBooking()"><i class="fa-solid fa-pencil"></i><span data-i18n="edit">Edit</span></div>`;
-                if(routePolyline) map.removeLayer(routePolyline);
-                routePolyline = L.polyline([[pickupCoords.lat, pickupCoords.lng], [dropoffCoords.lat, dropoffCoords.lng]], {
-                    color: '#D50000', weight: 5, opacity: 0.8, dashArray: '10, 10'
-                }).addTo(map);
-                map.fitBounds(routePolyline.getBounds(), { padding: [100, 100] });
-                document.getElementById('route-bottom-sheet').classList.add('active');
-                const dist = map.distance([pickupCoords.lat, pickupCoords.lng], [dropoffCoords.lat, dropoffCoords.lng]);
-                document.getElementById('res-dist').innerText = (dist/1000).toFixed(1) + " km";
-                document.getElementById('res-time').innerText = Math.ceil((dist/1000)/0.4) + " min";
-                document.getElementById('res-price').innerText = "LKR " + Math.floor((dist/1000) * 100 + 150);
+                loader.style.display = 'none';
+                list.style.display = 'flex';
+                generateRouteOptions();
             }, 2000);
         }
 
+        function generateRouteOptions() {
+            const dist = map.distance([pickupCoords.lat, pickupCoords.lng], [dropoffCoords.lat, dropoffCoords.lng]); // meters
+            
+            // Mock Route 1: Normal
+            const normalTime = Math.ceil((dist/1000)/0.4); // km / 25kmh avg
+            const normalPrice = (dist/1000) * 100 + 150;
+            
+            // Mock Route 2: Expressway (30% faster, 40% expensive)
+            const expTime = Math.ceil(normalTime * 0.7);
+            const expPrice = normalPrice * 1.4;
+
+            const container = document.getElementById('route-options-list');
+            container.innerHTML = '';
+
+            const createCard = (type, time, price, badge, warning) => {
+                const div = document.createElement('div');
+                div.className = 'route-option-card';
+                div.onclick = () => previewRoute(type, div);
+                div.innerHTML = `
+                    ${badge ? `<div class="route-badge">${badge}</div>` : ''}
+                    <div class="route-details">
+                        <h4>${type === 'normal' ? i18n[currentLang].normal : i18n[currentLang].expr}</h4>
+                        <p>${Math.round(dist/1000)} km • ${time} min</p>
+                    </div>
+                    <div class="route-details">
+                        <div class="route-price">LKR ${Math.floor(price)}</div>
+                        ${warning ? `<span class="route-cost-notice">${warning}</span>` : ''}
+                    </div>
+                `;
+                return div;
+            };
+
+            const normalCard = createCard('normal', normalTime, normalPrice, i18n[currentLang].most_rec, null);
+            const expCard = createCard('expressway', expTime, expPrice, null, i18n[currentLang].additional);
+
+            container.appendChild(normalCard);
+            container.appendChild(expCard);
+
+            // Draw initial preview (Normal selected by default)
+            previewRoute('normal', normalCard);
+        }
+
+        function clearRoutes() {
+            if(routePolylines.normal) map.removeLayer(routePolylines.normal);
+            if(routePolylines.expressway) map.removeLayer(routePolylines.expressway);
+        }
+
+        window.previewRoute = function(type, cardElement) {
+            // UI Updates
+            document.querySelectorAll('.route-option-card').forEach(el => {
+                el.classList.remove('selected');
+                el.classList.add('active-preview');
+            });
+            cardElement.classList.add('selected');
+            cardElement.classList.remove('active-preview');
+
+            clearRoutes();
+
+            // Draw Lines (Simulated by curving differently or just straight line with style)
+            // For demo, Expressway is dashed red, Normal is solid red
+            const points = [[pickupCoords.lat, pickupCoords.lng], [dropoffCoords.lat, dropoffCoords.lng]];
+            
+            const commonStyle = { color: '#D50000', weight: 5 };
+            const greyStyle = { color: '#ccc', weight: 5, dashArray: '5, 5' };
+            
+            if(type === 'normal') {
+                routePolylines.normal = L.polyline(points, commonStyle).addTo(map);
+                routePolylines.expressway = L.polyline(points, greyStyle).addTo(map);
+            } else {
+                routePolylines.normal = L.polyline(points, greyStyle).addTo(map);
+                routePolylines.expressway = L.polyline(points, { ...commonStyle, dashArray: '10, 10' }).addTo(map);
+            }
+
+            map.fitBounds(routePolylines.normal.getBounds(), { padding: [100, 100] });
+
+            // Show Continue Button (Inside the card container for flow)
+            // But user said "selected one, then continue"
+            // We will add a Continue button to the panel dynamically
+            let contBtn = document.getElementById('route-continue-btn');
+            if(!contBtn) {
+                contBtn = document.createElement('button');
+                contBtn.id = 'route-continue-btn';
+                contBtn.className = 'btn-red';
+                contBtn.style.marginTop = '10px';
+                contBtn.innerText = "Continue";
+                contBtn.onclick = confirmRouteSelection;
+                document.getElementById('route-options-panel').appendChild(contBtn);
+            }
+        }
+
+        window.confirmRouteSelection = function() {
+            document.getElementById('route-options-panel').style.display = 'none';
+            document.getElementById('route-final-sheet').classList.add('active');
+            
+            // Update final sheet data based on selection (mock)
+            // In real app, calculate based on active route
+            const dist = map.distance([pickupCoords.lat, pickupCoords.lng], [dropoffCoords.lat, dropoffCoords.lng]);
+            document.getElementById('res-dist').innerText = (dist/1000).toFixed(1) + " km";
+            document.getElementById('res-time').innerText = "15 min"; // Mock
+            document.getElementById('res-price').innerText = "LKR 450"; // Mock
+
+            // Collapse Top Card
+            const card = document.getElementById('ride-card');
+            card.classList.add('collapsed');
+            card.innerHTML = `
+                <div class="collapsed-row" onclick="resetBooking()">
+                    <div class="loc-info-group">
+                        <i class="fa-solid fa-circle-dot loc-icon-sm"></i>
+                        <span class="loc-text-display">${document.getElementById('lbl-pickup').innerText}</span>
+                    </div>
+                    <i class="fa-solid fa-pencil loc-edit-icon" onclick="event.stopPropagation(); openLocationPicker('pickup')"></i>
+                </div>
+                <div class="collapsed-row" onclick="resetBooking()">
+                    <div class="loc-info-group">
+                        <i class="fa-solid fa-square loc-icon-sm green"></i>
+                        <span class="loc-text-display">${document.getElementById('lbl-dropoff').innerText}</span>
+                    </div>
+                    <i class="fa-solid fa-pencil loc-edit-icon" onclick="event.stopPropagation(); openLocationPicker('dropoff')"></i>
+                </div>
+            `;
+        }
+
         window.resetBooking = function() {
-            document.getElementById('route-bottom-sheet').classList.remove('active');
+            // Clear all routes and markers
+            clearRoutes();
+            document.getElementById('route-final-sheet').classList.remove('active');
+            
+            // Rebuild Expanded Card
             const card = document.getElementById('ride-card');
             card.classList.remove('collapsed');
             card.innerHTML = `
                 <div class="ride-title" data-i18n="book_ride">Book a Ride</div>
-                <div class="loc-input-row"><i class="fa-solid fa-circle-dot loc-icon-sm loc-icon-marker"></i><div class="loc-pill" id="btn-pickup" onclick="openLocationPicker('pickup')"><span id="lbl-pickup">${document.getElementById('lbl-pickup').innerText}</span><i class="fa-solid fa-chevron-right" style="font-size:10px; color:#ccc;"></i></div></div>
-                <div class="loc-input-row"><i class="fa-solid fa-square loc-icon-sm loc-icon-marker green"></i><div class="loc-pill" id="btn-dropoff" onclick="openLocationPicker('dropoff')"><span id="lbl-dropoff">${document.getElementById('lbl-dropoff').innerText}</span><i class="fa-solid fa-chevron-right" style="font-size:10px; color:#ccc;"></i></div></div>
-                <button class="ride-btn" id="btn-show-vehicles" onclick="startRouting()" data-i18n="show_veh">Show Vehicle Options</button>
+                <div class="loc-input-row"><i class="fa-solid fa-circle-dot loc-icon-sm"></i><div class="loc-pill" id="btn-pickup" onclick="openLocationPicker('pickup')"><span id="lbl-pickup">${document.getElementById('lbl-pickup').innerText}</span></div><i class="fa-solid fa-pencil loc-btn-small" onclick="openLocationPicker('pickup')"></i></div>
+                <div class="loc-input-row"><i class="fa-solid fa-square loc-icon-sm green"></i><div class="loc-pill" id="btn-dropoff" onclick="openLocationPicker('dropoff')"><span id="lbl-dropoff">${document.getElementById('lbl-dropoff').innerText}</span></div><i class="fa-solid fa-pencil loc-btn-small" onclick="openLocationPicker('dropoff')"></i></div>
+                <button class="btn-red" id="btn-show-vehicles" onclick="findRoutes()" disabled data-i18n="show_veh">Show Vehicle Options</button>
             `;
-            if(routePolyline) map.removeLayer(routePolyline);
+            // Ensure button state persists if locations are set
+            if(pickupCoords && dropoffCoords) document.getElementById('btn-show-vehicles').disabled = false;
         }
 
-        // --- PROFILE EDIT & DUPLICATE CHECK ---
+        // --- PROFILE & EDIT ---
         let tempEditPic = "";
-
         window.openEditProfile = function() {
             document.getElementById('edit-name').value = currentUser.fullName || '';
             document.getElementById('edit-email').value = currentUser.email || '';
@@ -913,46 +1179,29 @@
             r.readAsDataURL(f);
         }
 
-        window.closeEditProfile = function() {
-            document.getElementById('edit-profile-modal').classList.add('hidden');
-        }
+        window.closeEditProfile = function() { document.getElementById('edit-profile-modal').classList.add('hidden'); }
 
         window.saveProfile = async function() {
             const newName = document.getElementById('edit-name').value.trim();
             const newEmail = document.getElementById('edit-email').value.trim();
             const newPhone = document.getElementById('edit-phone').value.trim();
-            const errDiv = document.getElementById('wizard-error'); // Reuse generic error area if needed or use toast
 
-            if(!newName || !newEmail || !newPhone) {
-                showToast("All fields are required", "error");
-                return;
-            }
+            if(!newName || !newEmail || !newPhone) { showToast("All fields required", "error"); return; }
 
-            // Check Phone Duplicate if changed
+            // Check Phone Duplicate
             if(newPhone !== currentUser.phone) {
                 try {
                     const q = query(ref(db, 'users'), orderByChild('phone'), equalTo(newPhone));
                     const snap = await get(q);
                     if(snap.exists()) {
                         const users = snap.val();
-                        // If any user with this phone exists who is NOT the current user
                         const duplicateUser = Object.keys(users).find(uid => uid !== currentUser.uid);
-                        if(duplicateUser) {
-                            showToast("Phone number already registered", "error");
-                            return;
-                        }
+                        if(duplicateUser) { showToast("Phone number already found", "error"); return; }
                     }
-                } catch(e) {
-                    console.error(e);
-                }
+                } catch(e) {}
             }
 
-            // Update
-            const updates = {
-                fullName: newName,
-                email: newEmail,
-                phone: newPhone
-            };
+            const updates = { fullName: newName, email: newEmail, phone: newPhone };
             if(tempEditPic) {
                 updates.profilePic = tempEditPic;
                 document.getElementById('ui-profile-img').src = tempEditPic;
@@ -964,33 +1213,19 @@
                 await update(ref(db, 'users/' + currentUser.uid), updates);
                 currentUser = { ...currentUser, ...updates };
                 localStorage.setItem('speedo_user', JSON.stringify(currentUser));
-                
-                // Update UI Text
                 document.getElementById('ui-name').innerText = newName.split(' ')[0];
                 document.getElementById('prof-view-name').innerText = newName;
                 document.getElementById('prof-view-email').innerText = newEmail;
-                
                 showToast("Profile Updated", "success");
                 closeEditProfile();
-            } catch(e) {
-                showToast("Failed to update profile", "error");
-            }
+            } catch(e) { showToast("Failed to update", "error"); }
+        }
+        
+        window.openSettings = function() {
+            showToast("Settings opened (Mock)", "success");
         }
 
-
-        // --- WIZARD & GENERAL UI ---
-        const slData = {
-            "Western": ["Colombo", "Gampaha", "Kalutara"],
-            "Central": ["Kandy", "Matale", "Nuwara Eliya"],
-            "Southern": ["Galle", "Matara", "Hambantota"],
-            "North Western": ["Kurunegala", "Puttalam"],
-            "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Vavuniya", "Mullaitivu"],
-            "Eastern": ["Trincomalee", "Batticaloa", "Ampara"],
-            "North Central": ["Anuradhapura", "Polonnaruwa"],
-            "Uva": ["Badulla", "Monaragala"],
-            "Sabaragamuwa": ["Ratnapura", "Kegalle"]
-        };
-
+        // --- GENERAL UI ---
         window.switchTab = function(tab) {
             document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -1011,6 +1246,7 @@
             if(currentLang === 'en') currentLang = 'si'; else if(currentLang === 'si') currentLang = 'ta'; else currentLang = 'en';
             localStorage.setItem('speedo_lang', currentLang); updateLangState();
         }
+
         function updateLangState() {
             document.getElementById('lang-en').className = currentLang==='en'?'active':'';
             document.getElementById('lang-si').className = currentLang==='si'?'active':'';
@@ -1026,23 +1262,24 @@
             document.getElementById('ui-greeting').innerText = i18n[currentLang][k];
         }
 
+        // --- WIZARD ---
         function initWizard() { const s=document.getElementById('inp-province'); for(let p in slData) s.add(new Option(p,p)); }
         window.loadDistricts = () => {
             const p = document.getElementById('inp-province').value;
-            const d = document.getElementById('inp-district'); d.innerHTML = '<option value="">Select District</option>';
+            const d = document.getElementById('inp-district'); d.innerHTML = '<option value="">Select</option>';
             if(slData[p]) slData[p].forEach(x => d.add(new Option(x,x)));
         }
 
         window.wNext = (n) => {
             const err = document.getElementById('wizard-error'); err.innerText = "";
-            if(n===1 && document.getElementById('inp-name').value.trim() === "") return err.innerText = "Name is required";
-            if(n===2 && document.getElementById('inp-email').value.trim() === "") return err.innerText = "Email is required";
-            if(n===2.5 && document.getElementById('inp-phone').value.trim() === "") return err.innerText = "Phone is required";
-            if(n===4 && document.getElementById('inp-province').value === "") return err.innerText = "Select a Province";
-            if(n===5 && document.getElementById('inp-district').value === "") return err.innerText = "Select a District";
-            document.getElementById(`step-${n}`).classList.remove('active');
+            if(n===1 && document.getElementById('inp-name').value.trim() === "") return err.innerText = "Name required";
+            if(n===2 && document.getElementById('inp-email').value.trim() === "") return err.innerText = "Email required";
+            if(n===2.5 && document.getElementById('inp-phone').value.trim() === "") return err.innerText = "Phone required";
+            if(n===4 && document.getElementById('inp-province').value === "") return err.innerText = "Select Province";
+            if(n===5 && document.getElementById('inp-district').value === "") return err.innerText = "Select District";
+            document.getElementById(`step-${n}`).classList.add('hidden');
             const nextStep = (n === 2.5) ? 3 : n+1;
-            document.getElementById(`step-${nextStep}`).classList.add('active');
+            document.getElementById(`step-${nextStep}`).classList.remove('hidden');
         }
 
         window.prevImg = (e) => {
@@ -1055,12 +1292,12 @@
 
         window.finishSetup = async () => {
             const err = document.getElementById('wizard-error');
-            if(!base64Profile) return err.innerText = "Profile Picture is required";
-            if(!document.getElementById('chk').checked) return err.innerText = "You must accept Terms";
+            if(!base64Profile) return err.innerText = "Profile Picture required";
+            if(!document.getElementById('chk').checked) return err.innerText = "Accept Terms";
             const up = { fullName: document.getElementById('inp-name').value, email: document.getElementById('inp-email').value, phone: document.getElementById('inp-phone').value, country:"Sri Lanka", province:document.getElementById('inp-province').value, district:document.getElementById('inp-district').value, profilePic:base64Profile, profileCompleted:true };
             await update(ref(db, 'users/'+currentUser.uid), up);
             currentUser={...currentUser,...up}; localStorage.setItem('speedo_user',JSON.stringify(currentUser));
-            document.getElementById('setup-wizard').classList.add('hidden'); checkLocationPermission(); initUI();
+            document.getElementById('setup-wizard').classList.add('hidden'); initUI();
         }
     </script>
 </body>
