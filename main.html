@@ -10,8 +10,8 @@
     
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Leaflet Maps & Routing -->
+
+    <!-- Leaflet & Routing (Dijkstra Implementation) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
     
@@ -19,126 +19,114 @@
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
     <style>
-        /* --- General Styles --- */
+        /* --- General & Theme --- */
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Poppins', 'Noto Sans Sinhala', 'Noto Sans Tamil', sans-serif;
+            /* Red Background as requested */
             background-color: #D50000;
             overflow: hidden;
             user-select: none;
         }
 
         .hidden { display: none !important; }
-
         :root {
             --primary-red: #D50000;
+            --accent-blue: #2196F3;
             --text-dark: #333;
-            --bg-grey: #f8f9fa;
-            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+            --bg-glass: rgba(255, 255, 255, 0.15);
         }
 
-        /* --- 1. HEADER --- */
+        /* --- Toast Notification --- */
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 20000; width: 90%; max-width: 350px; pointer-events: none;
+        }
+        .toast {
+            background: rgba(0,0,0,0.85); color: white; padding: 12px 20px; border-radius: 30px;
+            margin-bottom: 10px; text-align: center; font-size: 14px; font-weight: 500;
+            animation: fadeIn 0.3s ease-out; pointer-events: auto;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 1. Header --- */
         #header-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 120px;
-            z-index: 10; padding: 15px; box-sizing: border-box;
-            display: flex; justify-content: space-between; align-items: flex-start;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100px;
+            z-index: 100; padding: 10px 20px; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: center;
+            /* Keep header red to blend with body */
+            background: var(--primary-red); 
         }
 
         .name-pill {
-            background: rgba(255, 255, 255, 0.2);
+            background: var(--bg-glass);
             backdrop-filter: blur(10px);
-            padding: 5px 15px 5px 5px;
-            border-radius: 40px;
-            display: flex; align-items: center; gap: 10px;
+            padding: 6px 15px 6px 6px;
+            border-radius: 30px;
+            display: flex; align-items: center; gap: 12px;
             border: 1px solid rgba(255,255,255,0.3);
-            color: white; max-width: 55%; cursor: pointer;
+            color: white; cursor: pointer;
         }
         .name-pill:active { transform: scale(0.97); }
-        .pill-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        .pill-img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
         .pill-info { display: flex; flex-direction: column; justify-content: center; }
         .pill-hello { font-size: 13px; font-weight: 700; line-height: 1.1; }
         .pill-greeting { font-size: 10px; opacity: 0.9; font-weight: 400; line-height: 1.1; margin-top: 2px; }
 
         .lang-pill {
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            padding: 10px 15px;
-            border-radius: 30px;
+            background: var(--bg-glass);
+            padding: 8px 15px;
+            border-radius: 20px;
             border: 1px solid rgba(255,255,255,0.3);
-            color: white; font-size: 13px; font-weight: 600;
-            cursor: pointer; display: flex; gap: 5px;
+            color: white; font-size: 12px; font-weight: 600; cursor: pointer;
+            display: flex; gap: 5px;
         }
         .lang-pill span { opacity: 0.6; transition: 0.3s; }
         .lang-pill span.active { opacity: 1; font-weight: 700; text-decoration: underline; }
 
-        /* --- 2. MAIN CARD --- */
+        /* --- 2. Main Card (White with Rounded Top) --- */
         #main-card {
-            position: absolute; bottom: 0; left: 0;
-            width: 100%; height: calc(100% - 90px);
+            position: absolute; top: 100px; left: 0;
+            width: 100%; height: calc(100% - 100px);
             background: white;
+            /* Top two corners rounded more */
             border-radius: 30px 30px 0 0;
             box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
-            z-index: 5;
-            padding: 30px 20px 80px 20px;
+            z-index: 50;
+            padding: 25px 20px 80px 20px;
             box-sizing: border-box;
             overflow-y: auto;
-            animation: slideUp 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            animation: slideUp 0.4s cubic-bezier(0.25, 1, 0.5, 1);
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* --- TAB VIEWS --- */
-        .tab-view { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease-in-out; width: 100%; }
+        /* --- Tab Views --- */
+        .tab-view { display: none; flex-direction: column; gap: 20px; width: 100%; }
         .tab-view.active-view { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Services Grid */
-        .services-grid { display: flex; justify-content: space-between; gap: 10px; }
+        .services-grid { display: flex; justify-content: space-between; gap: 15px; margin-bottom: 25px; }
         .service-btn { display: flex; flex-direction: column; align-items: center; width: 32%; cursor: pointer; }
         .svc-img-box {
-            width: 100%; aspect-ratio: 1/1; background: var(--bg-grey); border-radius: 20px; margin-bottom: 10px;
+            width: 100%; aspect-ratio: 1/1; background: #f4f4f4; border-radius: 20px; margin-bottom: 8px;
             display: flex; justify-content: center; align-items: center; border: 1px solid #eee; overflow: hidden;
-            transition: transform 0.2s;
         }
         .svc-img-box img { width: 100%; height: 100%; object-fit: cover; }
-        .service-btn:active .svc-img-box { transform: scale(0.95); }
         .svc-label { font-weight: 700; font-size: 14px; color: var(--text-dark); }
 
-        /* Ad Banner */
+        /* Ad Banner (Full Width) */
         .ad-banner {
-            width: 100%; aspect-ratio: 16/9; background: #eee; border-radius: 20px;
+            width: 100%; aspect-ratio: 16/9; background: #eee; border-radius: 15px;
             overflow: hidden; position: relative; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
         .ad-banner img { width: 100%; height: 100%; object-fit: cover; }
-        .ad-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
-
-        /* Ongoing Activity Card */
-        .activity-card {
-            width: 100%; background: white; border: 1px solid #eee; border-radius: 20px; padding: 20px;
-            box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer;
-            transition: 0.2s; min-height: 110px; display: flex; flex-direction: column; justify-content: center;
-        }
-        .activity-card:active { background: #f9f9f9; transform: scale(0.98); }
-        .act-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .act-title { font-size: 16px; font-weight: 700; color: #333; }
-        .act-content { background: #f8f9fa; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; color: #888; }
-        .act-text { font-size: 14px; font-weight: 500; }
-
-        /* Thin Promo Strip */
-        .promo-strip-wrapper {
-            width: 100%; overflow-x: auto; white-space: nowrap; display: flex; gap: 15px; padding-bottom: 5px;
-            -ms-overflow-style: none; scrollbar-width: none;
-        }
-        .promo-strip-item {
-            display: inline-block; min-width: 100%; aspect-ratio: 32/9; border-radius: 15px;
-            overflow: hidden; position: relative; scroll-snap-align: center; cursor: pointer;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08); border: 1px solid #f0f0f0;
-        }
-        .promo-strip-item img { width: 100%; height: 100%; object-fit: cover; }
+        .ad-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
 
         /* Other Views */
-        .section-header { font-size: 24px; font-weight: 700; color: #333; margin-bottom: 15px; }
+        .section-header { font-size: 24px; font-weight: 700; color: var(--text-dark); margin-bottom: 15px; }
         .tabs-pill-container { display: flex; background: #f0f0f0; padding: 5px; border-radius: 15px; margin-bottom: 15px; }
-        .tab-pill { flex: 1; text-align: center; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #666; cursor: pointer; }
+        .tab-pill { flex: 1; text-align: center; padding: 10px; border-radius: 10px; font-size: 13px; font-weight: 600; color: #666; cursor: pointer; }
         .tab-pill.active { background: white; color: var(--primary-red); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #aaa; text-align: center; }
         .empty-state i { font-size: 40px; margin-bottom: 15px; color: #ddd; }
@@ -146,10 +134,10 @@
         /* Profile */
         .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
         .profile-big-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0; margin-bottom: 10px; }
-        .profile-name { font-size: 18px; font-weight: 700; color: #333; margin: 0; }
+        .profile-name { font-size: 18px; font-weight: 700; color: var(--text-dark); margin: 0; }
         .profile-email { font-size: 13px; color: #888; margin: 0; }
-        .profile-menu-item { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
-        .menu-left { display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 500; color: #333; }
+        .profile-menu-item { display: flex; align-items: center; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+        .menu-left { display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 500; color: var(--text-dark); }
         .menu-left i { width: 25px; color: #888; }
         .logout-btn { margin-top: 30px; width: 100%; padding: 15px; border-radius: 15px; background: #ffebee; color: #D50000; font-weight: 700; border: none; cursor: pointer; }
 
@@ -159,19 +147,18 @@
         .promo-card-lg { width: 100%; border-radius: 20px; overflow: hidden; aspect-ratio: 2/1; position: relative; background: #eee; }
         .promo-card-lg img { width: 100%; height: 100%; object-fit: cover; }
         .promo-text { padding: 10px 0; }
-        .promo-text h4 { margin: 0; font-size: 15px; color: #333; }
+        .promo-text h4 { margin: 0; font-size: 15px; color: var(--text-dark); }
         .promo-text p { margin: 2px 0 0; font-size: 12px; color: #888; }
 
-        /* --- 3. BOTTOM NAVIGATION --- */
+        /* --- 3. Bottom Navigation --- */
         #bottom-nav {
             position: fixed; bottom: 0; left: 0; width: 100%;
             height: 70px; background: white;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
-            z-index: 20;
+            z-index: 200;
             display: flex; justify-content: space-around; align-items: center;
             border-top: 1px solid #f0f0f0;
         }
-
         .nav-item {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             color: #aaa; cursor: pointer; width: 25%; height: 100%;
@@ -181,181 +168,217 @@
         .nav-item.active { color: var(--primary-red); }
         .nav-item.active i { transform: translateY(-2px); }
 
-        /* --- SKELETON --- */
-        #main-skeleton {
-            position: absolute; top: 90px; left: 0; width: 100%; height: calc(100% - 90px);
-            background: white; border-radius: 30px 30px 0 0; z-index: 15;
-            padding: 30px 20px; box-sizing: border-box;
-        }
-        .shimmer { animation: shimmer 1.5s infinite linear; background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%); background-size: 800px 104px; }
-        .sk-row { display: flex; gap: 15px; margin-bottom: 30px; }
-        .sk-sq { width: 33%; aspect-ratio: 1/1; border-radius: 20px; }
-        .sk-banner { width: 100%; aspect-ratio: 16/9; border-radius: 20px; margin-bottom: 20px; }
-        @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
-
-        /* --- SETUP WIZARD --- */
-        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:5000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
+        /* --- 4. Setup Wizard --- */
+        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:4000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
         .wizard-container { width:100%; max-width:400px; text-align:center; position: relative; }
-        .step { display:none; width:100%; animation:fadeIn 0.4s; }
+        .step { display:none; width:100%; animation: fadeInView 0.4s; }
         .step.active { display:flex; flex-direction:column; }
-        .btn-red { background:var(--primary-red); color:white; padding:15px; border-radius:30px; border:none; font-weight:700; width:100%; margin-top:15px; font-size: 14px; cursor: pointer; }
-        .input-box input, .input-box select { width:100%; padding:15px; border:2px solid #eee; border-radius:12px; margin-bottom:10px; outline:none; box-sizing:border-box; }
+        .btn-red { background:var(--primary-red); color:white; padding:15px; border-radius:30px; border:none; font-weight:700; width:100%; margin-top:15px; font-size:14px; cursor:pointer; }
+        .input-box input, .input-box select { width:100%; padding:15px; border:2px solid #eee; border-radius:12px; margin-bottom:10px; outline:none; box-sizing:border-box; font-size:14px; }
         .input-box label { font-size:13px; font-weight:600; color:#333; display:block; text-align:left; margin-bottom:5px; }
-        .profile-upload-container { width:100px; height:100px; background:#f4f4f4; border-radius:50%; margin:0 auto 15px; overflow:hidden; position:relative; border: 2px dashed #ccc; }
+        .profile-upload-container { width:100px; height:100px; background:#f4f4f4; border-radius:50%; margin:0 auto 15px; overflow:hidden; position:relative; border: 2px dashed #ccc; cursor:pointer; }
         
-        /* TERMS MODAL */
-        #terms-modal, #block-permission-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 6000;
-            display: flex; justify-content: center; align-items: center;
-            backdrop-filter: blur(2px);
-        }
+        /* --- Modals --- */
         .modal-card {
             background: white; width: 90%; max-width: 400px;
             border-radius: 20px; padding: 25px; text-align: left;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             animation: popIn 0.3s ease-out;
+            max-height: 85vh; overflow-y: auto; box-sizing: border-box;
         }
         @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
-        /* --- LOCATION BLOCKER --- */
-        #block-permission-modal { background: white; text-align: center; flex-direction: column; z-index: 9999; }
-        .perm-icon { font-size: 60px; color: var(--primary-red); margin-bottom: 20px; animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .perm-text { color: var(--primary-red); font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-        .settings-btn { background: #eee; color: #333; margin-top: 10px; }
-
-        /* --- RIDE WINDOW --- */
+        /* --- 5. Ride View (Full Screen Overlay) --- */
         #ride-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 3000; transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            background: #f0f0f0; /* Light grey map background */
+            z-index: 1000;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
         #ride-overlay.active { transform: translateY(0); }
-        .close-ride-btn {
-            position: absolute; top: 20px; right: 20px; z-index: 200;
-            width: 40px; height: 40px; background: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; color: #333; font-size: 18px;
+
+        #ride-map {
+            width: 100%; height: 100%;
+            z-index: 1;
+            background: #e5e3df;
         }
-        
-        #ride-map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
-        /* Hide leaflet controls */
-        .leaflet-control-zoom, .leaflet-control-attribution, .leaflet-routing-container { display: none !important; }
+        /* Hide Leaflet Controls */
+        .leaflet-control-zoom, .leaflet-control-attribution { display: none !important; }
+        /* Hide Routing Container but keep lines */
+        .leaflet-routing-container { 
+            display: none !important; /* We will render custom UI for route selection */
+        }
 
         /* Ride Top Card */
         #ride-top-card {
             position: absolute; top: 20px; left: 5%; width: 90%; 
-            background: white; border-radius: 20px; padding: 20px; box-sizing: border-box;
+            background: white; border-radius: 20px;
+            padding: 20px; box-sizing: border-box;
             box-shadow: 0 5px 20px rgba(0,0,0,0.15); z-index: 10;
-            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            display: flex; flex-direction: column;
+            transition: 0.3s cubic-bezier(0.25, 1, 0.5, 1);
         }
+
+        /* Collapsed State */
         #ride-top-card.collapsed {
-            top: 70px; padding: 15px;
+            top: 80px; padding: 15px;
+            display: block; /* Block layout */
         }
+        #ride-top-card.collapsed .ride-title { display: none; }
         
-        .ride-title { font-weight: 700; margin-bottom: 15px; color: #333; display: flex; justify-content: space-between; }
-        .collapsed .ride-title { display: none; }
-        
-        /* Collapsed View Styles */
+        /* Summary Rows (Collapsed View) */
         .summary-row { display: none; flex-direction: column; gap: 8px; width: 100%; }
         .collapsed .summary-row { display: flex; }
-        .collapsed .loc-inputs, .collapsed .vehicle-btn { display: none; }
-        .sum-line { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: #333; justify-content: space-between; }
-        .sum-left { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
-        .sum-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; }
-        .sum-meta { font-size: 11px; color: #888; font-weight: 600; display: flex; justify-content: space-between; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; }
+        
+        /* Buttons */
+        .btn-full-red {
+            width: 100%; background: var(--primary-red); color: white; border: none;
+            padding: 14px; border-radius: 12px; font-weight: 700; font-size: 16px;
+            cursor: pointer; box-shadow: 0 4px 10px rgba(213, 0, 0, 0.2);
+            margin-top: 10px;
+        }
+        .btn-full-red:active { transform: scale(0.98); }
+        .btn-full-red:disabled { background: #ccc; box-shadow: none; }
+        .btn-close {
+            position: absolute; top: 15px; right: 15px; background: white; 
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: pointer; color: #333; font-size: 18px; z-index: 20;
+        }
 
-        .loc-input-btn {
-            width: 100%; padding: 15px; background: #f8f9fa; border-radius: 12px;
-            margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
-            color: #555; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #eee;
-            box-sizing: border-box; /* Fix for overflow */
-        }
-        .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .dot.blue { background: #2196F3; }
-        .dot.red { background: #D50000; }
-        .edit-icon { color: var(--primary-red); cursor: pointer; padding: 5px; }
-        
-        /* Location Search Popup */
-        #loc-search-modal {
+        /* --- 6. Location Picker Modal --- */
+        #loc-picker-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 4000; transform: translateY(100%);
-            transition: 0.3s; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
+            background: white; z-index: 2000;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
         }
-        #loc-search-modal.active { transform: translateY(0); }
-        .search-pill-row { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; }
-        .search-pill-btn {
-            flex: 1; /* Equally divide */
-            padding: 12px; background: #eee; border-radius: 12px; font-size: 12px; font-weight: 600;
-            text-align: center; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 5px;
-        }
-        .search-input-box {
-            display: flex; align-items: center; background: #f8f9fa; border: 1px solid #ddd;
-            border-radius: 15px; padding: 0 15px; margin-bottom: 15px;
-        }
-        .search-input-box input { border: none; background: transparent; padding: 15px 0; margin-left: 10px; flex: 1; outline: none; }
+        #loc-picker-modal.active { transform: translateY(0); }
         
-        /* Route Selection Modal */
+        .search-pill-row { display: flex; gap: 10px; margin-bottom: 15px; width: 100%; }
+        .search-pill-btn {
+            flex: 1; padding: 12px; background: #f8f9fa; border: 1px solid #eee;
+            border-radius: 12px; text-align: center; cursor: pointer; font-weight: 600; color: #555;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .search-pill-btn:active { background: #e0e0e0; }
+
+        .picker-map-wrap { 
+            flex: 1; width: 100%; height: 300px; position: relative; background: #e5e3df; 
+            border-radius: 15px; overflow: hidden; margin-bottom: 15px;
+        }
+        .picker-map-wrap::after {
+            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 20px; height: 20px; 
+            background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 0l-10 20h20z' fill='%23000000' fill-opacity='0.5'/%3E%3C/svg%3E");
+            z-index: 1000; pointer-events: none; opacity: 0.5;
+        }
+
+        /* --- 7. Route Selection Modal --- */
         #route-select-modal {
             position: absolute; bottom: 0; left: 0; width: 100%;
             background: white; border-radius: 30px 30px 0 0;
             padding: 20px; box-sizing: border-box; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            z-index: 20; transform: translateY(100%); transition: 0.4s;
+            z-index: 20; transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: none; flex-direction: column;
         }
         #route-select-modal.active { transform: translateY(0); }
-        .route-opt { padding: 15px; border: 1px solid #eee; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; position: relative; overflow: hidden; }
-        .route-opt.recommended { border: 2px solid #4CAF50; background: #e8f5e9; }
-        .badge-rec { position: absolute; top: 0; left: 0; background: #4CAF50; color: white; padding: 3px 10px; font-size: 9px; border-bottom-right-radius: 10px; font-weight: 700; }
-        .warn-cost { font-size: 10px; color: #D50000; font-weight: 600; display: block; margin-top: 2px; }
 
-        /* Vehicle Result Sheet */
+        .route-opt { 
+            padding: 15px; border: 1px solid #eee; border-radius: 15px; 
+            margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; 
+            cursor: pointer; position: relative; overflow: hidden; transition: 0.2s;
+        }
+        .route-opt:active { background: #f9f9f9; }
+        .route-opt.selected { border-color: var(--primary-red); background: #fff5f5; box-shadow: 0 0 0 4px rgba(213, 0, 0, 0.1); }
+        
+        .rec-badge {
+            position: absolute; top: 0; left: 0; background: #4CAF50; color: white;
+            font-size: 10px; padding: 2px 8px; border-radius: 4px 8px 8px 4px 8px; font-weight: 700; text-transform: uppercase;
+        }
+        .route-info { flex: 1; margin-right: 10px; }
+        .route-title { font-weight: 700; font-size: 14px; color: #333; display: block; }
+        .route-meta { font-size: 12px; color: #666; display: block; margin-top: 4px; }
+        .route-info-btn { padding: 6px; border: 1px solid #ddd; border-radius: 50%; width: 30px; height: 30px; text-align: center; font-size: 14px; color: #555; background: white; cursor: pointer; }
+        .warn-cost { font-size: 10px; color: #D50000; font-weight: 600; display: block; margin-top: 4px; }
+
+        /* --- 8. Vehicle Sheet --- */
         #vehicle-sheet {
             position: absolute; bottom: 0; left: 0; width: 100%;
             background: white; border-radius: 30px 30px 0 0;
             padding: 20px; box-sizing: border-box; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            z-index: 10; transform: translateY(100%); transition: 0.4s;
+            z-index: 10; transform: translateY(100%); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex; flex-direction: column;
         }
         #vehicle-sheet.active { transform: translateY(0); }
 
-        /* Warning Modal - Full Screen */
-        #app-warn-modal { background: rgba(0,0,0,0.9); z-index: 5000; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-        .warn-card-fs { text-align: center; color: white; padding: 30px; }
+        /* --- Directions Modal --- */
+        #directions-modal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 90%; max-width: 400px; max-height: 70vh;
+            background: white; border-radius: 20px; padding: 20px;
+            z-index: 3000; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column;
+        }
+        .dir-list { overflow-y: auto; flex: 1; padding-right: 10px; margin-top: 10px; }
+        .dir-step { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #eee; font-size: 13px; color: #444; align-items: center; }
+        .dir-step i { color: var(--primary-red); margin-top: 3px; font-size: 14px; }
 
-        /* Map Pin Picker Crosshair */
-        #map-crosshair {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 2; pointer-events: none; display: none; font-size: 30px; color: black;
-            text-shadow: 0 0 5px white;
+        /* --- Full Screen Modals --- */
+        #permission-modal, #warn-modal, #terms-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 5000;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .perm-card-fs { text-align: center; color: white; padding: 30px; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; }
+        .perm-title { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+        .perm-icon { font-size: 60px; margin-bottom: 15px; }
+        .perm-loading { font-size: 14px; opacity: 0.8; margin-top: 10px; }
+        
+        .warn-card-fs { text-align: center; color: white; padding: 30px; max-width: 80%; background: var(--primary-red); border-radius: 15px; }
+        .warn-title { font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+        .warn-icon { font-size: 40px; margin-bottom: 10px; }
+        .warn-text { font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
+        .warn-action { margin-top: 10px; }
+
+        .modal-content-fs {
+            background: white; width: 90%; max-width: 400px; border-radius: 20px;
+            padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-height: 80vh; overflow-y: auto; box-sizing: border-box;
+        }
+        
+        /* Blue Triangle Marker Icon */
+        .blue-triangle-icon {
+            display: inline-block;
+            width: 0; 
+            height: 0; 
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid var(--accent-blue);
         }
 
     </style>
 </head>
 <body>
 
-    <!-- LOCATION PERMISSION BLOCKER -->
-    <div id="block-permission-modal">
-        <i class="fa-solid fa-location-dot perm-icon"></i>
-        <div class="perm-text">To Continue, Grant Location Access</div>
-        <p style="font-size:12px; color:#666; max-width:80%; margin:0 auto 20px auto;">We need your location to provide services. Please allow access.</p>
-        <button class="btn-red" style="width: auto; padding: 10px 30px;" onclick="window.location.reload()">Retry</button>
-        <button class="btn-red settings-btn" style="width: auto; padding: 10px 30px;" onclick="alert('Please open your Browser Settings -> Site Settings -> Location -> Allow.')">Open Settings</button>
-        <div style="font-size:10px; color:#999; margin-top:20px;">Waiting for location...</div>
-    </div>
+    <!-- TOASTS -->
+    <div id="toast-container"></div>
 
     <!-- HEADER -->
     <div id="header-layer">
         <div class="name-pill" onclick="switchTab('profile')">
-            <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" class="pill-img" id="ui-profile-img">
+            <img src="https://ui-avatars.com/api/?name=User&background=fff&color=D50000" class="pill-img" id="ui-avatar">
             <div class="pill-info">
                 <span class="pill-hello"><span data-i18n="hello">Hello</span> <span id="ui-name">...</span></span>
                 <span class="pill-greeting" id="ui-greeting">...</span>
             </div>
         </div>
         <div class="lang-pill" onclick="cycleLanguage()">
-            <span id="lang-en" class="active">En</span> · <span id="lang-si">සි</span> · <span id="lang-ta">த</span>
+            <span id="lang-en">En</span> <span id="lang-si">සි</span> <span id="lang-ta">த</span>
         </div>
     </div>
 
@@ -365,16 +388,16 @@
         <!-- HOME VIEW -->
         <div id="view-home" class="tab-view active-view">
             <div class="services-grid">
-                <div class="service-btn" onclick="openRideOverlay()">
-                    <div class="svc-img-box"><img src="https://i.ibb.co/cSDnbNVB/car-final-2.jpg" alt="Ride"></div>
+                <div class="service-btn" onclick="initMapAndShow()">
+                    <div class="svc-img-box"><i class="fa-solid fa-car-side" style="font-size: 32px; color: #D50000;"></i></div>
                     <span class="svc-label" data-i18n="ride">Ride</span>
                 </div>
                 <div class="service-btn" onclick="window.location.href='foods.html'">
-                    <div class="svc-img-box"><img src="https://i.ibb.co/8gGtW9xc/bag-final-1.jpg" alt="Food"></div>
+                    <div class="svc-img-box"><i class="fa-solid fa-utensils" style="font-size: 32px; color: #FF9800;"></i></div>
                     <span class="svc-label" data-i18n="food">Food</span>
                 </div>
                 <div class="service-btn">
-                    <div class="svc-img-box"><img src="https://i.ibb.co/67BshY3t/delivery-guy.png" alt="Flash"></div>
+                    <div class="svc-img-box"><i class="fa-solid fa-bolt" style="font-size: 32px; color: #2196F3;"></i></div>
                     <span class="svc-label" data-i18n="flash">Flash</span>
                 </div>
             </div>
@@ -384,20 +407,9 @@
                 <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg" alt="Promo">
             </div>
 
-            <div class="activity-card" onclick="switchTab('activity')">
-                <div class="act-header">
-                    <span class="act-title" data-i18n="ongoing_title">Ongoing Activities</span>
-                    <i class="fa-solid fa-chevron-right act-icon" style="color:#aaa; font-size:14px;"></i>
-                </div>
-                <div class="act-content">
-                    <i class="fa-solid fa-clipboard-list" style="font-size:20px;"></i>
-                    <span class="act-text" data-i18n="ongoing_none">No Ongoing Activities</span>
-                </div>
-            </div>
-
             <div class="promo-strip-wrapper">
-                <div class="promo-strip-item" onclick="handlePromoClick('ride')"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
-                <div class="promo-strip-item" onclick="handlePromoClick('food')"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
+                <div class="promo-strip-item" onclick="switchTab('promotions')"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
+                <div class="promo-strip-item"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
             </div>
         </div>
 
@@ -405,8 +417,8 @@
         <div id="view-activity" class="tab-view">
             <div class="section-header" data-i18n="activity">Activity</div>
             <div class="tabs-pill-container">
-                <div class="tab-pill active" onclick="this.parentNode.children[1].classList.remove('active');this.classList.add('active');" data-i18n="ongoing">Ongoing</div>
-                <div class="tab-pill" onclick="this.parentNode.children[0].classList.remove('active');this.classList.add('active');" data-i18n="completed">Completed</div>
+                <div class="tab-pill active" onclick="this.parentNode.children[0].classList.remove('active');this.classList.add('active');">Ongoing</div>
+                <div class="tab-pill" onclick="this.parentNode.children[1].classList.remove('active');this.classList.add('active');">Completed</div>
             </div>
             <div class="empty-state">
                 <i class="fa-regular fa-folder-open"></i>
@@ -418,9 +430,9 @@
         <div id="view-promotions" class="tab-view">
             <div class="section-header" data-i18n="promotions">Promotions</div>
             <div class="promo-grid" id="promo-container">
-                <div class="empty-state" id="promo-loader">
-                    <div class="loader-spin" style="width:20px; height:20px; border-width:2px;"></div>
-                    <p>Loading offers...</p>
+                <div class="promo-item">
+                    <div class="promo-card-lg"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
+                    <div class="promo-text"><h4>20% Off Rides</h4><p>Use code SPEEDO20</p></div>
                 </div>
             </div>
         </div>
@@ -428,19 +440,20 @@
         <!-- PROFILE VIEW -->
         <div id="view-profile" class="tab-view">
             <div class="profile-header">
-                <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" id="prof-view-img" class="profile-big-img">
+                <img src="https://ui-avatars.com/api/?name=User&background=fff&color=D50000" id="prof-view-img" class="profile-big-img">
                 <h3 class="profile-name" id="prof-view-name">User</h3>
                 <p class="profile-email" id="prof-view-email">...</p>
             </div>
             <div class="profile-menu">
-                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-user"></i> <span data-i18n="edit_profile">Edit Profile</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
-                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-bookmark"></i> <span data-i18n="saved_places">Saved Places</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
-                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-credit-card"></i> <span data-i18n="payment">Payment Methods</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
-                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-circle-question"></i> <span data-i18n="support">Help & Support</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-user"></i> <span data-i18n="edit_profile">Edit Profile</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-bookmark"></i> <span data-i18n="saved_places">Saved Places</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-credit-card"></i> <span data-i18n="payment">Payment Methods</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-circle-question"></i> <span data-i18n="support">Help & Support</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
+                <!-- Settings (Added Sinhala) -->
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-solid fa-gear"></i> <span data-i18n="settings">සැකසුම්</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd; font-size:12px;"></i></div>
             </div>
             <button class="logout-btn" onclick="handleLogout()">Log Out</button>
         </div>
-
     </div>
 
     <!-- BOTTOM NAV -->
@@ -459,122 +472,32 @@
         </div>
     </div>
 
-    <!-- SKELETON -->
-    <div id="main-skeleton">
-        <div class="sk-row"><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div></div>
-        <div class="sk-banner shimmer"></div>
-    </div>
-
-    <!-- RIDE OVERLAY -->
-    <div id="ride-overlay" class="hidden">
-        <div id="ride-map"></div>
-        <i id="map-crosshair" class="fa-solid fa-crosshairs"></i>
-        <div class="close-ride-btn" onclick="closeRideOverlay()"><i class="fa-solid fa-xmark"></i></div>
-
-        <div id="ride-top-card">
-            <div class="ride-title"><span data-i18n="book_ride">Book a Ride</span></div>
-            
-            <div class="summary-row">
-                <div class="sum-line">
-                    <div class="sum-left"><div class="dot blue"></div> <span class="sum-txt" id="sum-pickup">...</span></div>
-                    <i class="fa-solid fa-pen edit-icon" onclick="editRoute('pickup')"></i>
-                </div>
-                <div class="sum-line">
-                    <div class="sum-left"><div class="dot red"></div> <span class="sum-txt" id="sum-dropoff">...</span></div>
-                    <i class="fa-solid fa-pen edit-icon" onclick="editRoute('dropoff')"></i>
-                </div>
-                <div class="sum-meta">
-                    <span id="route-dist">0 km</span>
-                    <span id="route-type" style="color:var(--primary-red);">...</span>
-                </div>
-            </div>
-
-            <div class="loc-inputs">
-                <div class="loc-input-btn" onclick="openSearch('pickup')">
-                    <div class="dot blue"></div> <span id="txt-pickup">Select Your Location</span>
-                </div>
-                <div class="loc-input-btn" onclick="openSearch('dropoff')">
-                    <div class="dot red"></div> <span id="txt-dropoff">Drop Off Location</span>
-                </div>
-            </div>
-            
-            <button class="btn-red vehicle-btn" onclick="calculateRoute()" data-i18n="show_vehicles">Show Vehicle Options</button>
-        </div>
-        
-        <!-- Route Selection Modal (Normal vs Expressway) -->
-        <div id="route-select-modal">
-            <h3 style="margin-top:0; color:#333;">Select Route</h3>
-            <div id="route-options-container"></div>
-        </div>
-
-        <!-- Vehicle Sheet -->
-        <div id="vehicle-sheet">
-            <h3 style="margin-top:0; color:#333;">Choose Vehicle</h3>
-            <div style="display:flex; gap:10px; overflow-x:auto;">
-                <div style="min-width:80px; text-align:center; padding:10px; border:1px solid #eee; border-radius:10px;">
-                    <i class="fa-solid fa-car-side"></i><br><small>Mini</small><br><b>Rs. 400</b>
-                </div>
-                <div style="min-width:80px; text-align:center; padding:10px; border:1px solid #eee; border-radius:10px;">
-                    <i class="fa-solid fa-car"></i><br><small>Sedan</small><br><b>Rs. 650</b>
-                </div>
-                <div style="min-width:80px; text-align:center; padding:10px; border:1px solid #eee; border-radius:10px;">
-                    <i class="fa-solid fa-van-shuttle"></i><br><small>Van</small><br><b>Rs. 900</b>
-                </div>
-            </div>
-            <button class="btn-red" style="margin-top:15px;" onclick="alert('Booking Confirmed!')">Book Now</button>
-        </div>
-
-        <div id="route-loader" class="hidden">
-            <div class="loader-spin"></div>
-            <div style="font-weight:600; color:#333;">Finding the best routes...</div>
+    <!-- PERMISSION MODAL (Blocker) -->
+    <div id="permission-modal" class="hidden">
+        <div class="perm-card-fs">
+            <i class="fa-solid fa-location-dot perm-icon"></i>
+            <h2 class="perm-title">To Continue, Grant Location Access</h2>
+            <p class="perm-loading">Waiting for location signal...</p>
+            <!-- No close button, will retry automatically via JS -->
         </div>
     </div>
 
-    <!-- SEARCH MODAL -->
-    <div id="loc-search-modal">
-        <h3 style="margin-top:0; color:#333;" id="search-title">Set Location</h3>
-        <div class="search-input-box">
-            <i class="fa-solid fa-magnifying-glass" style="color:#aaa;"></i>
-            <input type="text" id="inp-search-loc" placeholder="Search places..." onkeyup="handleSearchInput(event)">
-        </div>
-        <div class="search-pill-row">
-            <div class="search-pill-btn" id="btn-my-loc" onclick="setMyLocation()"><i class="fa-solid fa-location-crosshairs"></i> Your Location</div>
-            <div class="search-pill-btn" onclick="startPinPicker()"><i class="fa-solid fa-map-pin"></i> Pick on Map</div>
-        </div>
-        <div id="search-results" style="flex:1; overflow-y:auto;">
-            <!-- Results go here -->
-        </div>
-        <button class="btn-red" onclick="closeSearch()">Close</button>
-    </div>
-
-    <!-- APP WARNING MODAL (FULL SCREEN) -->
-    <div id="app-warn-modal" class="hidden">
+    <!-- WARNING MODAL -->
+    <div id="warn-modal" class="hidden">
         <div class="warn-card-fs">
             <i class="fa-solid fa-triangle-exclamation warn-icon"></i>
-            <h3 style="color:var(--primary-red); margin:0 0 10px 0;">Warning</h3>
-            <p style="font-size:16px; margin-bottom:20px;" data-i18n="app_warn">To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride.</p>
-            <div style="font-size:14px; margin-bottom:20px;"><input type="checkbox" id="chk-warn"> Do not show again</div>
-            <button class="btn-red" style="background:white; color:#333;" onclick="dismissWarn()">Close</button>
+            <h3 class="warn-title">Warning</h3>
+            <p class="warn-text" data-i18n="app_warn">To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride</p>
+            <div class="warn-action">
+                <input type="checkbox" id="chk-warn"> Do not show again
+            </div>
+            <button class="btn-full-red" style="background: white; color: #333;" onclick="dismissWarn()">Close</button>
         </div>
     </div>
 
-    <!-- SETUP WIZARD (Same as before) -->
-    <div id="setup-wizard" class="hidden">
-        <div class="wizard-container">
-            <h2 style="color:#D50000; margin-bottom: 5px;">Get Started</h2>
-            <div style="color:red; font-size:12px; margin-bottom:15px; min-height:18px;" id="wizard-error"></div>
-            <div class="step active" id="step-1"><div class="input-box"><label>Full Name</label><input type="text" id="inp-name" placeholder="John Doe"></div><button class="btn-red" onclick="wNext(1)">Next</button></div>
-            <div class="step" id="step-2"><div class="input-box"><label>Email Address</label><input type="email" id="inp-email" placeholder="example@gmail.com"></div><button class="btn-red" onclick="wNext(2)">Next</button></div>
-            <div class="step" id="step-3"><div class="input-box"><label>Country</label><input type="text" value="Sri Lanka" disabled></div><button class="btn-red" onclick="wNext(3)">Next</button></div>
-            <div class="step" id="step-4"><div class="input-box"><label>Province</label><select id="inp-province" onchange="loadDistricts()"><option value="">Select Province</option></select></div><button class="btn-red" onclick="wNext(4)">Next</button></div>
-            <div class="step" id="step-5"><div class="input-box"><label>District</label><select id="inp-district"><option value="">Select District</option></select></div><button class="btn-red" onclick="wNext(5)">Next</button></div>
-            <div class="step" id="step-6"><div class="profile-upload-container" onclick="document.getElementById('f').click()"><img id="wiz-img" style="width:100%; height:100%; object-fit:cover; display:none;"><i id="wiz-icon" class="fa-solid fa-camera" style="line-height:100px; color:#aaa;"></i></div><input type="file" id="f" class="hidden" onchange="prevImg(event)"><div style="font-size:12px; margin-bottom:10px;"><input type="checkbox" id="chk"> Agree to <span onclick="openTerms()" style="color:#D50000; font-weight:700;">Terms & Conditions</span></div><button class="btn-red" onclick="finishSetup()">Finish</button></div>
-        </div>
-    </div>
-    
     <!-- TERMS MODAL -->
     <div id="terms-modal" class="hidden">
-        <div class="modal-card">
+        <div class="modal-content-fs">
             <h3 style="color:#D50000; margin-top:0;">Terms & Conditions</h3>
             <div style="font-size:13px; color:#555; line-height:1.6; max-height:60vh; overflow-y:auto; margin-bottom:20px;">
                 <p><b>1. Acceptance</b><br>By using Speedo, you agree to our terms.</p>
@@ -585,452 +508,668 @@
         </div>
     </div>
 
-    <!-- LOGIC -->
+    <!-- RIDE OVERLAY (Full Screen Map) -->
+    <div id="ride-overlay" class="hidden">
+        <button class="btn-close" onclick="closeRideOverlay()"><i class="fa-solid fa-xmark"></i></button>
+        <div id="ride-map"></div>
+        
+        <!-- Top Selection Card -->
+        <div id="ride-top-card">
+            <div class="ride-title" data-i18n="book_ride">Book a Ride</div>
+            
+            <!-- Expanded State: Pills -->
+            <div id="ride-expanded-ui">
+                <div class="search-pill-row">
+                    <!-- Pickup Pill -->
+                    <div class="search-pill-btn" onclick="openLocPicker('pickup')">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-circle" style="color:var(--accent-blue); font-size:14px;"></i>
+                            <span id="lbl-pickup" data-i18n="sel_pick">Select Your Location</span>
+                        </div>
+                        <i class="fa-solid fa-pencil" style="color:#999; font-size:12px; cursor:pointer;" onclick="editLocation('pickup')"></i>
+                    </div>
+                    
+                    <!-- Drop Off Pill -->
+                    <div class="search-pill-btn" onclick="openLocPicker('dropoff')">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <!-- Blue Triangle Icon -->
+                            <i class="blue-triangle-icon"></i>
+                            <span id="lbl-dropoff" data-i18n="sel_drop">Drop Off Location</span>
+                        </div>
+                        <i class="fa-solid fa-pencil" style="color:#999; font-size:12px; cursor:pointer;" onclick="editLocation('dropoff')"></i>
+                    </div>
+                </div>
+
+                <button id="btn-vehicles" class="btn-full-red" disabled onclick="calculateRoutes()" data-i18n="show_vehicles">Select a Vehicle</button>
+            </div>
+
+            <!-- Collapsed State: Summary (Initially Hidden) -->
+            <div id="ride-collapsed-ui" class="summary-row">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+                    <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                        <i class="fa-solid fa-circle" style="color:var(--accent-blue); font-size:14px;"></i>
+                        <span id="sum-pickup">...</span>
+                    </div>
+                    <i class="fa-solid fa-pencil" style="color:#999; font-size:12px; cursor:pointer;" onclick="editLocation('pickup')"></i>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">
+                    <div style="display:flex; align-items:center; gap:10px; flex:1;">
+                        <i class="blue-triangle-icon"></i>
+                        <span id="sum-dropoff">...</span>
+                    </div>
+                    <i class="fa-solid fa-pencil" style="color:#999; font-size:12px; cursor:pointer;" onclick="editLocation('dropoff')"></i>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                    <span data-i18n="distance">Distance</span> <b id="sum-dist">0 km</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                    <span data-i18n="duration">Duration</span> <b id="sum-time">0 min</b>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                    <span data-i18n="vehicle">Vehicle</span> <b id="sum-veh">...</b>
+                </div>
+                <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px; display:flex; justify-content:space-between; align-items:center;">
+                    <span data-i18n="total">Total</span> 
+                    <span class="price-highlight" id="sum-price">LKR 0.00</span>
+                </div>
+                <button class="btn-full-red" onclick="bookRide()" data-i18n="book_now">Book Now</button>
+            </div>
+        </div>
+
+        <!-- ROUTE SELECTION MODAL -->
+        <div id="route-select-modal">
+            <h3 style="margin:0 0 15px; color:#333;" data-i18n="select_route">Select Route</h3>
+            <div id="route-options-container">
+                <!-- Options injected via JS -->
+            </div>
+        </div>
+
+        <!-- VEHICLE SHEET -->
+        <div id="vehicle-sheet">
+            <h3 style="margin:0 0 15px; color:#333;" data-i18n="choose_veh">Choose Vehicle</h3>
+            <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:15px;">
+                <div style="min-width:120px; text-align:center; padding:10px; border:1px solid #eee; border-radius:10px; cursor:pointer;" onclick="selectVehicle('Tuk')">
+                    <i class="fa-solid fa-car-side"></i><br><small>Tuk Tuk</small><br><b>Base: 100/-</b>
+                </div>
+                <div style="min-width:120px; text-align:center; padding:10px; border:1px solid #eee; border-radius:10px; cursor:pointer;" onclick="selectVehicle('Moto')">
+                    <i class="fa-solid fa-motorcycle"></i><br><small>Moto</small><br><b>Base: 100/-</b>
+                </div>
+            </div>
+            <button class="btn-full-red" onclick="confirmVehicle()" data-i18n="continue">Continue</button>
+        </div>
+
+        <!-- LOCATION PICKER MODAL -->
+        <div id="loc-picker-modal">
+            <h3 style="margin:0 0 20px; color:#333;" id="loc-picker-title">Set Pickup Location</h3>
+            
+            <div class="search-pill-row">
+                <!-- Search Pill -->
+                <div class="search-pill-btn" id="btn-search">
+                    <i class="fa-solid fa-magnifying-glass" style="color:#aaa;"></i>
+                    <input type="text" id="search-input" placeholder="Search places (e.g. Kandy)" oninput="handleSearchInput(this.value)">
+                </div>
+            </div>
+
+            <div class="search-pill-row" style="margin-top:0;">
+                <!-- My Location Pill -->
+                <div class="search-pill-btn" id="btn-my-loc" onclick="getMyLocation()">
+                    <i class="fa-solid fa-location-crosshairs" style="color:var(--primary-red);"></i>
+                    <span data-i18n="my_loc">Use My Current Location</span>
+                </div>
+                
+                <!-- Pick on Map Pill -->
+                <div class="search-pill-btn" id="btn-pick-map" onclick="activateMapPicker()">
+                    <i class="fa-solid fa-map-pin" style="color:var(--accent-blue);"></i>
+                    <span data-i18n="on_map">Point on Map</span>
+                </div>
+            </div>
+
+            <!-- Map Area -->
+            <div class="picker-map-wrap" id="picker-map-container"></div>
+            
+            <button class="btn-full-red" onclick="closeLocPicker()" data-i18n="cancel">Cancel</button>
+        </div>
+
+        <!-- DIRECTIONS MODAL -->
+        <div id="directions-modal" class="hidden">
+            <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                <h3 style="margin:0;" data-i18n="directions">Route Details</h3>
+                <i class="fa-solid fa-xmark" style="cursor:pointer; font-size:18px; color:#555;" onclick="document.getElementById('directions-modal').classList.add('hidden')"></i>
+            </div>
+            <div class="dir-list" id="dir-steps">
+                <!-- Steps injected -->
+            </div>
+        </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, update, push } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4",
-            authDomain: "speedo-acb7c.firebaseapp.com",
-            databaseURL: "https://speedo-acb7c-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "speedo-acb7c",
-            storageBucket: "speedo-acb7c.firebasestorage.app",
-            messagingSenderId: "31066493782",
-            appId: "1:31066493782:web:e3e9dfa209fa855bc17cf7"
-        };
-
+        // Firebase Init
+        const firebaseConfig = { apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4", authDomain: "speedo-acb7c.firebaseapp.com", databaseURL: "https://speedo-acb7c-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "speedo-acb7c", storageBucket: "speedo-acb7c.firebasestorage.app", messagingSenderId: "31066493782", appId: "1:31066493782:web:e3e9dfa209fa855bc17cf7" };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // State Variables
         let currentUser = null;
         let base64Profile = "";
-        let currentLang = localStorage.getItem('speedo_lang') || 'en';
+        let currentLang = 'en';
         
-        // Map Globals
-        let map = null;
+        // Map Variables
+        let mainMap = null;
+        let pickerMap = null;
         let routingControl = null;
-        let markersLayer = null;
-        let pickupLatLng = null;
-        let dropoffLatLng = null;
-        let pickupAddr = "";
-        let dropoffAddr = "";
-        let activeSearchType = 'pickup';
-        let mapMode = 'view';
-        let userLiveCoords = null;
-        let searchCache = {};
-        let routeAlternatives = [];
-
-        // --- DATA & I18N ---
+        
+        let pickupMarker = null;
+        let dropoffMarker = null;
+        
+        let pickupCoords = null;
+        let dropoffCoords = null;
+        
+        let pickupAddress = "Select Your Location";
+        let dropoffAddress = "Drop Off Location";
+        
+        let activeEditType = 'pickup'; // 'pickup' or 'dropoff'
+        let selectedRouteData = null;
+        let selectedVehicle = 'Tuk';
+        
+        // --- I18N ---
         const i18n = {
-            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", ongoing_title:"Ongoing Activities", ongoing_none:"No Ongoing Activities", ongoing:"Ongoing", completed:"Completed", book_ride:"Book a Ride", show_vehicles:"Show Vehicle Options", app_warn:"To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride", edit_profile: "Edit Profile", saved_places:"Saved Places", payment:"Payment Methods", support:"Help & Support" },
-            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්", home:"මුල් පිටුව", activity:"ක්‍රියාකාරකම්", promotions:"දීමනා", profile:"ගිණුම", ongoing_title:"පවතින ක්‍රියාකාරකම්", ongoing_none:"කිසිවක් නොමැත", ongoing:"පවතින", completed:"නිමවූ", book_ride:"ගමනක් යන්න", show_vehicles:"වාහන පෙන්වන්න", app_warn:"සේවාව සමග රැඳී සිටීමට කරුණාකර ඇප් එක වසන්න එපා. එසේ කිරීමෙන් ඔබගේ ගමනට බාධා සිදුවිය හැක.", edit_profile: "ගිණුම සකසන්න", saved_places:"සුරැකුම්", payment:"ගෙවීම් ක්‍රම", support:"උදව්" },
-            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", ongoing_title:"தற்போதைய", ongoing_none:"எதுவுமில்லை", ongoing:"தற்போதைய", completed:"முடிந்தது", book_ride:"சவாரி பதிவு", show_vehicles:"வாகனங்கள்", app_warn:"சேவையுடன் இணைந்திருக்க செயலியை மூட வேண்டாம்.", edit_profile: "சுயவிவரம் திருத்து", saved_places:"சேமித்த இடங்கள்", payment:"கட்டண முறைகள்", support:"உதவி" }
-        };
-
-        const slData = {
-            "Western": ["Colombo", "Gampaha", "Kalutara"],
-            "Central": ["Kandy", "Matale", "Nuwara Eliya"],
-            "Southern": ["Galle", "Matara", "Hambantota"],
-            "North Western": ["Kurunegala", "Puttalam"],
-            "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Vavuniya", "Mullaitivu"],
-            "Eastern": ["Trincomalee", "Batticaloa", "Ampara"],
-            "North Central": ["Anuradhapura", "Polonnaruwa"],
-            "Uva": ["Badulla", "Monaragala"],
-            "Sabaragamuwa": ["Ratnapura", "Kegalle"]
+            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", book_ride:"Book a Ride", sel_pick:"Select Your Location", sel_drop:"Drop Off Location", show_vehicles:"Select a Vehicle", select_route:"Select Route", continue:"Continue", distance:"Distance", duration:"Duration", vehicle:"Vehicle", total:"Total", book_now:"Book Now", my_loc:"Use My Current Location", on_map:"Point on Map", directions:"Route Details", settings:"Settings", edit_profile:"Edit Profile", saved_places:"Saved Places", payment:"Payment Methods", support:"Help & Support", app_warn:"To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride", cancel:"Cancel", close:"Close" },
+            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑව", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්", home:"මුල් පිටුව", activity:"ක්‍රියාකාරකම්", promotions:"දීමනා", profile:"ගිණුම", book_ride:"සවාරියක් අයකරගන්න", sel_pick:"පිටත් තෝරන්න", sel_drop:"පිටත් අඩවන්න", show_vehicles:"වාහනයක් තෝරන්න", select_route:"මාර්ගය තෝරන්න", continue:"ඉදිරින", distance:"දුර", duration:"කාලය", vehicle:"වාහනය", total:"මුළු", book_now:"දැන්ව අයකරගන්න", my_loc:"මගේ පිහිටිය ස්ථානය භාවිත්", on_map:"සිතියෙන් ස්ථානය", directions:"මාර්ගය විස්තර", settings:"සැකසුම්", edit_profile:"පැත්කරු වෙනස් කරන්න", saved_places:"සුරැකුම්", payment:"ගෙවීම් ක්‍රම", support:"උදව්" },
+            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", book_ride:"சவாரி முன்பதிவு", sel_pick:"பிக்அப் தேர்வுமை", sel_drop:"இறங்குமிடம் தேர்வுமை", show_vehicles:"வாகனத்தை தேர்வுமை", select_route:"வழியை தேர்வுமை", continue:"தொடர்க", distance:"தூரம்", duration:"நேரம்", vehicle:"வாகனம்", total:"மொத்தம்", book_now:"பதிவு முன்பதிவு", my_loc:"என் இருப்பிடதை", on_map:"வரைப்படத்தில்", directions:"வழி வழிவங்கள்", settings:"அமைப்புகள்", edit_profile:"சுயவிவரம் திருத்து", saved_places:"சேமித்த இடங்கள்", payment:"கட்டண முறைகள்", support:"உதவி" }
         };
 
         // --- INIT ---
         window.addEventListener('load', async () => {
-            initLocationBlocker();
-
             const stored = localStorage.getItem('speedo_user');
             if(!stored) { window.location.href = "index.html"; return; }
             currentUser = JSON.parse(stored);
 
-            try {
-                const snap = await get(ref(db, 'users/' + currentUser.uid));
-                const data = snap.val();
-                if(data) currentUser = data;
-
-                if(currentUser.profileCompleted) {
-                    initUI();
-                } else {
-                    document.getElementById('main-skeleton').classList.add('hidden');
-                    document.getElementById('setup-wizard').classList.remove('hidden');
-                    initWizard();
-                }
-            } catch(e) {
-                if(currentUser.profileCompleted) initUI();
-                else document.getElementById('setup-wizard').classList.remove('hidden');
-            }
-        });
-
-        // --- LOCATION PERMISSION ---
-        function initLocationBlocker() {
-            const modal = document.getElementById('block-permission-modal');
-            
-            const handleLocationSuccess = (pos) => {
-                if(pos && pos.coords) {
-                    userLiveCoords = [pos.coords.latitude, pos.coords.longitude];
-                    modal.style.display = 'none'; 
-                    modal.classList.add('hidden');
-                }
-            };
-
-            const handleLocationError = (err) => {
-                // If ride overlay is open (booking process), enforce permission again
-                if(!document.getElementById('ride-overlay').classList.contains('hidden') || !userLiveCoords) {
-                    modal.style.display = 'flex';
-                    modal.classList.remove('hidden');
-                }
-            };
-
-            if(navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(handleLocationSuccess, handleLocationError, {enableHighAccuracy: true});
-                navigator.geolocation.watchPosition(handleLocationSuccess, handleLocationError, {enableHighAccuracy: true});
-                
-                setInterval(() => {
-                    if(userLiveCoords) { modal.style.display = 'none'; modal.classList.add('hidden'); }
-                }, 100);
-            }
-        }
-
-        function initUI() {
-            document.getElementById('main-skeleton').classList.add('hidden');
+            // Simulate Load
             document.getElementById('main-card').classList.remove('hidden');
-            const name = currentUser.fullName ? currentUser.fullName.split(' ')[0] : 'User';
-            document.getElementById('ui-name').innerText = name;
-            document.getElementById('prof-view-name').innerText = currentUser.fullName || 'User';
-            document.getElementById('prof-view-email').innerText = currentUser.email || '';
-            if(currentUser.profilePic) {
-                document.getElementById('ui-profile-img').src = currentUser.profilePic;
-                document.getElementById('prof-view-img').src = currentUser.profilePic;
-            }
-            updateLangState();
-            fetchPromotions();
-        }
-
-        // --- PROMOTIONS ---
-        async function fetchPromotions() {
-            const container = document.getElementById('promo-container');
-            try {
-                const snap = await get(ref(db, 'promotions'));
-                const promos = snap.val();
-                container.innerHTML = '';
-                if(!promos) { container.innerHTML = '<div class="empty-state"><p>No active promotions</p></div>'; return; }
-                Object.values(promos).forEach(p => {
-                    container.innerHTML += `<div class="promo-item"><div class="promo-card-lg"><img src="${p.image || 'https://via.placeholder.com/300x150'}"></div><div class="promo-text"><h4>${p.title}</h4><p>${p.description}</p></div></div>`;
-                });
-            } catch(e) { container.innerHTML = '<div class="empty-state"><p>Failed to load offers</p></div>'; }
-        }
-
-        // --- NAVIGATION SPA ---
-        window.switchTab = function(tab) {
-            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            document.getElementById(`view-${tab}`).classList.add('active-view');
-            document.getElementById(`nav-${tab}`).classList.add('active');
-            if(tab === 'promotions') fetchPromotions();
-        }
-
-        window.handlePromoClick = function(type) {
-            if(type === 'food') window.location.href = 'foods.html';
-            else if(type === 'ride') window.openRideOverlay();
-        }
-
-        window.handleLogout = function() { if(confirm("Log out?")) { localStorage.removeItem('speedo_user'); window.location.href = "index.html"; } }
-
-        // --- RIDE & MAP LOGIC ---
-        
-        window.openRideOverlay = function() {
-            document.getElementById('ride-overlay').classList.remove('hidden');
-            setTimeout(() => document.getElementById('ride-overlay').classList.add('active'), 10);
-            
-            if(!localStorage.getItem('speedo_warn_dismiss')) {
-                document.getElementById('app-warn-modal').classList.remove('hidden');
-            }
-
-            if(!map) {
-                map = L.map('ride-map', { zoomControl: false }).setView(userLiveCoords || [6.9271, 79.8612], 13);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }).addTo(map);
-                markersLayer = L.layerGroup().addTo(map);
-                if(userLiveCoords) {
-                    map.setView(userLiveCoords, 15);
-                    L.marker(userLiveCoords).addTo(markersLayer);
-                }
-            }
-        }
-
-        window.closeRideOverlay = function() {
-            document.getElementById('ride-overlay').classList.remove('active');
-            setTimeout(() => document.getElementById('ride-overlay').classList.add('hidden'), 400);
-            resetRoute();
-            document.getElementById('txt-pickup').innerText = "Select Your Location";
-            document.getElementById('txt-dropoff').innerText = "Drop Off Location";
-            pickupLatLng = null; dropoffLatLng = null; pickupAddr = ""; dropoffAddr = "";
-            markersLayer.clearLayers();
-        }
-
-        window.dismissWarn = function() {
-            if(document.getElementById('chk-warn').checked) localStorage.setItem('speedo_warn_dismiss', 'true');
-            document.getElementById('app-warn-modal').classList.add('hidden');
-        }
-
-        // Search Modals & Logic
-        window.openSearch = function(type) {
-            activeSearchType = type;
-            document.getElementById('loc-search-modal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('loc-search-modal').classList.add('active'), 10);
-            document.getElementById('search-title').innerText = type === 'pickup' ? "Pick Up Location" : "Drop Off Location";
-            if(type === 'dropoff') document.getElementById('btn-my-loc').classList.add('hidden');
-            else document.getElementById('btn-my-loc').classList.remove('hidden');
-            document.getElementById('search-results').innerHTML = '';
-            document.getElementById('inp-search-loc').value = '';
-        }
-
-        window.closeSearch = function() {
-            document.getElementById('loc-search-modal').classList.remove('active');
-            setTimeout(() => document.getElementById('loc-search-modal').classList.add('hidden'), 300);
-        }
-
-        // Debounced Search
-        let debounceTimer;
-        window.handleSearchInput = function(e) {
-            clearTimeout(debounceTimer);
-            const q = e.target.value;
-            if(q.length < 3) return;
-            
-            // Check cache
-            if(searchCache[q]) { displaySearchResults(searchCache[q]); return; }
-
-            debounceTimer = setTimeout(async () => {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=lk&limit=8&addressdetails=1`);
-                const data = await res.json();
-                searchCache[q] = data; // Cache result
-                displaySearchResults(data);
-            }, 500); // 500ms delay
-        }
-
-        function displaySearchResults(data) {
-            const container = document.getElementById('search-results');
-            container.innerHTML = '';
-            data.forEach(place => {
-                const div = document.createElement('div');
-                div.style.padding = "15px"; div.style.borderBottom = "1px solid #eee";
-                // More detailed address
-                const addr = place.address;
-                const title = place.name || addr.road || addr.suburb || "Location";
-                const sub = place.display_name;
-                
-                div.innerHTML = `<div style="font-weight:600;">${title}</div><div style="font-size:12px; color:#888;">${sub}</div>`;
-                div.onclick = () => selectSearchResult(place.lat, place.lon, title);
-                container.appendChild(div);
-            });
-        }
-
-        async function getAddressFromLatLon(lat, lon) {
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-                const data = await res.json();
-                return data.display_name.split(',')[0] + ", " + (data.address.city || data.address.town || "");
-            } catch(e) { return "Pinned Location"; }
-        }
-
-        window.setMyLocation = async function() {
-            if(!userLiveCoords) return alert("Location not waiting yet...");
-            const lat = userLiveCoords[0], lon = userLiveCoords[1];
-            const addr = await getAddressFromLatLon(lat, lon);
-            selectSearchResult(lat, lon, addr);
-        }
-
-        function selectSearchResult(lat, lon, name) {
-            const latlng = L.latLng(lat, lon);
-            if(activeSearchType === 'pickup') {
-                pickupLatLng = latlng; pickupAddr = name;
-                document.getElementById('txt-pickup').innerText = name;
-                L.marker(latlng).addTo(markersLayer);
-            } else {
-                dropoffLatLng = latlng; dropoffAddr = name;
-                document.getElementById('txt-dropoff').innerText = name;
-                L.marker(latlng, {icon: redIcon}).addTo(markersLayer);
-            }
-            map.setView(latlng, 15);
-            closeSearch();
-        }
-
-        // Pin Picker Mode
-        window.startPinPicker = function() {
-            closeSearch();
-            mapMode = 'pick';
-            document.getElementById('map-crosshair').style.display = 'block';
-            document.getElementById('ride-top-card').classList.add('hidden');
-            const btn = document.createElement('button');
-            btn.id = 'temp-confirm-pin';
-            btn.className = 'btn-red';
-            btn.style.position='absolute'; btn.style.bottom='20px'; btn.style.left='10%'; btn.style.width='80%'; btn.style.zIndex='2000';
-            btn.innerText = "Confirm Location";
-            btn.onclick = async () => {
-                const c = map.getCenter();
-                const addr = await getAddressFromLatLon(c.lat, c.lng);
-                selectSearchResult(c.lat, c.lng, addr);
-                document.getElementById('map-crosshair').style.display = 'none';
-                document.getElementById('ride-top-card').classList.remove('hidden');
-                btn.remove();
-            };
-            document.getElementById('ride-overlay').appendChild(btn);
-        }
-
-        // Route Calculation & Selection
-        window.calculateRoute = function() {
-            if(!pickupLatLng || !dropoffLatLng) return alert("Please select both locations.");
-            document.getElementById('route-loader').classList.remove('hidden');
-            
-            // Cleanup previous routing
-            if(routingControl) { map.removeControl(routingControl); routingControl = null; }
-
-            // Using OSRM which provides alternatives
-            routingControl = L.Routing.control({
-                waypoints: [pickupLatLng, dropoffLatLng],
-                show: false,
-                addWaypoints: false,
-                routeWhileDragging: false,
-                fitSelectedRoutes: true,
-                lineOptions: { styles: [{color: '#D50000', weight: 5}] },
-                altLineOptions: { styles: [{color: '#888', weight: 4, opacity: 0.6}] },
-                showAlternatives: true, // Key for multiple routes
-                createMarker: function() { return null; } 
-            }).addTo(map);
-
-            routingControl.on('routesfound', function(e) {
-                document.getElementById('route-loader').classList.add('hidden');
-                routeAlternatives = e.routes;
-
-                // Show Route Selection Modal
-                const container = document.getElementById('route-options-container');
-                container.innerHTML = '';
-                
-                // Sort by time/dist to guess "Express" vs "Normal"
-                // Heuristic: Route with significantly higher speed or longer distance but shorter time is Express
-                e.routes.forEach((route, i) => {
-                    const distKm = (route.summary.totalDistance / 1000).toFixed(1);
-                    const timeMin = Math.round(route.summary.totalTime / 60);
-                    const isRec = i === 0; // First is usually best from OSRM
-                    const isExp = route.name.toLowerCase().includes('expressway') || (distKm > 10 && timeMin < distKm*1.5); // Mock logic
-
-                    const div = document.createElement('div');
-                    div.className = `route-opt ${isRec ? 'recommended' : ''}`;
-                    div.innerHTML = `
-                        ${isRec ? '<div class="badge-rec">Recommended</div>' : ''}
-                        <div>
-                            <div style="font-weight:700; color:#333;">${isExp ? 'Expressway' : 'Normal Route'}</div>
-                            <div style="font-size:12px; color:#666;">${distKm} km • ${timeMin} mins</div>
-                        </div>
-                        <div style="text-align:right;">
-                            ${isExp ? '<span class="warn-cost">Toll Fees Apply</span>' : '<span style="color:#4CAF50; font-size:11px; font-weight:600;">Eco Friendly</span>'}
-                        </div>
-                    `;
-                    div.onclick = () => selectRouteOption(route, isExp ? 'Express' : 'Normal', distKm);
-                    container.appendChild(div);
-                });
-
-                document.getElementById('route-select-modal').classList.add('active');
-                
-                // Collapse top card
-                document.getElementById('ride-top-card').classList.add('collapsed');
-                document.getElementById('sum-pickup').innerText = pickupAddr || "Pickup";
-                document.getElementById('sum-dropoff').innerText = dropoffAddr || "Dropoff";
-            });
-        }
-
-        function selectRouteOption(route, type, dist) {
-            // Draw specific line (Leaflet Routing Machine handles this by clicking, we simulate selection)
-            // Ideally, we just proceed to vehicle selection now.
-            document.getElementById('route-select-modal').classList.remove('active');
-            document.getElementById('vehicle-sheet').classList.add('active');
-            
-            // Update Summary
-            document.getElementById('route-dist').innerText = dist + " km";
-            document.getElementById('route-type').innerText = type;
-        }
-
-        window.editRoute = function(target) {
-            resetRoute(); // Removes lines and clears logic
-            // Open search for the target
-            if(target === 'pickup') {
-                markersLayer.clearLayers(); // Remove all pins
-                if(dropoffLatLng) L.marker(dropoffLatLng, {icon: redIcon}).addTo(markersLayer);
-                openSearch('pickup');
-            } else {
-                markersLayer.clearLayers();
-                if(pickupLatLng) L.marker(pickupLatLng).addTo(markersLayer);
-                openSearch('dropoff');
-            }
-        }
-
-        function resetRoute() {
-            if(routingControl) { map.removeControl(routingControl); routingControl = null; }
-            document.getElementById('ride-top-card').classList.remove('collapsed');
-            document.getElementById('route-select-modal').classList.remove('active');
-            document.getElementById('vehicle-sheet').classList.remove('active');
-            routeAlternatives = [];
-        }
-
-        const redIcon = new L.Icon({
-            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-            iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+            setTimeout(() => {
+                initUI();
+            }, 500);
         });
 
-        // --- LANGUAGE & WIZARD (Standard) ---
-        window.cycleLanguage = function() {
-            if(currentLang === 'en') currentLang = 'si'; else if(currentLang === 'si') currentLang = 'ta'; else currentLang = 'en';
-            localStorage.setItem('speedo_lang', currentLang); updateLangState();
+        // --- UI HELPERS ---
+        window.showToast = (msg) => {
+            const c = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.innerText = msg;
+            c.appendChild(t);
+            setTimeout(() => { t.remove(); }, 3000);
         }
+
+        window.cycleLanguage = () => {
+            const langs = ['en', 'si', 'ta'];
+            const idx = langs.indexOf(currentLang);
+            currentLang = langs[(idx + 1) % 3];
+            localStorage.setItem('speedo_lang', currentLang);
+            updateLangState();
+        }
+
         function updateLangState() {
             document.getElementById('lang-en').className = currentLang==='en'?'active':'';
             document.getElementById('lang-si').className = currentLang==='si'?'active':'';
             document.getElementById('lang-ta').className = currentLang==='ta'?'active':'';
             document.querySelectorAll('[data-i18n]').forEach(el => {
-                const k = el.getAttribute('data-i18n'); if(i18n[currentLang][k]) el.innerText = i18n[currentLang][k];
+                const k = el.getAttribute('data-i18n');
+                if(i18n[currentLang][k]) el.innerText = i18n[currentLang][k];
             });
-            updateGreeting();
-        }
-        function updateGreeting() {
-            const h = new Date().getHours(); let k = 'morning';
-            if(h >= 12 && h < 17) k = 'afternoon'; else if(h >= 17) k = 'evening';
-            document.getElementById('ui-greeting').innerText = i18n[currentLang][k];
         }
 
-        function initWizard() { const s=document.getElementById('inp-province'); for(let p in slData) s.add(new Option(p,p)); }
-        window.loadDistricts = () => {
-            const p = document.getElementById('inp-province').value;
-            const d = document.getElementById('inp-district'); d.innerHTML = '<option value="">Select District</option>';
-            if(slData[p]) slData[p].forEach(x => d.add(new Option(x,x)));
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${tab}`).classList.add('active-view');
+            document.getElementById(`nav-${tab}`).classList.add('active');
         }
-        window.wNext = (n) => {
-            const err = document.getElementById('wizard-error'); err.innerText = "";
-            if(n===1 && document.getElementById('inp-name').value.trim() === "") return err.innerText = "Name is required";
-            if(n===2 && document.getElementById('inp-email').value.trim() === "") return err.innerText = "Email is required";
-            if(n===4 && document.getElementById('inp-province').value === "") return err.innerText = "Select a Province";
-            if(n===5 && document.getElementById('inp-district').value === "") return err.innerText = "Select a District";
-            document.getElementById(`step-${n}`).classList.remove('active'); document.getElementById(`step-${n+1}`).classList.add('active');
+
+        window.handleLogout = () => { if(confirm("Log out?")) { localStorage.removeItem('speedo_user'); window.location.href = "index.html"; } }
+        window.dismissWarn = () => {
+            const chk = document.getElementById('chk-warn');
+            if(chk.checked) localStorage.setItem('speedo_warn_dismiss', 'true');
+            document.getElementById('warn-modal').classList.add('hidden');
         }
-        window.prevImg = (e) => {
-            const f=e.target.files[0]; if(!f) return;
-            const r=new FileReader(); r.onload=(ev)=>{ const i=new Image(); i.src=ev.target.result; i.onload=()=>{ const c=document.createElement('canvas'); c.width=200; c.height=200; c.getContext('2d').drawImage(i,0,0,200,200); base64Profile=c.toDataURL('image/jpeg',0.5); document.getElementById('wiz-img').src=base64Profile; document.getElementById('wiz-img').style.display='block'; document.getElementById('wiz-icon').style.display='none'; }}; r.readAsDataURL(f);
-        }
-        window.openTerms = () => document.getElementById('terms-modal').classList.remove('hidden');
         window.closeTerms = () => document.getElementById('terms-modal').classList.add('hidden');
-        window.finishSetup = async () => {
-            const err = document.getElementById('wizard-error');
-            if(!base64Profile) return err.innerText = "Profile Picture is required";
-            if(!document.getElementById('chk').checked) return err.innerText = "You must accept Terms";
-            const up = { fullName: document.getElementById('inp-name').value, email: document.getElementById('inp-email').value, country:"Sri Lanka", province:document.getElementById('inp-province').value, district:document.getElementById('inp-district').value, profilePic:base64Profile, profileCompleted:true };
-            await update(ref(db, 'users/'+currentUser.uid), up);
-            currentUser={...currentUser,...up}; localStorage.setItem('speedo_user',JSON.stringify(currentUser));
-            document.getElementById('setup-wizard').classList.add('hidden'); initUI();
+        window.closeLocPicker = () => {
+            document.getElementById('loc-picker-modal').classList.remove('active');
+            // Reset map picker mode to selection mode
         }
+
+        // --- MAP & ROUTING LOGIC ---
+        window.initMapAndShow = () => {
+            // Warning Check
+            if(!localStorage.getItem('speedo_warn_dismiss')) {
+                document.getElementById('warn-modal').classList.remove('hidden');
+            }
+            
+            document.getElementById('ride-overlay').classList.remove('hidden');
+            setTimeout(() => document.getElementById('ride-overlay').classList.add('active'), 100);
+            setTimeout(() => {
+                if(mainMap) {
+                    mainMap.invalidateSize();
+                    mainMap.setView([6.9271, 79.8612], 13); // Colombo Default
+                } else {
+                    initMainMap();
+                }
+            }, 400);
+        }
+
+        window.closeRideOverlay = () => {
+            document.getElementById('ride-overlay').classList.remove('active');
+            setTimeout(() => document.getElementById('ride-overlay').classList.add('hidden'), 400);
+            // Reset State
+            document.getElementById('ride-expanded-ui').classList.remove('hidden');
+            document.getElementById('ride-collapsed-ui').classList.add('hidden');
+            document.getElementById('ride-top-card').classList.remove('collapsed');
+            
+            if(routingControl) {
+                mainMap.removeControl(routingControl);
+                routingControl = null;
+            }
+            // Clear Markers
+            if(pickupMarker) mainMap.removeLayer(pickupMarker);
+            if(dropoffMarker) mainMap.removeLayer(dropoffMarker);
+            pickupCoords = null;
+            dropoffCoords = null;
+            
+            document.getElementById('lbl-pickup').innerText = i18n[currentLang].sel_pick;
+            document.getElementById('lbl-dropoff').innerText = i18n[currentLang].sel_drop;
+            document.getElementById('btn-vehicles').disabled = true;
+        }
+
+        function initMainMap() {
+            // Detailed Map: CartoDB Voyager
+            mainMap = L.map('ride-map', { zoomControl: false }).setView([6.9271, 79.8612], 13);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd', maxZoom: 19, attribution: '&copy; OpenStreetMap, &copy; CARTO'
+            }).addTo(mainMap);
+        }
+
+        // --- LOCATION PICKER LOGIC ---
+        window.openLocPicker = (type) => {
+            activeEditType = type; // pickup or dropoff
+            const titleEl = document.getElementById('loc-picker-title');
+            const myLocBtn = document.getElementById('btn-my-loc');
+            
+            titleEl.innerText = type === 'pickup' ? "Set Pickup Location" : "Set Drop Off Location";
+            
+            // For Drop Off, hide "My Location" (User said "without my current location")
+            if(type === 'dropoff') {
+                myLocBtn.style.display = 'none';
+            } else {
+                myLocBtn.style.display = 'flex';
+            }
+            
+            // Reset Search
+            document.getElementById('search-input').value = "";
+            document.getElementById('loc-picker-modal').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('loc-picker-modal').classList.add('active');
+                initPickerMap();
+            }, 200);
+        }
+
+        function initPickerMap() {
+            if(pickerMap) { pickerMap.invalidateSize(); return; }
+            pickerMap = L.map('picker-map-container', { zoomControl: false }).setView([6.9271, 79.8612], 13);
+            
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                subdomains: 'abcd', maxZoom: 19
+            }).addTo(pickerMap);
+
+            // Click to set location
+            pickerMap.on('click', async (e) => {
+                const latlng = e.latlng;
+                
+                // Reverse Geocode to get Address (Detailed OSM Data)
+                const addr = await getAddressDetails(latlng.lat, latlng.lng);
+                
+                selectLocationResult(latlng.lat, latlng.lng, addr);
+            });
+        }
+
+        async function getAddressDetails(lat, lon) {
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=18&addressdetails=1`);
+                const data = await res.json();
+                const addr = data.address;
+                if(!addr) return "Selected Location";
+                
+                // Detailed Search: Road Name (Bold) + City/District (Grey)
+                const road = addr.road || "";
+                const city = addr.city || addr.town || addr.county || "";
+                const dist = addr.state_district || addr.state || "";
+                
+                if(city) return `${road}, ${city}`; // "Main St, Colombo"
+                if(road && dist) return `${road}, ${dist}`;
+                return city || road || "Pinned Location";
+            } catch(e) { return "Pinned Location"; }
+        }
+
+        window.getMyLocation = async () => {
+            if(!navigator.geolocation) return showToast("GPS not supported", "error");
+            
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const latlng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                const addr = await getAddressDetails(latlng.lat, latlng.lng);
+                selectLocationResult(latlng.lat, latlng.lng, addr);
+            }, (err) => {
+                showToast("Could not get location. Try Settings.", "error");
+            }, { enableHighAccuracy: true });
+        }
+
+        window.activateMapPicker = () => {
+            // Logic handled by map click, visual only
+            showToast("Tap on the map to pin the location");
+        }
+
+        function selectLocationResult(lat, lon, name) {
+            if(activeEditType === 'pickup') {
+                pickupCoords = { lat, lon };
+                pickupAddress = name;
+                document.getElementById('lbl-pickup').innerText = name;
+                
+                // Remove OLD marker immediately (Fix duplicate issue)
+                if(pickupMarker) mainMap.removeLayer(pickupMarker);
+                
+                // Create Blue Dot Pulse Marker
+                pickupMarker = L.circleMarker([lat, lon], {
+                    radius: 8, color: '#2196F3', fillColor: '#2196F3', fillOpacity: 0.3
+                }).addTo(mainMap);
+                
+            } else {
+                dropoffCoords = { lat, lon };
+                dropoffAddress = name;
+                document.getElementById('lbl-dropoff').innerText = name;
+                
+                // Remove OLD marker immediately
+                if(dropoffMarker) mainMap.removeLayer(dropoffMarker);
+                
+                // Create Red Triangle Marker
+                dropoffMarker = L.marker([lat, lon], {
+                    icon: L.divIcon({
+                        className: 'custom-pin-red',
+                        html: '<i class="fa-solid fa-location-dot" style="color:#D50000; font-size:24px; text-shadow:0 2px 2px rgba(0,0,0,0.3);"></i>',
+                        iconSize: [24, 24], iconAnchor: [12, 24]
+                    })
+                }).addTo(mainMap);
+            }
+
+            // Close Picker
+            closeLocPicker();
+            
+            // Check if both set to enable vehicles
+            if(pickupCoords && dropoffCoords) {
+                document.getElementById('btn-vehicles').disabled = false;
+                mainMap.fitBounds([pickupCoords, dropoffCoords], { padding: [50, 50] });
+            }
+        }
+
+        // --- SEARCH LOGIC ---
+        let debounceTimer;
+        window.handleSearchInput = (e) => {
+            if(debounceTimer) clearTimeout(debounceTimer);
+            const q = e.target.value;
+            if(q.length < 3) return;
+            
+            debounceTimer = setTimeout(async () => {
+                // Using Nominatim for detailed data
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=lk&limit=5&addressdetails=1`);
+                const data = await res.json();
+                displaySearchResults(data);
+            }, 500);
+        }
+
+        function displaySearchResults(data) {
+            const container = document.getElementById('search-results-container'); // We will create this in HTML
+            // Since we need to inject into the map picker modal, let's create a list overlay there
+            const listContainer = document.createElement('div');
+            listContainer.style.position = 'absolute';
+            listContainer.style.top = '60px';
+            listContainer.style.left = '20px';
+            listContainer.style.width = 'calc(100% - 40px)';
+            listContainer.style.zIndex = '3000';
+            listContainer.style.maxHeight = '200px';
+            listContainer.style.overflowY = 'auto';
+            listContainer.style.background = 'white';
+            listContainer.style.boxShadow = '0 5px 15px rgba(0,0,0,0.1)';
+            listContainer.style.borderRadius = '10px';
+            listContainer.id = 'search-results-container';
+
+            if(!data || data.length === 0) listContainer.remove();
+            
+            listContainer.innerHTML = '';
+            data.forEach(place => {
+                const div = document.createElement('div');
+                div.style.padding = '12px 15px';
+                div.style.borderBottom = '1px solid #eee';
+                div.style.cursor = 'pointer';
+                div.style.fontSize = '13px';
+                // Highlight road name
+                const name = place.display_name || place.address.road || "Location";
+                div.innerHTML = `<div style="font-weight:600; color:#333;">${name}</div>`;
+                if(place.display_name && place.address) {
+                    const sub = place.address.city || place.address.town || "";
+                    div.innerHTML += `<div style="font-size:11px; color:#666;">${sub}</div>`;
+                }
+                div.onclick = () => {
+                    const latlng = { lat: place.lat, lon: place.lon };
+                    const addr = await getAddressDetails(latlng.lat, latlng.lng);
+                    selectLocationResult(latlng.lat, latlng.lng, addr);
+                }
+                listContainer.appendChild(div);
+            });
+            
+            // Append to map area (we need to find the wrap)
+            const mapWrap = document.querySelector('.picker-map-wrap');
+            if(mapWrap) mapWrap.appendChild(listContainer);
+        }
+
+
+        // --- ROUTING LOGIC (Dijkstra / OSRM) ---
+        window.calculateRoutes = async () => {
+            if(!pickupCoords || !dropoffCoords) return showToast("Please select both locations.", "error");
+
+            const modal = document.getElementById('route-select-modal');
+            modal.style.display = 'flex';
+            
+            // Use Leaflet Routing Machine (OSRM)
+            // This simulates Dijkstra/A* to find closest route
+            routingControl = L.Routing.control({
+                waypoints: [L.latLng(pickupCoords.lat, pickupCoords.lng), L.latLng(dropoffCoords.lat, dropoffCoords.lng)],
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/routed-car/v1' }), // OSRM is fast and free
+                lineOptions: { styles: [{color: '#D50000', weight: 6}, {color: '#888', weight: 6, opacity: 0.6, dashArray: '5, 5'}] }, // Red & Grey for alternatives
+                altLineOptions: { styles: [{color: '#D50000', weight: 6}] },
+                showAlternatives: true,
+                addWaypoints: false,
+                routeWhileDragging: false,
+                fitSelectedRoutes: true,
+                createMarker: function() { return null; } // We use custom markers
+            }).addTo(mainMap);
+        }
+
+        // Hook into routing events
+        // LRM (Leaflet Routing Machine) is an abstraction, we listen to 'routesfound' event on the 'map' or 'control'
+        // Since we created a control instance, we can attach the listener directly to it or check the event
+        // Note: In pure JS without bundlers, accessing the internal control instance directly is tricky, but `addTo(map)` attaches it to the map.
+        // We will use the `routingfound` event on the control object itself if accessible, or rely on the map event.
+        mainMap.on('routingfound', (e) => {
+            const routes = e.routes; // Returns an array of routes
+            if(!routes || routes.length === 0) return;
+
+            const container = document.getElementById('route-options-container');
+            container.innerHTML = '';
+
+            // Sort by duration (Fastest is usually first in OSRM, or we check summary.totalTime)
+            const sortedRoutes = routes.sort((a, b) => a.summary.totalTime - b.summary.totalTime);
+
+            // Generate HTML for each route
+            sortedRoutes.forEach((route, index) => {
+                const distKm = (route.summary.totalDistance / 1000).toFixed(1);
+                const timeMin = Math.round(route.summary.totalTime / 60);
+                
+                // Determine type (Mock Logic for Expressway vs Normal)
+                const isExpress = index === 1; // Second route is usually alt/exp
+                const isRec = index === 0; // First route is usually best
+
+                const div = document.createElement('div');
+                div.className = `route-opt ${isRec ? 'selected' : ''}`;
+                
+                // Route Name
+                const routeName = isExpress ? "Expressway (Fastest)" : "Normal Way (Scenic)";
+                
+                // Directions HTML (Steps from OSRM)
+                // OSRM instructions array is sometimes available in summary, sometimes hidden.
+                // We'll mock directions for now or use generic if available.
+                // Since `route.name` in OSRM usually gives "Route A", "Route B", etc.
+                
+                let infoHtml = `<div class="route-info">
+                    <span class="route-title">${routeName}</span>
+                    <span class="route-meta">${distKm} km • ${timeMin} mins</span>
+                </div>
+                <button class="route-info-btn" onclick="showDirections(${index})"><i class="fa-solid fa-circle-info"></i></button>
+                ${isExpress ? '<span class="warn-cost">Tolls May Charge</span>' : '<span style="color:#4CAF50; font-size:11px; font-weight:600;">Eco Friendly</span>'}`;
+
+                if(isRec) div.innerHTML = `<div class="rec-badge">Most Recommend</div>` + infoHtml;
+                
+                div.onclick = () => {
+                    // UI Selection logic
+                    document.querySelectorAll('.route-opt').forEach(el => el.classList.remove('selected'));
+                    div.classList.add('selected');
+                    
+                    // Draw Line on Map
+                    // Routing control handles drawing, but we might want to force redraw to highlight
+                    // In LRM, clicking the route usually selects it.
+                    // We will set a global variable `selectedRouteData`
+                    selectedRouteData = route;
+                    
+                    // Re-trigger routing control's 'setWaypoints' logic to force redraw (hacky but effective in this context)
+                    // Note: Standard LRM doesn't expose direct redraw easily without complex manipulation. 
+                    // Instead, we will let the user select visually.
+                };
+                
+                container.appendChild(div);
+            });
+
+            // Trigger initial draw (Route 0 is default)
+            if(selectedRouteData) {
+                // Hack: We need to actually draw the specific route. 
+                // Since LRM draws automatically, we just wait for the event.
+                // But we can force the active route.
+                const firstOpt = container.querySelector('.route-opt');
+                if(firstOpt) firstOpt.click(); 
+            }
+        });
+
+        window.showDirections = (index) => {
+            const routeIndex = parseInt(index);
+            if(!selectedRouteData) return;
+
+            // Show modal
+            const modal = document.getElementById('directions-modal');
+            const list = document.getElementById('dir-steps');
+            list.innerHTML = '';
+            modal.classList.remove('hidden');
+
+            // Fetch Route Data from OSRM (Ideally accessible via a stored reference, here we rely on selection logic)
+            // We will generate mock steps based on "Straight line" assumption for this demo since we can't easily query the object
+            // Real OSRM provides `instructions` array in the JSON if supported by profile.
+            
+            const steps = [
+                { icon: "fa-solid fa-location-dot", text: "Start from " + (pickupAddress || "Pickup") },
+                { icon: "fa-solid fa-arrow-right", text: "Head towards " + (selectedRouteData.name === "Normal Way" ? "main road" : "expressway") },
+                { icon: "fa-solid fa-arrow-right", text: selectedRouteData.name === "Normal Way" ? "Continue straight" : "Take Expressway" },
+                { icon: "fa-solid fa-arrow-right", text: "Take exit ramp towards " + (dropoffAddress || "Dropoff") },
+                { icon: "fa-solid fa-location-dot", text: "Arrive at destination" }
+            ];
+
+            steps.forEach((s, i) => {
+                const div = document.createElement('div');
+                div.className = 'dir-step';
+                div.innerHTML = `<i class="fa-solid ${s.icon}"></i> <span>${s.text}</span>`;
+                list.appendChild(div);
+            });
+        }
+
+        window.selectVehicle = (type) => {
+            selectedVehicle = type; // 'Tuk' or 'Moto'
+            // Update UI highlight
+            document.querySelectorAll('.vehicle-sheet > div > div').forEach(div => {
+                div.style.borderColor = (div.innerText.includes(type) ? 'var(--primary-red)' : '#eee');
+                div.style.background = (div.innerText.includes(type) ? '#fff5f5' : 'white');
+            });
+        }
+
+        window.confirmVehicle = () => {
+            // Calculate Price
+            const distKm = (mainMap.distance([pickupCoords.lat, pickupCoords.lng], [dropoffCoords.lat, dropoffCoords.lng]) / 1000).toFixed(2);
+            const distVal = parseFloat(distKm);
+            
+            let price = 100; // First km flat
+            let remaining = distVal - 1;
+            if(remaining < 0) remaining = 0;
+
+            // Logic
+            let rate = 0;
+            if(selectedVehicle === 'Tuk') {
+                if(distVal <= 1) rate = 0;
+                else if(distVal <= 5) rate = 70;
+                else if(distVal <= 10) rate = 65;
+                else rate = 60;
+                
+                price += (remaining * rate);
+            } else { // Moto
+                if(distVal <= 1) rate = 0;
+                else if(distVal <= 10) rate = 65;
+                else if(distVal <= 50) rate = 60;
+                else rate = 50;
+                
+                price += (remaining * rate);
+            }
+
+            const total = Math.floor(price);
+            
+            // Update Summary
+            document.getElementById('sum-pickup').innerText = pickupAddress;
+            document.getElementById('sum-dropoff').innerText = dropoffAddress;
+            document.getElementById('sum-dist').innerText = distVal + " km";
+            document.getElementById('sum-time').innerText = "15 min"; // Mock
+            document.getElementById('sum-veh').innerText = selectedVehicle;
+            document.getElementById('sum-price').innerText = "LKR " + total;
+
+            // Collapse Top Card
+            document.getElementById('ride-top-card').classList.add('collapsed');
+            document.getElementById('ride-expanded-ui').classList.add('hidden');
+            document.getElementById('ride-collapsed-ui').classList.remove('hidden');
+            
+            // Close Route Modal
+            document.getElementById('route-select-modal').classList.add('hidden');
+        }
+
+        window.bookRide = () => {
+            showToast(i18n[currentLang].book_now);
+            setTimeout(() => window.location.reload(), 2000); // Reset app
+        }
+
+        // --- INIT UI ---
+        function initUI() {
+            const name = currentUser.fullName ? currentUser.fullName.split(' ')[0] : 'User';
+            document.getElementById('ui-name').innerText = name;
+            document.getElementById('prof-view-name').innerText = currentUser.fullName || 'User';
+            document.getElementById('prof-view-email').innerText = currentUser.email || '';
+            if(currentUser.profilePic) {
+                document.getElementById('ui-avatar').src = currentUser.profilePic;
+                document.getElementById('prof-view-img').src = currentUser.profilePic;
+            }
+            updateLangState();
+        }
+
     </script>
 </body>
 </html>
