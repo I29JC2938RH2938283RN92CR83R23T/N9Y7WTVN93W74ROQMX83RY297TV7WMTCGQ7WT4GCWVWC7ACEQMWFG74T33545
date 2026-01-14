@@ -10,643 +10,1067 @@
     
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Leaflet Maps -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <!-- Leaflet JS (Loaded Globally to avoid Import Errors) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
     <style>
-        /* --- CORE LAYOUT --- */
+        /* --- General Styles --- */
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Poppins', sans-serif;
-            background-color: #D50000; /* Red Background */
-            overflow: hidden; user-select: none;
+            font-family: 'Poppins', 'Noto Sans Sinhala', 'Noto Sans Tamil', sans-serif;
+            background-color: #D50000;
+            overflow: hidden;
+            user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
+
         .hidden { display: none !important; }
 
-        :root { --primary-red: #D50000; --text-dark: #333; --bg-grey: #f8f9fa; }
+        :root {
+            --primary-red: #D50000;
+            --text-dark: #333;
+            --bg-grey: #f8f9fa;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
 
-        /* --- HEADER (Red Area) --- */
+        /* --- 1. HEADER --- */
         #header-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 110px;
-            z-index: 10; padding: 15px 20px; box-sizing: border-box;
+            position: absolute; top: 0; left: 0; width: 100%; height: 120px;
+            z-index: 10; padding: 15px; box-sizing: border-box;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
+
         .name-pill {
-            background: rgba(255,255,255,0.25); backdrop-filter: blur(5px);
-            padding: 5px 15px 5px 5px; border-radius: 40px; display: flex; align-items: center; gap: 10px;
-            border: 1px solid rgba(255,255,255,0.3); color: white; cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 5px 15px 5px 5px;
+            border-radius: 40px;
+            display: flex; align-items: center; gap: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white; max-width: 55%; cursor: pointer;
         }
-        .pill-img { width: 36px; height: 36px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
-        .pill-info { display: flex; flex-direction: column; line-height: 1.1; }
+        .name-pill:active { transform: scale(0.97); }
+        .pill-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        .pill-info { display: flex; flex-direction: column; justify-content: center; }
+        .pill-hello { font-size: 13px; font-weight: 700; line-height: 1.1; }
+        .pill-greeting { font-size: 10px; opacity: 0.9; font-weight: 400; line-height: 1.1; margin-top: 2px; }
 
-        /* --- MAIN CARD (White Area) --- */
+        .lang-pill {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white; font-size: 13px; font-weight: 600;
+            cursor: pointer; display: flex; gap: 5px;
+        }
+        .lang-pill span { opacity: 0.6; transition: 0.3s; }
+        .lang-pill span.active { opacity: 1; font-weight: 700; text-decoration: underline; }
+
+        /* --- 2. MAIN CARD --- */
         #main-card {
-            position: absolute; top: 110px; left: 0; width: 100%; bottom: 70px; /* Leave space for header & nav */
-            background: #fff; border-radius: 30px 30px 0 0;
-            padding: 25px 20px; box-sizing: border-box;
-            overflow-y: auto; z-index: 5;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
+            position: absolute; bottom: 0; left: 0;
+            width: 100%; height: calc(100% - 90px);
+            background: white;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+            z-index: 5;
+            padding: 30px 20px 80px 20px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            animation: slideUp 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* --- SERVICES GRID --- */
-        .services-grid { display: flex; justify-content: space-between; margin-bottom: 25px; }
-        .service-btn { width: 30%; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
-        .svc-icon-box {
-            width: 100%; aspect-ratio: 1/1; background: #f5f5f5; border-radius: 20px;
-            display: flex; align-items: center; justify-content: center;
-            border: 1px solid #eee; overflow: hidden; transition: 0.2s;
+        /* --- TAB VIEWS --- */
+        .tab-view { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease-in-out; width: 100%; }
+        .tab-view.active-view { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Services Grid */
+        .services-grid { display: flex; justify-content: space-between; gap: 10px; }
+        .service-btn { display: flex; flex-direction: column; align-items: center; width: 32%; cursor: pointer; }
+        .svc-img-box {
+            width: 100%; aspect-ratio: 1/1; background: var(--bg-grey); border-radius: 20px; margin-bottom: 10px;
+            display: flex; justify-content: center; align-items: center; border: 1px solid #eee; overflow: hidden;
+            transition: transform 0.2s;
         }
-        .svc-icon-box img { width: 100%; height: 100%; object-fit: cover; }
-        .svc-label { font-weight: 700; color: #333; font-size: 14px; }
-        .service-btn:active .svc-icon-box { transform: scale(0.95); }
+        .svc-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .service-btn:active .svc-img-box { transform: scale(0.95); }
+        .svc-label { font-weight: 700; font-size: 14px; color: var(--text-dark); }
 
-        /* --- PROMOS & ACTIVITY --- */
-        .ad-banner { width: 100%; aspect-ratio: 16/7; background: #eee; border-radius: 20px; overflow: hidden; margin-bottom: 20px; }
+        /* Ad Banner */
+        .ad-banner {
+            width: 100%; aspect-ratio: 16/9; background: #eee; border-radius: 20px;
+            overflow: hidden; position: relative; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
         .ad-banner img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .activity-card {
-            background: white; border: 1px solid #eee; border-radius: 15px; padding: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;
-        }
-        
-        /* --- BOTTOM NAV --- */
-        #bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
-            background: white; border-top: 1px solid #eee; z-index: 20;
-            display: flex; justify-content: space-around; align-items: center;
-        }
-        .nav-item { display: flex; flex-direction: column; align-items: center; color: #ccc; font-size: 10px; font-weight: 600; cursor: pointer; }
-        .nav-item i { font-size: 22px; margin-bottom: 4px; }
-        .nav-item.active { color: var(--primary-red); }
+        .ad-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
 
-        /* --- RIDE UI --- */
-        #ride-overlay {
+        /* Ongoing Activity Card */
+        .activity-card {
+            width: 100%; background: white; border: 1px solid #eee; border-radius: 20px; padding: 20px;
+            box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; min-height: 110px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .activity-card:active { background: #f9f9f9; transform: scale(0.98); }
+        .act-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .act-title { font-size: 16px; font-weight: 700; color: #333; }
+        .act-content { background: #f8f9fa; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; color: #888; }
+        .act-text { font-size: 14px; font-weight: 500; }
+
+        /* Thin Promo Strip */
+        .promo-strip-wrapper {
+            width: 100%; overflow-x: auto; white-space: nowrap; display: flex; gap: 15px; padding-bottom: 5px;
+            -ms-overflow-style: none; scrollbar-width: none;
+        }
+        .promo-strip-wrapper::-webkit-scrollbar { display: none; }
+        .promo-strip-item {
+            display: inline-block; min-width: 100%; aspect-ratio: 32/9; border-radius: 15px;
+            overflow: hidden; position: relative; scroll-snap-align: center; cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08); border: 1px solid #f0f0f0;
+        }
+        .promo-strip-item img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Other Views */
+        .section-header { font-size: 24px; font-weight: 700; color: #333; margin-bottom: 15px; }
+        .tabs-pill-container { display: flex; background: #f0f0f0; padding: 5px; border-radius: 15px; margin-bottom: 15px; }
+        .tab-pill { flex: 1; text-align: center; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #666; cursor: pointer; }
+        .tab-pill.active { background: white; color: var(--primary-red); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #aaa; text-align: center; }
+        .empty-state i { font-size: 40px; margin-bottom: 15px; color: #ddd; }
+        
+        /* Profile */
+        .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
+        .profile-big-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0; margin-bottom: 10px; }
+        .profile-name { font-size: 18px; font-weight: 700; color: #333; margin: 0; }
+        .profile-email { font-size: 13px; color: #888; margin: 0; }
+        .profile-menu-item { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+        .menu-left { display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 500; color: #333; }
+        .menu-left i { width: 25px; color: #888; }
+        .logout-btn { margin-top: 30px; width: 100%; padding: 15px; border-radius: 15px; background: #ffebee; color: #D50000; font-weight: 700; border: none; cursor: pointer; }
+
+        /* Promo Grid */
+        .promo-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .promo-item { margin-bottom: 10px; }
+        .promo-card-lg { width: 100%; border-radius: 20px; overflow: hidden; aspect-ratio: 2/1; position: relative; }
+        .promo-card-lg img { width: 100%; height: 100%; object-fit: cover; }
+        .promo-text { padding: 10px 0; }
+        .promo-text h4 { margin: 0; font-size: 15px; color: #333; }
+        .promo-text p { margin: 2px 0 0; font-size: 12px; color: #888; }
+
+        /* --- 3. BOTTOM NAVIGATION --- */
+        #bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            height: 70px; background: white;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            z-index: 20;
+            display: flex; justify-content: space-around; align-items: center;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #aaa; cursor: pointer; width: 25%; height: 100%;
+        }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; transition: 0.3s; }
+        .nav-item span { font-size: 10px; font-weight: 500; }
+        .nav-item.active { color: var(--primary-red); }
+        .nav-item.active i { transform: translateY(-2px); }
+
+        /* --- SKELETON --- */
+        #main-skeleton {
+            position: absolute; top: 90px; left: 0; width: 100%; height: calc(100% - 90px);
+            background: white; border-radius: 30px 30px 0 0; z-index: 15;
+            padding: 30px 20px; box-sizing: border-box;
+        }
+        .shimmer { animation: shimmer 1.5s infinite linear; background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%); background-size: 800px 104px; }
+        .sk-row { display: flex; gap: 15px; margin-bottom: 30px; }
+        .sk-sq { width: 33%; aspect-ratio: 1/1; border-radius: 20px; }
+        .sk-banner { width: 100%; aspect-ratio: 16/9; border-radius: 20px; margin-bottom: 20px; }
+        @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
+
+        /* --- SETUP WIZARD --- */
+        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:5000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
+        .wizard-container { width:100%; max-width:400px; text-align:center; position: relative; }
+        .step { display:none; width:100%; animation:fadeIn 0.4s; }
+        .step.active { display:flex; flex-direction:column; }
+        .btn-red { background:var(--primary-red); color:white; padding:15px; border-radius:30px; border:none; font-weight:700; width:100%; margin-top:15px; }
+        .input-box input, .input-box select { width:100%; padding:15px; border:2px solid #eee; border-radius:12px; margin-bottom:10px; outline:none; box-sizing:border-box; }
+        .input-box label { font-size:13px; font-weight:600; color:#333; display:block; text-align:left; margin-bottom:5px; }
+        .profile-upload-container { width:100px; height:100px; background:#f4f4f4; border-radius:50%; margin:0 auto 15px; overflow:hidden; position:relative; border: 2px dashed #ccc; }
+        
+        /* TERMS MODAL */
+        #terms-modal, #location-modal, #ride-warning-modal, #location-picker-modal, #route-loader-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 2000; transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            background: rgba(0,0,0,0.6); z-index: 6000;
+            display: flex; justify-content: center; align-items: center;
+            backdrop-filter: blur(2px);
+        }
+        .modal-card {
+            background: white; width: 90%; max-width: 400px;
+            border-radius: 20px; padding: 25px; text-align: left;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: popIn 0.3s ease-out;
+            max-height: 85vh; overflow-y: auto;
+        }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* --- LOCATION PERMISSION POPUP (Full Screen) --- */
+        #loc-perm-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%; background: white; z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 30px;
+            box-sizing: border-box;
+        }
+        .loc-icon-big { font-size: 80px; color: var(--primary-red); margin-bottom: 20px; animation: pulseRed 1.5s infinite; }
+        @keyframes pulseRed { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+        .loc-title { color: var(--primary-red); font-size: 24px; font-weight: 700; margin-bottom: 10px; }
+
+        /* --- RIDE VIEW (Slide Up) --- */
+        #ride-view {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #e5e3df; /* Map background */
+            z-index: 8000;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
             display: flex; flex-direction: column;
         }
-        #ride-overlay.active { transform: translateY(0); }
+        #ride-view.active { transform: translateY(0); }
 
-        #ride-map { flex: 1; width: 100%; position: relative; }
-        .leaflet-control-attribution { display: none; }
+        #ride-map {
+            width: 100%; height: 100%;
+            background: #ccc;
+            z-index: 1;
+        }
+        /* Hide Leaflet Controls */
+        .leaflet-control-zoom, .leaflet-control-attribution { display: none !important; }
 
-        /* Top Card */
-        #ride-top-card {
-            position: absolute; top: 20px; left: 15px; right: 15px;
-            background: white; border-radius: 20px; padding: 20px;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.15); z-index: 1000;
-            transition: 0.3s ease;
+        /* Ride Top Card */
+        .ride-top-card {
+            position: absolute; top: 40px; left: 15px; right: 15px;
+            background: white; border-radius: 20px;
+            padding: 20px; z-index: 1000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transition: 0.3s;
         }
-        #ride-top-card.collapsed {
-            top: 20px; padding: 15px;
+        .ride-top-card.collapsed {
+            padding: 10px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            cursor: pointer;
         }
-        .ride-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .ride-title { font-weight: 800; font-size: 18px; }
+        .ride-title { font-size: 18px; font-weight: 700; margin-bottom: 15px; color: #333; }
         
-        .close-btn { 
-            width: 30px; height: 30px; background: #f0f0f0; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; cursor: pointer; 
+        .loc-input-row { margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+        .loc-pill {
+            flex: 1; background: #f4f4f4; border: 1px solid #eee; border-radius: 12px;
+            padding: 12px 15px; font-size: 14px; color: #555; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+            transition: 0.2s;
         }
-
-        .input-row { 
-            display: flex; align-items: center; gap: 10px; padding: 12px;
-            background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; margin-bottom: 8px; cursor: pointer;
-        }
-        .collapsed .input-row, .collapsed .btn-main { display: none; }
+        .loc-pill:active { background: #e0e0e0; }
+        .loc-icon-sm { color: #888; width: 20px; text-align: center; }
+        .loc-icon-marker { color: var(--primary-red); }
+        .loc-icon-marker.green { color: #00C853; }
         
-        /* Collapsed Summary */
-        .summary-view { display: none; flex-direction: column; gap: 8px; }
-        .collapsed .summary-view { display: flex; }
-        .sum-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; }
-        .sum-pen { color: var(--primary-red); padding: 5px; cursor: pointer; }
-        .sum-meta { font-size: 11px; color: #888; border-top: 1px solid #eee; padding-top: 5px; margin-top: 5px; display: flex; justify-content: space-between; }
-
-        .btn-main {
-            background: var(--primary-red); color: white; border: none; padding: 15px;
-            width: 100%; border-radius: 12px; font-weight: 700; font-size: 15px; margin-top: 5px;
+        .ride-btn {
+            width: 100%; background: var(--primary-red); color: white; font-weight: 600;
+            padding: 15px; border-radius: 12px; border: none; margin-top: 10px; cursor: pointer;
+            font-size: 16px;
         }
+        .ride-btn:disabled { background: #ccc; cursor: not-allowed; }
 
-        /* Loading / Route Options */
-        #route-loader { display: none; text-align: center; padding: 20px; color: #666; font-size: 13px; }
-        #route-loader.visible { display: block; }
-        .bar-loader { width: 100%; height: 3px; background: #eee; overflow: hidden; border-radius: 2px; margin-bottom: 10px; }
-        .bar-fill { width: 50%; height: 100%; background: var(--primary-red); animation: slide 1s infinite ease-in-out; }
-        @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
+        /* Edit Pill (Collapsed) */
+        .edit-pill-content { display: flex; align-items: center; gap: 10px; color: #333; font-weight: 600; font-size: 14px; }
 
-        #route-options { 
-            background: white; border-radius: 25px 25px 0 0; padding: 20px; 
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.1); transform: translateY(100%); transition: 0.3s;
-            position: absolute; bottom: 0; left: 0; right: 0; z-index: 1001; max-height: 50vh; overflow-y: auto;
+        /* Ride Warning Modal */
+        .warning-content { text-align: center; }
+        .warning-icon { color: var(--primary-red); font-size: 40px; margin-bottom: 15px; }
+        .warning-text { color: var(--primary-red); font-weight: 600; font-size: 15px; margin-bottom: 20px; line-height: 1.4; }
+        .dont-show-wrap { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 20px; font-size: 13px; color: #666; }
+
+        /* Location Picker Modal */
+        .picker-card { width: 100%; height: 100%; max-width: none; max-height: none; border-radius: 0; padding: 0; display: flex; flex-direction: column; }
+        .picker-header { padding: 15px 20px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; gap: 15px; z-index: 10; }
+        .picker-search { padding: 12px; background: #f4f4f4; border-radius: 8px; border: none; width: 100%; outline: none; }
+        .picker-map { flex: 1; width: 100%; position: relative; background: #e5e3df; }
+        .picker-btn-group { padding: 20px; background: white; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px; }
+        .picker-option { padding: 15px; background: white; border: 1px solid #eee; border-radius: 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; transition: 0.2s; }
+        .picker-option:active { background: #f9f9f9; }
+        .picker-option i { color: #555; font-size: 18px; }
+        .picker-option b { display: block; font-size: 15px; color: #333; }
+        .picker-option span { font-size: 12px; color: #888; }
+        
+        .search-results { 
+            position: absolute; top: 60px; left: 10px; right: 10px; 
+            background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+            z-index: 20; max-height: 200px; overflow-y: auto; display: none;
         }
-        #route-options.active { transform: translateY(0); }
+        .search-item { padding: 12px 15px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; }
+        .search-item:last-child { border-bottom: none; }
+        .search-item:active { background: #f0f0f0; }
 
-        .route-card {
-            border: 1px solid #eee; border-radius: 12px; padding: 12px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center; cursor: pointer; position: relative;
+        /* Route Bottom Sheet */
+        #route-bottom-sheet {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: white; border-radius: 20px 20px 0 0;
+            padding: 25px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            transform: translateY(110%); transition: 0.4s ease-out; z-index: 2000;
         }
-        .route-card.selected { border: 2px solid var(--primary-red); background: #fffbfb; }
-        .tag-rec { position: absolute; top: 0; left: 0; background: #4CAF50; color: white; font-size: 9px; padding: 2px 6px; border-bottom-right-radius: 8px; }
+        #route-bottom-sheet.active { transform: translateY(0); }
 
-        /* Vehicle Sheet */
-        #vehicle-sheet {
-            background: white; border-radius: 25px 25px 0 0; padding: 25px 20px; 
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.2); transform: translateY(100%); transition: 0.3s;
-            position: absolute; bottom: 0; left: 0; right: 0; z-index: 1002;
+        /* Loader */
+        #route-loader {
+            position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.9); z-index: 9000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
         }
-        #vehicle-sheet.active { transform: translateY(0); }
-        .vehicle-scroller { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
-        .v-card { min-width: 90px; text-align: center; border: 1px solid #eee; padding: 15px 10px; border-radius: 12px; }
-        .v-card.active { border-color: var(--primary-red); background: #fff5f5; }
-
-        /* Search Modal */
-        #search-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white;
-            z-index: 3000; display: flex; flex-direction: column; transform: translateY(100%); transition: 0.3s;
+        .spinner {
+            width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-red);
+            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;
         }
-        #search-modal.active { transform: translateY(0); }
-        .search-head { padding: 20px; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center; }
-        .search-bar { flex: 1; background: #f5f5f5; border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 10px; }
-        .search-bar input { border: none; background: transparent; width: 100%; outline: none; font-size: 15px; }
-        .search-results { flex: 1; overflow-y: auto; padding: 10px 20px; }
-        .place-item { padding: 15px 0; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
-
-        /* Skeleton Location Loader */
-        #loc-skeleton {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .pulse-circle { width: 60px; height: 60px; background: #eee; border-radius: 50%; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.6; } }
-
-        /* Glowing User Marker */
-        .user-glow { width: 16px; height: 16px; background: #2196F3; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 15px #2196F3; animation: glow 2s infinite; }
-        @keyframes glow { 0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); } 100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); } }
-
-        /* Toast */
-        #toast { 
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
-            background: #333; color: white; padding: 10px 20px; border-radius: 30px; 
-            font-size: 13px; z-index: 9999; display: none; animation: dropIn 0.3s; 
-        }
-        @keyframes dropIn { from {top:-50px;} to {top:20px;} }
-
-        /* Buttons on Map (Pin) */
-        #pin-confirm-btn {
-            position: absolute; bottom: 30px; left: 20px; right: 20px; 
-            z-index: 1000; display: none;
-        }
-        #map-center-marker {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%);
-            z-index: 500; font-size: 35px; color: #333; pointer-events: none; display: none;
-        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     </style>
 </head>
 <body>
 
-    <!-- TOAST -->
-    <div id="toast">Notification</div>
-
-    <!-- LOCATION SKELETON -->
-    <div id="loc-skeleton" class="hidden">
-        <div class="pulse-circle"></div>
-        <h3 style="margin-top:20px;">Locating...</h3>
-        <p style="color:#888; font-size:13px; max-width:80%; text-align:center;">Connecting to GPS satellites</p>
-        <div id="loc-failed-msg" class="hidden" style="text-align:center;">
-            <p style="color:#D50000; margin-top:20px;">Location access failed.</p>
-            <button onclick="document.getElementById('loc-skeleton').classList.add('hidden')" style="padding:10px 20px; background:#eee; border:none; border-radius:10px;">Close</button>
-        </div>
-    </div>
-
     <!-- HEADER -->
     <div id="header-layer">
-        <div class="name-pill">
-            <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" class="pill-img" id="hdr-img">
+        <div class="name-pill" onclick="switchTab('profile')">
+            <!-- Fixed Placeholder Image -->
+            <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" class="pill-img" id="ui-profile-img">
             <div class="pill-info">
-                <span style="font-size:10px; opacity:0.8;">Hello</span>
-                <span style="font-weight:700; font-size:13px;" id="hdr-name">User</span>
+                <span class="pill-hello"><span data-i18n="hello">Hello</span> <span id="ui-name">...</span></span>
+                <span class="pill-greeting" id="ui-greeting">...</span>
             </div>
         </div>
-        <div class="name-pill" style="border-radius:12px; padding:8px;" onclick="alert('Settings')">
-            <i class="fa-solid fa-gear" style="font-size:16px;"></i>
+        <div class="lang-pill" onclick="cycleLanguage()">
+            <span id="lang-en" class="active">En</span> · <span id="lang-si">සි</span> · <span id="lang-ta">த</span>
         </div>
     </div>
 
     <!-- MAIN CARD -->
-    <div id="main-card">
-        <!-- SERVICES -->
-        <div class="services-grid">
-            <div class="service-btn" onclick="startRideFlow()">
-                <div class="svc-icon-box"><img src="https://i.ibb.co/cSDnbNVB/car-final-2.jpg"></div>
-                <span class="svc-label">Ride</span>
+    <div id="main-card" class="hidden">
+        
+        <!-- HOME VIEW -->
+        <div id="view-home" class="tab-view active-view">
+            <div class="services-grid">
+                <div class="service-btn" onclick="openRideView()">
+                    <div class="svc-img-box"><img src="https://placehold.co/100x100/F44336/white?text=Ride" alt="Ride"></div>
+                    <span class="svc-label" data-i18n="ride">Ride</span>
+                </div>
+                <div class="service-btn" onclick="window.location.href='foods.html'">
+                    <div class="svc-img-box"><img src="https://placehold.co/100x100/FF9800/white?text=Food" alt="Food"></div>
+                    <span class="svc-label" data-i18n="food">Food</span>
+                </div>
+                <div class="service-btn">
+                    <div class="svc-img-box"><img src="https://placehold.co/100x100/2196F3/white?text=Flash" alt="Flash"></div>
+                    <span class="svc-label" data-i18n="flash">Flash</span>
+                </div>
             </div>
-            <div class="service-btn">
-                <div class="svc-icon-box"><img src="https://i.ibb.co/8gGtW9xc/bag-final-1.jpg"></div>
-                <span class="svc-label">Food</span>
+
+            <div class="ad-banner">
+                <div class="ad-badge">Promoted</div>
+                <img src="https://placehold.co/400x225?text=Ad+Banner" alt="Promo">
             </div>
-            <div class="service-btn">
-                <div class="svc-icon-box"><img src="https://i.ibb.co/67BshY3t/delivery-guy.png"></div>
-                <span class="svc-label">Flash</span>
+
+            <div class="activity-card" onclick="switchTab('activity')">
+                <div class="act-header">
+                    <span class="act-title" data-i18n="ongoing_title">Ongoing Activities</span>
+                    <i class="fa-solid fa-chevron-right act-icon" style="color:#aaa; font-size:14px;"></i>
+                </div>
+                <div class="act-content">
+                    <i class="fa-solid fa-clipboard-list" style="font-size:20px;"></i>
+                    <span class="act-text" data-i18n="ongoing_none">No Ongoing Activities</span>
+                </div>
+            </div>
+
+            <div class="promo-strip-wrapper">
+                <!-- Loaded dynamically -->
+                <div class="promo-strip-item"><img src="https://placehold.co/400x125?text=Promo+Strip" alt="Promo"></div>
             </div>
         </div>
 
-        <!-- BANNER -->
-        <div class="ad-banner">
-            <div class="ad-badge">Promoted</div>
-            <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg">
+        <!-- ACTIVITY VIEW -->
+        <div id="view-activity" class="tab-view">
+            <div class="section-header" data-i18n="activity">Activity</div>
+            <div class="tabs-pill-container">
+                <div class="tab-pill active" onclick="switchActivityTab(this)" data-type="ongoing">Ongoing</div>
+                <div class="tab-pill" onclick="switchActivityTab(this)" data-type="completed">Completed</div>
+            </div>
+            <div id="activity-list-content">
+                <div class="empty-state">
+                    <i class="fa-regular fa-folder-open"></i>
+                    <p>No recent activities</p>
+                </div>
+            </div>
         </div>
 
-        <!-- ACTIVITY -->
-        <div class="activity-card">
-            <div>
-                <div style="font-weight:700; margin-bottom:5px;">Recent Activity</div>
-                <div style="font-size:12px; color:#888;">No rides yet</div>
+        <!-- PROMOTIONS VIEW -->
+        <div id="view-promotions" class="tab-view">
+            <div class="section-header" data-i18n="promotions">Promotions</div>
+            <div class="promo-grid" id="promo-container">
+                <!-- Loaded from DB -->
             </div>
-            <i class="fa-solid fa-chevron-right" style="color:#ccc;"></i>
         </div>
+
+        <!-- PROFILE VIEW -->
+        <div id="view-profile" class="tab-view">
+            <div class="profile-header">
+                <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" id="prof-view-img" class="profile-big-img">
+                <h3 class="profile-name" id="prof-view-name">User</h3>
+                <p class="profile-email" id="prof-view-email">...</p>
+            </div>
+            <div class="profile-menu">
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-user"></i> Edit Profile</div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-bookmark"></i> Saved Places</div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-credit-card"></i> Payment Methods</div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-circle-question"></i> Help & Support</div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">Log Out</button>
+        </div>
+
     </div>
 
     <!-- BOTTOM NAV -->
     <div id="bottom-nav">
-        <div class="nav-item active"><i class="fa-solid fa-house"></i><span>Home</span></div>
-        <div class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i><span>Activity</span></div>
-        <div class="nav-item"><i class="fa-solid fa-user"></i><span>Profile</span></div>
+        <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+            <i class="fa-solid fa-house"></i> <span data-i18n="home">Home</span>
+        </div>
+        <div class="nav-item" id="nav-activity" onclick="switchTab('activity')">
+            <i class="fa-solid fa-clock-rotate-left"></i> <span data-i18n="activity">Activity</span>
+        </div>
+        <div class="nav-item" id="nav-promotions" onclick="switchTab('promotions')">
+            <i class="fa-solid fa-tag"></i> <span data-i18n="promotions">Promotions</span>
+        </div>
+        <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">
+            <i class="fa-solid fa-user"></i> <span data-i18n="profile">Profile</span>
+        </div>
     </div>
 
-    <!-- RIDE OVERLAY -->
-    <div id="ride-overlay">
+    <!-- SKELETON -->
+    <div id="main-skeleton">
+        <div class="sk-row"><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div></div>
+        <div class="sk-banner shimmer"></div>
+    </div>
+
+    <!-- SETUP WIZARD -->
+    <div id="setup-wizard" class="hidden">
+        <div class="wizard-container">
+            <h2 style="color:#D50000; margin-bottom: 5px;">Get Started</h2>
+            <div style="color:red; font-size:12px; margin-bottom:15px; min-height:18px;" id="wizard-error"></div>
+
+            <div class="step active" id="step-1">
+                <div class="input-box"><label>Full Name</label><input type="text" id="inp-name" placeholder="John Doe"></div>
+                <button class="btn-red" onclick="wNext(1)">Next</button>
+            </div>
+            <div class="step" id="step-2">
+                <div class="input-box"><label>Email Address</label><input type="email" id="inp-email" placeholder="example@gmail.com"></div>
+                <button class="btn-red" onclick="wNext(2)">Next</button>
+            </div>
+            <div class="step" id="step-3">
+                <div class="input-box"><label>Country</label><input type="text" value="Sri Lanka" disabled></div>
+                <button class="btn-red" onclick="wNext(3)">Next</button>
+            </div>
+            <div class="step" id="step-4">
+                <div class="input-box"><label>Province</label><select id="inp-province" onchange="loadDistricts()"><option value="">Select Province</option></select></div>
+                <button class="btn-red" onclick="wNext(4)">Next</button>
+            </div>
+            <div class="step" id="step-5">
+                <div class="input-box"><label>District</label><select id="inp-district"><option value="">Select District</option></select></div>
+                <button class="btn-red" onclick="wNext(5)">Next</button>
+            </div>
+            <div class="step" id="step-6">
+                <div class="profile-upload-container" onclick="document.getElementById('f').click()">
+                    <img id="wiz-img" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <i id="wiz-icon" class="fa-solid fa-camera" style="line-height:100px; color:#aaa;"></i>
+                </div>
+                <input type="file" id="f" class="hidden" onchange="prevImg(event)">
+                <div style="font-size:12px; margin-bottom:10px;"><input type="checkbox" id="chk"> Agree to <span onclick="openTerms()" style="color:#D50000; font-weight:700;">Terms & Conditions</span></div>
+                <button class="btn-red" onclick="finishSetup()">Finish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TERMS MODAL -->
+    <div id="terms-modal" class="hidden">
+        <div class="modal-card">
+            <h3 style="color:#D50000; margin-top:0;">Terms & Conditions</h3>
+            <div style="font-size:13px; color:#555; line-height:1.6; max-height:60vh; overflow-y:auto; margin-bottom:20px;">
+                <p><b>1. Acceptance</b><br>By using Speedo, you agree to our terms.</p>
+                <p><b>2. Privacy</b><br>We collect basic info to provide services.</p>
+                <p><b>3. User Conduct</b><br>Respect drivers and follow laws.</p>
+                <p><b>4. Liability</b><br>We care about your lost/stolen and other items. However, we are not liable for lost items left in vehicles.</p>
+            </div>
+            <button class="btn-red" onclick="closeTerms()" style="margin-top:0;">Close</button>
+        </div>
+    </div>
+
+    <!-- LOCATION PERMISSION OVERLAY -->
+    <div id="loc-perm-overlay" class="hidden">
+        <i class="fa-solid fa-location-dot loc-icon-big"></i>
+        <h2 class="loc-title" data-i18n="loc_req_title">Location Required</h2>
+        <p style="color:#666; margin-bottom: 20px;">To Continue, Grant Location Access</p>
+        <div class="spinner" style="width: 30px; height: 30px; margin-bottom:10px; border-width:3px;"></div>
+        <p style="font-size:12px; color:#888;">Waiting for permission...</p>
+    </div>
+
+    <!-- RIDE VIEW OVERLAY (Full Screen Slide Up) -->
+    <div id="ride-view">
         <div id="ride-map"></div>
-        <i class="fa-solid fa-location-dot" id="map-center-marker"></i>
         
         <!-- Top Card -->
-        <div id="ride-top-card">
-            <div class="ride-header">
-                <span class="ride-title">Book a Ride</span>
-                <div class="close-btn" onclick="closeRideFlow()"><i class="fa-solid fa-xmark"></i></div>
-            </div>
-
-            <!-- Full Inputs -->
-            <div class="input-row" onclick="openSearch('pickup')">
-                <div class="dot" style="width:10px; height:10px; background:#2196F3; border-radius:50%;"></div>
-                <span style="font-size:13px; color:#555; flex:1;" id="lbl-pickup">Current Location</span>
-            </div>
-            <div class="input-row" onclick="openSearch('dropoff')">
-                <div class="dot" style="width:10px; height:10px; background:#D50000; border-radius:50%;"></div>
-                <span style="font-size:13px; color:#555; flex:1;" id="lbl-dropoff">Where to?</span>
-            </div>
-
-            <!-- Collapsed Summary -->
-            <div class="summary-view">
-                <div class="sum-row">
-                    <span><span style="color:#2196F3">●</span> <span id="sum-pickup">...</span></span>
-                    <i class="fa-solid fa-pencil sum-pen" onclick="reEdit('pickup')"></i>
+        <div class="ride-top-card" id="ride-card">
+            <div class="ride-title" data-i18n="book_ride">Book a Ride</div>
+            
+            <div class="loc-input-row">
+                <i class="fa-solid fa-circle-dot loc-icon-sm loc-icon-marker"></i>
+                <div class="loc-pill" id="btn-pickup" onclick="openLocationPicker('pickup')">
+                    <span id="lbl-pickup" data-i18n="sel_loc">Select Your Location</span>
+                    <i class="fa-solid fa-chevron-right" style="font-size:12px; color:#ccc;"></i>
                 </div>
-                <div class="sum-row">
-                    <span><span style="color:#D50000">●</span> <span id="sum-dropoff">...</span></span>
-                    <i class="fa-solid fa-pencil sum-pen" onclick="reEdit('dropoff')"></i>
-                </div>
-                <div class="sum-meta">
-                    <span id="meta-dist">0 km</span>
-                    <span style="color:#D50000; font-weight:700;">Est. Price</span>
+            </div>
+            
+            <div class="loc-input-row">
+                <i class="fa-solid fa-square loc-icon-sm loc-icon-marker green"></i>
+                <div class="loc-pill" id="btn-dropoff" onclick="openLocationPicker('dropoff')">
+                    <span id="lbl-dropoff" data-i18n="sel_drop">Select Drop Off</span>
+                    <i class="fa-solid fa-chevron-right" style="font-size:12px; color:#ccc;"></i>
                 </div>
             </div>
 
-            <button class="btn-main vehicle-btn" onclick="calcRoute()">Find Route</button>
-
-            <!-- Route Loader inside card -->
-            <div id="route-loader">
-                <div class="bar-loader"><div class="bar-fill"></div></div>
-                <span>Finding best routes...</span>
-            </div>
-        </div>
-        
-        <!-- Pin Button -->
-        <button id="pin-confirm-btn" class="btn-main" onclick="confirmPin()">Set Location</button>
-
-        <!-- Route Options -->
-        <div id="route-options">
-            <h3 style="margin-top:0;">Select Route</h3>
-            <div id="route-list"></div>
-            <button class="btn-main" style="margin-top:10px;" onclick="toVehicles()">Continue</button>
+            <button class="ride-btn" id="btn-show-vehicles" onclick="startRouting()" disabled data-i18n="show_veh">Show Vehicle Options</button>
         </div>
 
-        <!-- Vehicle Sheet -->
-        <div id="vehicle-sheet">
-            <h3 style="margin-top:0;">Select Vehicle</h3>
-            <div class="vehicle-scroller">
-                <div class="v-card active">
-                    <i class="fa-solid fa-car-side" style="font-size:24px;"></i><br><small>Mini</small><br><b>450 LKR</b>
-                </div>
-                <div class="v-card">
-                    <i class="fa-solid fa-car" style="font-size:24px;"></i><br><small>Sedan</small><br><b>700 LKR</b>
-                </div>
-                <div class="v-card">
-                    <i class="fa-solid fa-van-shuttle" style="font-size:24px;"></i><br><small>Van</small><br><b>1200 LKR</b>
-                </div>
+        <!-- Route Found Bottom Sheet -->
+        <div id="route-bottom-sheet">
+            <h3 style="margin:0 0 10px 0; color:#333;">Route Found</h3>
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <div><b>Distance</b><br><span id="res-dist">0 km</span></div>
+                <div><b>Time</b><br><span id="res-time">0 min</span></div>
+                <div><b>Price</b><br><span id="res-price">LKR 0</span></div>
             </div>
-            <button class="btn-main" style="margin-top:20px;" onclick="showToast('Searching for drivers...')">Confirm Booking</button>
+            <button class="ride-btn">Confirm Ride</button>
         </div>
     </div>
 
-    <!-- SEARCH MODAL -->
-    <div id="search-modal">
-        <div class="search-head">
-            <div class="close-btn" onclick="closeSearch()"><i class="fa-solid fa-arrow-left"></i></div>
-            <div class="search-bar">
-                <i class="fa-solid fa-magnifying-glass" style="color:#888;"></i>
-                <input type="text" id="inp-search" placeholder="Search city, town or place" onkeyup="liveSearch(event)">
+    <!-- RIDE WARNING MODAL -->
+    <div id="ride-warning-modal" class="hidden">
+        <div class="modal-card warning-content">
+            <i class="fa-solid fa-triangle-exclamation warning-icon"></i>
+            <p class="warning-text" data-i18n="warn_text">To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride</p>
+            <div class="dont-show-wrap">
+                <input type="checkbox" id="chk-warn"> <label for="chk-warn">Do not show again</label>
+            </div>
+            <button class="btn-red" onclick="closeRideWarning()">Close</button>
+        </div>
+    </div>
+
+    <!-- LOCATION PICKER MODAL -->
+    <div id="location-picker-modal" class="hidden">
+        <div class="picker-card">
+            <div class="picker-header">
+                <i class="fa-solid fa-arrow-left" onclick="closeLocationPicker()"></i>
+                <input type="text" class="picker-search" id="loc-search" placeholder="Search place (e.g. Lotus Tower)" oninput="handleSearch(this.value)">
+            </div>
+            <div class="search-results" id="search-res"></div>
+            <div id="picker-map-container" class="picker-map"></div>
+            <div class="picker-btn-group">
+                <div class="picker-option" id="opt-my-loc" onclick="selectMyLocation()">
+                    <i class="fa-solid fa-crosshairs"></i>
+                    <div>
+                        <b>My Location</b>
+                        <span>Use current GPS position</span>
+                    </div>
+                </div>
+                <div class="picker-option" id="opt-custom-loc" onclick="selectCustomLocation()">
+                    <i class="fa-solid fa-map-pin"></i>
+                    <div>
+                        <b>Custom Location</b>
+                        <span>Select point on map</span>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="search-results" id="res-list">
-            <!-- Results injected here -->
-        </div>
+    </div>
+
+    <!-- ROUTE LOADER -->
+    <div id="route-loader" class="hidden">
+        <div class="spinner"></div>
+        <p style="color:#555; font-weight:500;">Finding the best route...</p>
     </div>
 
     <!-- LOGIC -->
-    <script>
-        // -- STATE --
-        let userPos = null;
-        let map, routingControl;
-        let pMark, dMark;
-        let pLoc = null, dLoc = null;
-        let activeField = 'pickup'; // pickup or dropoff
-        let mapMode = 'view'; // view or pin
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        // Removed Leaflet import, it is loaded globally in head
 
-        // -- INITIALIZATION --
-        window.onload = () => {
-            // Check Location
-            const skel = document.getElementById('loc-skeleton');
-            skel.classList.remove('hidden');
-            
-            navigator.geolocation.getCurrentPosition(
-                (pos) => {
-                    userPos = [pos.coords.latitude, pos.coords.longitude];
-                    skel.classList.add('hidden');
-                    // Reverse Geo for pickup default
-                    reverseGeo(userPos[0], userPos[1], (addr) => {
-                         pLoc = { lat: userPos[0], lon: userPos[1], name: "Current Location" };
-                         document.getElementById('lbl-pickup').innerText = "Current Location";
-                    });
-                },
-                (err) => {
-                    setTimeout(() => {
-                        document.getElementById('loc-failed-msg').classList.remove('hidden');
-                    }, 5000); // 5 sec timeout
-                },
-                { enableHighAccuracy: true }
-            );
+        const firebaseConfig = {
+            apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4",
+            authDomain: "speedo-acb7c.firebaseapp.com",
+            databaseURL: "https://speedo-acb7c-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "speedo-acb7c",
+            storageBucket: "speedo-acb7c.firebasestorage.app",
+            messagingSenderId: "31066493782",
+            appId: "1:31066493782:web:e3e9dfa209fa855bc17cf7"
         };
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.innerText = msg; t.style.display = 'block';
-            setTimeout(() => t.style.display = 'none', 3000);
-        }
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        // -- RIDE FLOW --
-        function startRideFlow() {
-            if(!userPos) { showToast("Location needed for ride"); return; }
-            document.getElementById('ride-overlay').classList.add('active');
-            
-            if(!map) {
-                // CartoDB Voyager tiles (Clearer)
-                map = L.map('ride-map', { zoomControl: false }).setView(userPos, 15);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                    attribution: '', maxZoom: 19
-                }).addTo(map);
+        let currentUser = null;
+        let base64Profile = "";
+        let currentLang = localStorage.getItem('speedo_lang') || 'en';
 
-                // User Pulse Marker
-                const uIcon = L.divIcon({ className: 'user-glow', iconSize:[16,16] });
-                L.marker(userPos, {icon: uIcon}).addTo(map);
-                
-                // Initialize markers
-                pMark = L.marker(userPos, { draggable: true }).addTo(map);
-                pMark.on('dragend', (e) => updateFromDrag('pickup', e));
-            } else {
-                map.setView(userPos, 15);
-            }
-        }
+        // Maps Global Vars
+        let map = null;
+        let pickerMap = null;
+        let routePolyline = null;
+        let pickupMarker = null;
+        let dropoffMarker = null;
+        let tempMarker = null;
+        let pickupCoords = null;
+        let dropoffCoords = null;
+        let pickerMode = 'pickup'; // 'pickup' or 'dropoff'
 
-        function closeRideFlow() {
-            document.getElementById('ride-overlay').classList.remove('active');
-            // Reset UI
-            resetRouteUI();
-        }
+        // --- DATA & I18N ---
+        const i18n = {
+            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", ongoing_title:"Ongoing Activities", ongoing_none:"No Ongoing Activities", loc_req_title:"Location Required", book_ride:"Book a Ride", sel_loc:"Select Your Location", sel_drop:"Select Drop Off", show_veh:"Show Vehicle Options", warn_text:"To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride", edit:"Edit" },
+            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්", home:"මුල් පිටුව", activity:"ක්‍රියාකාරකම්", promotions:"දීමනා", profile:"ගිණුම", ongoing_title:"පවතින ක්‍රියාකාරකම්", ongoing_none:"කිසිවක් නොමැත", loc_req_title:"ස්ථානය අවශ්‍යයි", book_ride:"සවාරියක් අයකරගන්න", sel_loc:"ඔබේ ස්ථානය තෝරන්න", sel_drop:"පිටතට යන ස්ථානය", show_veh:"වාහන විකල්ප", warn_text:"සේවාව සමඟ සම්බන්ධ වීමට කරුණාකර යෙදුම වසන්න එපා.", edit:"වෙනස් කරන්න" },
+            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", ongoing_title:"தற்போதைய", ongoing_none:"எதுவுமில்லை", loc_req_title:"இடம் தேவை", book_ride:"சவாரி முன்பதிவு", sel_loc:"உங்கள் இருப்பிடத்தைத் தேர்ந்தெடுக்கவும்", sel_drop:"இறங்கும் இடம்", show_veh:"வாகன விருப்பங்கள்", warn_text:"சேவையுடன் இணைந்திருக்க, தயவுசெய்து பயன்பாட்டை மூட வேண்டாம்.", edit:"திருத்து" }
+        };
 
-        function resetRouteUI() {
-            if(routingControl) { map.removeControl(routingControl); routingControl = null; }
-            if(dMark) map.removeLayer(dMark); dMark = null; dLoc = null;
-            document.getElementById('ride-top-card').classList.remove('collapsed');
-            document.getElementById('route-options').classList.remove('active');
-            document.getElementById('vehicle-sheet').classList.remove('active');
-            document.getElementById('lbl-dropoff').innerText = "Where to?";
-            document.querySelector('.vehicle-btn').style.display = 'block';
-            document.querySelector('.input-row').style.display = 'flex';
-        }
+        // Sri Lanka Places for Search
+        const knownPlaces = [
+            { name: "Lotus Tower", lat: 6.9271, lng: 79.8612 },
+            { name: "Colombo Fort", lat: 6.9350, lng: 79.8480 },
+            { name: "Nelum Pokuna", lat: 6.9320, lng: 79.8590 },
+            { name: "Galle Face Green", lat: 6.9280, lng: 79.8410 },
+            { name: "Kandy City Center", lat: 7.2906, lng: 80.6337 },
+            { name: "Katunayake Airport", lat: 7.1808, lng: 79.8841 },
+            { name: "Independence Square", lat: 6.9305, lng: 79.8580 },
+            { name: "Viharamahadevi Park", lat: 6.9270, lng: 79.8570 }
+        ];
 
-        // -- SEARCH & OVERPASS API --
-        function openSearch(type) {
-            activeField = type;
-            document.getElementById('search-modal').classList.add('active');
-            document.getElementById('inp-search').value = '';
-            document.getElementById('inp-search').focus();
-            
-            // Initial List: API + Map Nearby
-            fetchMapNearby();
-        }
+        // --- INIT ---
+        window.addEventListener('load', async () => {
+            const stored = localStorage.getItem('speedo_user');
+            if(!stored) { window.location.href = "index.html"; return; }
+            currentUser = JSON.parse(stored);
 
-        function closeSearch() {
-            document.getElementById('search-modal').classList.remove('active');
-        }
+            try {
+                const snap = await get(ref(db, 'users/' + currentUser.uid));
+                const data = snap.val();
+                if(data) currentUser = data;
 
-        // Fetch cities/towns in Sri Lanka viewport from OSM (The "Map Data" Request)
-        function fetchMapNearby() {
-            const list = document.getElementById('res-list');
-            list.innerHTML = '<div style="padding:15px; color:#888;">Loading nearby places...</div>';
-
-            // Pin on map option
-            const pinBtn = document.createElement('div');
-            pinBtn.className = 'place-item';
-            pinBtn.innerHTML = '<i class="fa-solid fa-map-pin" style="color:#D50000; margin-right:10px;"></i> <b>Pick on Map</b>';
-            pinBtn.onclick = () => { closeSearch(); enablePinMode(); };
-
-            // Overpass Query for Sri Lanka Major Places
-            const query = `[out:json];node["place"~"city|town"](5.9,79.5,9.9,82.0);out body 15;`; 
-            // Gets ~15 major cities/towns in the bounding box of SL
-            
-            fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query))
-            .then(r => r.json())
-            .then(data => {
-                list.innerHTML = '';
-                list.appendChild(pinBtn); // Add Pin option first
-
-                // Sort by latitude (North to South) or closeness? Just list them.
-                // Include Northern/Eastern cities explicitly if found
-                data.elements.forEach(el => {
-                    const d = document.createElement('div');
-                    d.className = 'place-item';
-                    d.innerHTML = `<i class="fa-solid fa-location-dot" style="color:#ccc; margin-right:10px;"></i> ${el.tags.name || "Unknown Place"}`;
-                    d.onclick = () => selectLocation(el.lat, el.lon, el.tags.name);
-                    list.appendChild(d);
-                });
-            })
-            .catch(() => {
-                list.innerHTML = '';
-                list.appendChild(pinBtn);
-            });
-        }
-
-        // Live Typing (Nominatim API)
-        let debounce;
-        function liveSearch(e) {
-            clearTimeout(debounce);
-            const q = e.target.value;
-            if(q.length < 3) return;
-
-            debounce = setTimeout(() => {
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=lk&limit=5`)
-                .then(r => r.json())
-                .then(data => {
-                    const list = document.getElementById('res-list');
-                    list.innerHTML = '';
-                    data.forEach(item => {
-                        const d = document.createElement('div');
-                        d.className = 'place-item';
-                        d.innerHTML = `<i class="fa-solid fa-magnifying-glass" style="color:#ccc; margin-right:10px;"></i> <b>${item.name || item.display_name.split(',')[0]}</b><br><small style="color:#aaa; margin-left:24px;">${item.display_name}</small>`;
-                        d.onclick = () => selectLocation(item.lat, item.lon, item.name || item.display_name.split(',')[0]);
-                        list.appendChild(d);
-                    });
-                });
-            }, 500);
-        }
-
-        function selectLocation(lat, lon, name) {
-            const ll = [parseFloat(lat), parseFloat(lon)];
-            if(activeField === 'pickup') {
-                pLoc = { lat, lon, name };
-                document.getElementById('lbl-pickup').innerText = name;
-                document.getElementById('sum-pickup').innerText = name;
-                if(pMark) pMark.setLatLng(ll); else pMark = L.marker(ll, {draggable:true}).addTo(map);
-            } else {
-                dLoc = { lat, lon, name };
-                document.getElementById('lbl-dropoff').innerText = name;
-                document.getElementById('sum-dropoff').innerText = name;
-                if(dMark) dMark.setLatLng(ll); else {
-                    const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
-                    dMark = L.marker(ll, {icon:redIcon, draggable:true}).addTo(map);
-                    dMark.on('dragend', (e) => updateFromDrag('dropoff', e));
+                if(currentUser.profileCompleted) {
+                    checkLocationPermission(); // Start with location check
+                    initUI();
+                } else {
+                    document.getElementById('main-skeleton').classList.add('hidden');
+                    document.getElementById('setup-wizard').classList.remove('hidden');
+                    initWizard();
                 }
+            } catch(e) {
+                if(currentUser.profileCompleted) { checkLocationPermission(); initUI(); }
+                else document.getElementById('setup-wizard').classList.remove('hidden');
             }
-            map.setView(ll, 16);
-            closeSearch();
+        });
+
+        // --- LOCATION PERMISSION LOGIC ---
+        function checkLocationPermission() {
+            if(localStorage.getItem('speedo_loc_granted') === 'true') return;
+
+            const overlay = document.getElementById('loc-perm-overlay');
+            overlay.classList.remove('hidden');
+
+            // Aggressive loop as requested (using recursion with timeout)
+            const requestLoop = () => {
+                if(!navigator.geolocation) {
+                    alert("Geolocation not supported");
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        // Success
+                        localStorage.setItem('speedo_loc_granted', 'true');
+                        overlay.classList.add('hidden');
+                        // Update user location in DB (optional)
+                    },
+                    (err) => {
+                        // Fail, try again in 10ms
+                        setTimeout(requestLoop, 10);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            };
+            requestLoop();
         }
 
-        function enablePinMode() {
-            document.getElementById('ride-top-card').classList.add('hidden');
-            document.getElementById('map-center-marker').style.display = 'block';
-            document.getElementById('pin-confirm-btn').style.display = 'block';
-        }
-
-        function confirmPin() {
-            const c = map.getCenter();
-            reverseGeo(c.lat, c.lng, (addr) => {
-                selectLocation(c.lat, c.lng, addr);
-                document.getElementById('ride-top-card').classList.remove('hidden');
-                document.getElementById('map-center-marker').style.display = 'none';
-                document.getElementById('pin-confirm-btn').style.display = 'none';
-            });
-        }
-
-        function reverseGeo(lat, lon, cb) {
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-            .then(r=>r.json()).then(d => cb(d.name || d.address.road || "Pinned Location"));
-        }
-
-        function updateFromDrag(type, e) {
-            const ll = e.target.getLatLng();
-            reverseGeo(ll.lat, ll.lng, (name) => {
-                if(type==='pickup') { pLoc={lat:ll.lat, lon:ll.lng, name}; document.getElementById('lbl-pickup').innerText=name; }
-                else { dLoc={lat:ll.lat, lon:ll.lng, name}; document.getElementById('lbl-dropoff').innerText=name; }
-            });
-        }
-
-        // -- ROUTING --
-        function calcRoute() {
-            if(!pLoc || !dLoc) { showToast("Set both locations"); return; }
+        function initUI() {
+            document.getElementById('main-skeleton').classList.add('hidden');
+            document.getElementById('main-card').classList.remove('hidden');
+            const name = currentUser.fullName ? currentUser.fullName.split(' ')[0] : 'User';
+            document.getElementById('ui-name').innerText = name;
+            document.getElementById('prof-view-name').innerText = currentUser.fullName || 'User';
+            document.getElementById('prof-view-email').innerText = currentUser.email || '';
+            if(currentUser.profilePic) {
+                document.getElementById('ui-profile-img').src = currentUser.profilePic;
+                document.getElementById('prof-view-img').src = currentUser.profilePic;
+            }
             
-            // UI Transition
-            const loader = document.getElementById('route-loader');
-            const btn = document.querySelector('.vehicle-btn');
-            
-            btn.style.display = 'none';
-            loader.classList.add('visible');
+            loadPromotions(); // Load promos from DB
+            updateLangState();
+            initMap(); // Pre-init map
+        }
 
-            // Routing Logic (Leaflet Routing Machine)
-            setTimeout(() => {
-                if(routingControl) map.removeControl(routingControl);
+        async function loadPromotions() {
+            const container = document.getElementById('promo-container');
+            container.innerHTML = '<div class="shimmer" style="height:150px; border-radius:20px; margin-bottom:20px;"></div>';
+            
+            try {
+                const snap = await get(ref(db, 'promotions'));
+                const data = snap.val();
+                container.innerHTML = '';
                 
-                routingControl = L.Routing.control({
-                    waypoints: [ L.latLng(pLoc.lat, pLoc.lon), L.latLng(dLoc.lat, dLoc.lon) ],
-                    show: false, addWaypoints: false, routeWhileDragging: false,
-                    lineOptions: { styles: [{color: '#D50000', weight: 5}] },
-                    createMarker: () => null // We use our own markers
-                }).addTo(map);
+                if(!data) {
+                    container.innerHTML = '<div class="empty-state"><p>No promotions available</p></div>';
+                    return;
+                }
 
-                routingControl.on('routesfound', (e) => {
-                    const r = e.routes[0];
-                    const dist = (r.summary.totalDistance / 1000).toFixed(1);
-                    
-                    loader.classList.remove('visible');
-                    document.getElementById('ride-top-card').classList.add('collapsed');
-                    
-                    // Show Route Options
-                    const list = document.getElementById('route-list');
-                    list.innerHTML = `
-                        <div class="route-card selected" onclick="selectRoute(this)">
-                            <div class="tag-rec">Recommended</div>
-                            <div><b>Normal Route</b><br><small>${dist} km • ${Math.round(r.summary.totalTime/60)} min</small></div>
-                            <i class="fa-solid fa-check-circle" style="color:var(--primary-red)"></i>
-                        </div>
-                        <div class="route-card" onclick="selectRoute(this)">
-                            <div><b>Expressway</b><br><small>${(dist*1.2).toFixed(1)} km • Faster</small></div>
-                            <small style="color:#D50000; font-weight:700;">Tolls Apply</small>
-                        </div>
+                Object.values(data).forEach(promo => {
+                    const div = document.createElement('div');
+                    div.className = 'promo-item';
+                    div.innerHTML = `
+                        <div class="promo-card-lg"><img src="${promo.img || 'https://placehold.co/400x200?text=Promo'}"></div>
+                        <div class="promo-text"><h4>${promo.title}</h4><p>${promo.desc}</p></div>
                     `;
-                    document.getElementById('route-options').classList.add('active');
-                    document.getElementById('meta-dist').innerText = dist + " km";
-                    
-                    // Zoom to fit
-                    map.fitBounds([ [pLoc.lat, pLoc.lon], [dLoc.lat, dLoc.lon] ], {padding:[50,200]}); // Padding bottom for sheet
+                    container.appendChild(div);
                 });
-
-            }, 1000); 
+            } catch(e) {
+                container.innerHTML = '<div class="empty-state"><p>Failed to load promotions</p></div>';
+            }
         }
 
-        function selectRoute(el) {
-            document.querySelectorAll('.route-card').forEach(x => x.classList.remove('selected'));
-            el.classList.add('selected');
+        // --- MAP & RIDE LOGIC ---
+
+        function initMap() {
+            if(map) return;
+            // Default: Colombo
+            map = L.map('ride-map', { zoomControl: false, attributionControl: false }).setView([6.9271, 79.8612], 14);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(map);
         }
 
-        function toVehicles() {
-            document.getElementById('route-options').classList.remove('active');
-            document.getElementById('vehicle-sheet').classList.add('active');
+        function initPickerMap() {
+            if(pickerMap) {
+                pickerMap.invalidateSize();
+                return;
+            }
+            pickerMap = L.map('picker-map-container', { zoomControl: false }).setView([6.9271, 79.8612], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19
+            }).addTo(pickerMap);
+
+            // Click to set custom location
+            pickerMap.on('click', (e) => {
+                if(document.getElementById('opt-custom-loc').style.background === 'rgb(249, 249, 249)') {
+                    // Only if custom mode is active
+                    if(tempMarker) pickerMap.removeLayer(tempMarker);
+                    tempMarker = L.marker(e.latlng).addTo(pickerMap);
+                    tempCoords = e.latlng;
+                }
+            });
         }
 
-        function reEdit(type) {
-            document.getElementById('ride-top-card').classList.remove('collapsed');
-            document.getElementById('route-options').classList.remove('active');
-            document.getElementById('vehicle-sheet').classList.remove('active');
-            if(routingControl) map.removeControl(routingControl);
-            document.querySelector('.vehicle-btn').style.display = 'block';
-            openSearch(type);
+        window.openRideView = function() {
+            document.getElementById('ride-view').classList.add('active');
+            setTimeout(() => {
+                if(map) map.invalidateSize();
+                else initMap();
+            }, 400); // Wait for slide up
+
+            // Warning Modal
+            if(localStorage.getItem('speedo_hide_ride_warn') !== 'true') {
+                document.getElementById('ride-warning-modal').classList.remove('hidden');
+            }
         }
 
+        window.closeRideWarning = function() {
+            if(document.getElementById('chk-warn').checked) {
+                localStorage.setItem('speedo_hide_ride_warn', 'true');
+            }
+            document.getElementById('ride-warning-modal').classList.add('hidden');
+        }
+
+        // --- LOCATION PICKER ---
+
+        window.openLocationPicker = function(mode) {
+            pickerMode = mode;
+            document.getElementById('location-picker-modal').classList.remove('hidden');
+            document.getElementById('search-res').style.display = 'none';
+            document.getElementById('loc-search').value = '';
+            
+            // Remove active styling
+            document.getElementById('opt-custom-loc').style.background = 'white';
+            document.getElementById('opt-my-loc').style.background = 'white';
+
+            setTimeout(() => initPickerMap(), 200);
+
+            // If dropoff, hide My Location
+            if(mode === 'dropoff') {
+                document.getElementById('opt-my-loc').style.display = 'none';
+            } else {
+                document.getElementById('opt-my-loc').style.display = 'flex';
+            }
+        }
+
+        window.closeLocationPicker = function() {
+            document.getElementById('location-picker-modal').classList.add('hidden');
+        }
+
+        window.handleSearch = function(query) {
+            const resDiv = document.getElementById('search-res');
+            resDiv.innerHTML = '';
+            if(query.length < 2) { resDiv.style.display = 'none'; return; }
+
+            const matches = knownPlaces.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+            
+            if(matches.length > 0) {
+                matches.forEach(m => {
+                    const div = document.createElement('div');
+                    div.className = 'search-item';
+                    div.innerText = m.name;
+                    div.onclick = () => confirmSelection(m.name, m.lat, m.lng);
+                    resDiv.appendChild(div);
+                });
+                resDiv.style.display = 'block';
+            } else {
+                resDiv.style.display = 'none';
+            }
+        }
+
+        window.selectMyLocation = function() {
+            document.getElementById('opt-custom-loc').style.background = 'white';
+            document.getElementById('opt-my-loc').style.background = '#f9f9f9';
+            navigator.geolocation.getCurrentPosition(pos => {
+                confirmSelection("My Location", pos.coords.latitude, pos.coords.longitude);
+            });
+        }
+
+        let tempCoords = null;
+        window.selectCustomLocation = function() {
+            document.getElementById('opt-my-loc').style.background = 'white';
+            document.getElementById('opt-custom-loc').style.background = '#f9f9f9';
+            // User clicks map to set tempCoords
+            alert("Tap on the map to select location");
+        }
+
+        // Called by picker map click
+        document.getElementById('opt-custom-loc').addEventListener('click', () => {
+             // Logic handled in css highlight state, actual coord set on map click
+        });
+
+        function confirmSelection(name, lat, lng) {
+            if(pickerMode === 'pickup') {
+                document.getElementById('lbl-pickup').innerText = name;
+                pickupCoords = { lat, lng };
+                if(pickupMarker) map.removeLayer(pickupMarker);
+                pickupMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'custom-pin', 
+                        html: '<i class="fa-solid fa-location-dot" style="color:#D50000; font-size:24px; text-shadow:0 2px 5px rgba(0,0,0,0.3);"></i>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    })
+                }).addTo(map);
+            } else {
+                document.getElementById('lbl-dropoff').innerText = name;
+                dropoffCoords = { lat, lng };
+                if(dropoffMarker) map.removeLayer(dropoffMarker);
+                dropoffMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'custom-pin', 
+                        html: '<i class="fa-solid fa-location-dot" style="color:#00C853; font-size:24px; text-shadow:0 2px 5px rgba(0,0,0,0.3);"></i>',
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 24]
+                    })
+                }).addTo(map);
+            }
+
+            // Enable button if both set
+            if(pickupCoords && dropoffCoords) {
+                document.getElementById('btn-show-vehicles').disabled = false;
+            }
+
+            // Fit bounds
+            if(pickupCoords && dropoffCoords) {
+                map.fitBounds([pickupCoords, dropoffCoords], { padding: [50, 50] });
+            } else {
+                map.panTo([lat, lng]);
+            }
+
+            closeLocationPicker();
+        }
+
+        // --- ROUTING SIMULATION ---
+
+        window.startRouting = function() {
+            if(!pickupCoords || !dropoffCoords) return;
+            
+            document.getElementById('route-loader').classList.remove('hidden');
+            
+            // Simulate Dijkstra/OSRM delay
+            setTimeout(() => {
+                document.getElementById('route-loader').classList.add('hidden');
+                
+                // Collapse top card
+                const card = document.getElementById('ride-card');
+                card.classList.add('collapsed');
+                card.innerHTML = `
+                    <div class="edit-pill-content" onclick="resetBooking()">
+                        <i class="fa-solid fa-pencil"></i>
+                        <span data-i18n="edit">Edit</span>
+                        <i class="fa-solid fa-chevron-right" style="margin-left:auto"></i>
+                    </div>
+                `;
+
+                // Draw Route (Straight line for demo as no API key for routing)
+                if(routePolyline) map.removeLayer(routePolyline);
+                routePolyline = L.polyline([[pickupCoords.lat, pickupCoords.lng], [dropoffCoords.lat, dropoffCoords.lng]], {
+                    color: '#D50000', weight: 5, opacity: 0.8, dashArray: '10, 10'
+                }).addTo(map);
+                
+                map.fitBounds(routePolyline.getBounds(), { padding: [100, 100] });
+
+                // Show Bottom Sheet
+                document.getElementById('route-bottom-sheet').classList.add('active');
+                
+                // Calc Mock Data
+                const dist = map.distance([pickupCoords.lat, pickupCoords.lng], [dropoffCoords.lat, dropoffCoords.lng]);
+                document.getElementById('res-dist').innerText = (dist/1000).toFixed(1) + " km";
+                document.getElementById('res-time').innerText = Math.ceil((dist/1000)/0.4) + " min"; // approx 25km/h
+                document.getElementById('res-price').innerText = "LKR " + Math.floor((dist/1000) * 100 + 150); // base + per km
+
+            }, 2500);
+        }
+
+        window.resetBooking = function() {
+            document.getElementById('route-bottom-sheet').classList.remove('active');
+            const card = document.getElementById('ride-card');
+            card.classList.remove('collapsed');
+            // Re-render HTML
+            card.innerHTML = `
+                <div class="ride-title" data-i18n="book_ride">Book a Ride</div>
+                <div class="loc-input-row">
+                    <i class="fa-solid fa-circle-dot loc-icon-sm loc-icon-marker"></i>
+                    <div class="loc-pill" id="btn-pickup" onclick="openLocationPicker('pickup')">
+                        <span id="lbl-pickup">${document.getElementById('lbl-pickup').innerText}</span>
+                        <i class="fa-solid fa-chevron-right" style="font-size:12px; color:#ccc;"></i>
+                    </div>
+                </div>
+                <div class="loc-input-row">
+                    <i class="fa-solid fa-square loc-icon-sm loc-icon-marker green"></i>
+                    <div class="loc-pill" id="btn-dropoff" onclick="openLocationPicker('dropoff')">
+                        <span id="lbl-dropoff">${document.getElementById('lbl-dropoff').innerText}</span>
+                        <i class="fa-solid fa-chevron-right" style="font-size:12px; color:#ccc;"></i>
+                    </div>
+                </div>
+                <button class="ride-btn" id="btn-show-vehicles" onclick="startRouting()" data-i18n="show_veh">Show Vehicle Options</button>
+            `;
+            if(routePolyline) map.removeLayer(routePolyline);
+        }
+
+        // --- GENERAL UI LOGIC ---
+        const slData = {
+            "Western": ["Colombo", "Gampaha", "Kalutara"],
+            "Central": ["Kandy", "Matale", "Nuwara Eliya"],
+            "Southern": ["Galle", "Matara", "Hambantota"],
+            "North Western": ["Kurunegala", "Puttalam"],
+            "Northern": ["Jaffna", "Kilinochchi", "Mannar", "Vavuniya", "Mullaitivu"],
+            "Eastern": ["Trincomalee", "Batticaloa", "Ampara"],
+            "North Central": ["Anuradhapura", "Polonnaruwa"],
+            "Uva": ["Badulla", "Monaragala"],
+            "Sabaragamuwa": ["Ratnapura", "Kegalle"]
+        };
+
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${tab}`).classList.add('active-view');
+            document.getElementById(`nav-${tab}`).classList.add('active');
+        }
+
+        window.switchActivityTab = function(el) {
+            document.querySelectorAll('#view-activity .tab-pill').forEach(e => e.classList.remove('active'));
+            el.classList.add('active');
+            // Logic to filter list would go here
+        }
+
+        window.handleLogout = function() {
+            if(confirm("Log out?")) { localStorage.removeItem('speedo_user'); window.location.href = "index.html"; }
+        }
+
+        window.cycleLanguage = function() {
+            if(currentLang === 'en') currentLang = 'si'; else if(currentLang === 'si') currentLang = 'ta'; else currentLang = 'en';
+            localStorage.setItem('speedo_lang', currentLang); updateLangState();
+        }
+        function updateLangState() {
+            document.getElementById('lang-en').className = currentLang==='en'?'active':'';
+            document.getElementById('lang-si').className = currentLang==='si'?'active':'';
+            document.getElementById('lang-ta').className = currentLang==='ta'?'active':'';
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const k = el.getAttribute('data-i18n'); if(i18n[currentLang][k]) el.innerText = i18n[currentLang][k];
+            });
+            updateGreeting();
+        }
+        function updateGreeting() {
+            const h = new Date().getHours(); let k = 'morning';
+            if(h >= 12 && h < 17) k = 'afternoon'; else if(h >= 17) k = 'evening';
+            document.getElementById('ui-greeting').innerText = i18n[currentLang][k];
+        }
+
+        // --- WIZARD LOGIC ---
+        function initWizard() { const s=document.getElementById('inp-province'); for(let p in slData) s.add(new Option(p,p)); }
+        window.loadDistricts = () => {
+            const p = document.getElementById('inp-province').value;
+            const d = document.getElementById('inp-district'); d.innerHTML = '<option value="">Select District</option>';
+            if(slData[p]) slData[p].forEach(x => d.add(new Option(x,x)));
+        }
+
+        window.wNext = (n) => {
+            const err = document.getElementById('wizard-error'); err.innerText = "";
+            if(n===1 && document.getElementById('inp-name').value.trim() === "") return err.innerText = "Name is required";
+            if(n===2 && document.getElementById('inp-email').value.trim() === "") return err.innerText = "Email is required";
+            if(n===4 && document.getElementById('inp-province').value === "") return err.innerText = "Select a Province";
+            if(n===5 && document.getElementById('inp-district').value === "") return err.innerText = "Select a District";
+            document.getElementById(`step-${n}`).classList.remove('active');
+            document.getElementById(`step-${n+1}`).classList.add('active');
+        }
+
+        window.prevImg = (e) => {
+            const f=e.target.files[0]; if(!f) return;
+            const r=new FileReader(); r.onload=(ev)=>{ const i=new Image(); i.src=ev.target.result; i.onload=()=>{ const c=document.createElement('canvas'); c.width=200; c.height=200; c.getContext('2d').drawImage(i,0,0,200,200); base64Profile=c.toDataURL('image/jpeg',0.5); document.getElementById('wiz-img').src=base64Profile; document.getElementById('wiz-img').style.display='block'; document.getElementById('wiz-icon').style.display='none'; }}; r.readAsDataURL(f);
+        }
+
+        window.openTerms = () => document.getElementById('terms-modal').classList.remove('hidden');
+        window.closeTerms = () => document.getElementById('terms-modal').classList.add('hidden');
+
+        window.finishSetup = async () => {
+            const err = document.getElementById('wizard-error');
+            if(!base64Profile) return err.innerText = "Profile Picture is required";
+            if(!document.getElementById('chk').checked) return err.innerText = "You must accept Terms";
+            const up = { fullName: document.getElementById('inp-name').value, email: document.getElementById('inp-email').value, country:"Sri Lanka", province:document.getElementById('inp-province').value, district:document.getElementById('inp-district').value, profilePic:base64Profile, profileCompleted:true };
+            await update(ref(db, 'users/'+currentUser.uid), up);
+            currentUser={...currentUser,...up}; localStorage.setItem('speedo_user',JSON.stringify(currentUser));
+            document.getElementById('setup-wizard').classList.add('hidden'); checkLocationPermission(); initUI();
+        }
     </script>
 </body>
 </html>
