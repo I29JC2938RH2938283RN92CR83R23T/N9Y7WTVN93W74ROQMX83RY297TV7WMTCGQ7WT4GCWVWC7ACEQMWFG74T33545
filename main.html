@@ -11,810 +11,640 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Leaflet Maps & Routing -->
+    <!-- Leaflet Maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
 
     <style>
-        /* --- General Styles --- */
+        /* --- CORE LAYOUT --- */
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
-            font-family: 'Poppins', 'Noto Sans Sinhala', 'Noto Sans Tamil', sans-serif;
-            background-color: #D50000; /* Primary Red Background */
-            overflow: hidden;
-            user-select: none;
+            font-family: 'Poppins', sans-serif;
+            background-color: #D50000; /* Red Background */
+            overflow: hidden; user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-
         .hidden { display: none !important; }
 
-        :root {
-            --primary-red: #D50000;
-            --text-dark: #333;
-            --bg-grey: #f8f9fa;
-            --shadow: 0 4px 20px rgba(0,0,0,0.1);
-        }
+        :root { --primary-red: #D50000; --text-dark: #333; --bg-grey: #f8f9fa; }
 
-        /* --- TOAST NOTIFICATION --- */
-        #toast-container {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            z-index: 9999; display: flex; flex-direction: column; gap: 10px; width: 90%; max-width: 350px;
-        }
-        .toast {
-            background: rgba(0,0,0,0.85); color: white; padding: 12px 20px; border-radius: 30px;
-            font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); animation: slideDown 0.3s ease-out;
-        }
-        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        /* --- HEADER --- */
+        /* --- HEADER (Red Area) --- */
         #header-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 120px;
-            z-index: 10; padding: 15px; box-sizing: border-box;
+            position: absolute; top: 0; left: 0; width: 100%; height: 110px;
+            z-index: 10; padding: 15px 20px; box-sizing: border-box;
             display: flex; justify-content: space-between; align-items: flex-start;
         }
-
         .name-pill {
-            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
-            padding: 5px 15px 5px 5px; border-radius: 40px;
-            display: flex; align-items: center; gap: 10px;
-            border: 1px solid rgba(255,255,255,0.3); color: white; max-width: 55%; cursor: pointer;
+            background: rgba(255,255,255,0.25); backdrop-filter: blur(5px);
+            padding: 5px 15px 5px 5px; border-radius: 40px; display: flex; align-items: center; gap: 10px;
+            border: 1px solid rgba(255,255,255,0.3); color: white; cursor: pointer;
         }
-        .name-pill:active { transform: scale(0.97); }
-        .pill-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
-        .pill-info { display: flex; flex-direction: column; justify-content: center; }
-        .pill-hello { font-size: 13px; font-weight: 700; line-height: 1.1; }
-        .pill-greeting { font-size: 10px; opacity: 0.9; font-weight: 400; line-height: 1.1; margin-top: 2px; }
+        .pill-img { width: 36px; height: 36px; border-radius: 50%; border: 2px solid white; object-fit: cover; }
+        .pill-info { display: flex; flex-direction: column; line-height: 1.1; }
 
-        .lang-pill {
-            background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
-            padding: 10px 15px; border-radius: 30px;
-            border: 1px solid rgba(255,255,255,0.3); color: white; font-size: 13px; font-weight: 600;
-            cursor: pointer; display: flex; gap: 5px;
-        }
-        .lang-pill span { opacity: 0.6; transition: 0.3s; }
-        .lang-pill span.active { opacity: 1; font-weight: 700; text-decoration: underline; }
-
-        /* --- MAIN CARD --- */
+        /* --- MAIN CARD (White Area) --- */
         #main-card {
-            position: absolute; bottom: 0; left: 0;
-            width: 100%; height: calc(100% - 90px);
-            background: white; border-radius: 30px 30px 0 0;
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.2); z-index: 5;
-            padding: 30px 20px 80px 20px; box-sizing: border-box;
-            overflow-y: auto; animation: slideUp 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+            position: absolute; top: 110px; left: 0; width: 100%; bottom: 70px; /* Leave space for header & nav */
+            background: #fff; border-radius: 30px 30px 0 0;
+            padding: 25px 20px; box-sizing: border-box;
+            overflow-y: auto; z-index: 5;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.15);
         }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        /* Services Grid */
-        .services-grid { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
-        .service-btn { display: flex; flex-direction: column; align-items: center; width: 32%; cursor: pointer; }
-        .svc-img-box {
-            width: 100%; aspect-ratio: 1/1; background: var(--bg-grey); border-radius: 20px; margin-bottom: 10px;
-            display: flex; justify-content: center; align-items: center; border: 1px solid #eee; overflow: hidden;
-            transition: transform 0.2s;
+        /* --- SERVICES GRID --- */
+        .services-grid { display: flex; justify-content: space-between; margin-bottom: 25px; }
+        .service-btn { width: 30%; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+        .svc-icon-box {
+            width: 100%; aspect-ratio: 1/1; background: #f5f5f5; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            border: 1px solid #eee; overflow: hidden; transition: 0.2s;
         }
-        .svc-img-box img { width: 100%; height: 100%; object-fit: cover; }
-        .service-btn:active .svc-img-box { transform: scale(0.95); }
-        .svc-label { font-weight: 700; font-size: 14px; color: var(--text-dark); }
+        .svc-icon-box img { width: 100%; height: 100%; object-fit: cover; }
+        .svc-label { font-weight: 700; color: #333; font-size: 14px; }
+        .service-btn:active .svc-icon-box { transform: scale(0.95); }
 
-        /* Other UI Elements */
-        .ad-banner { width: 100%; aspect-ratio: 16/9; background: #eee; border-radius: 20px; overflow: hidden; position: relative; margin-bottom: 20px; }
+        /* --- PROMOS & ACTIVITY --- */
+        .ad-banner { width: 100%; aspect-ratio: 16/7; background: #eee; border-radius: 20px; overflow: hidden; margin-bottom: 20px; }
         .ad-banner img { width: 100%; height: 100%; object-fit: cover; }
-        .ad-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
         
-        .activity-card { width: 100%; background: white; border: 1px solid #eee; border-radius: 20px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer; margin-bottom: 20px; }
-        .act-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .act-title { font-size: 16px; font-weight: 700; color: #333; }
-        .act-content { background: #f8f9fa; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; color: #888; }
-
-        .promo-strip-wrapper { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
-        .promo-strip-item { min-width: 100%; aspect-ratio: 32/9; border-radius: 15px; overflow: hidden; box-shadow: 0 3px 10px rgba(0,0,0,0.08); }
-        .promo-strip-item img { width: 100%; height: 100%; object-fit: cover; }
-
-        .tab-view { display: none; flex-direction: column; animation: fadeIn 0.3s ease-in-out; width: 100%; }
-        .tab-view.active-view { display: flex; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+        .activity-card {
+            background: white; border: 1px solid #eee; border-radius: 15px; padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;
+        }
+        
         /* --- BOTTOM NAV --- */
         #bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; background: white;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 20; display: flex; justify-content: space-around; align-items: center; border-top: 1px solid #f0f0f0;
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px;
+            background: white; border-top: 1px solid #eee; z-index: 20;
+            display: flex; justify-content: space-around; align-items: center;
         }
-        .nav-item { display: flex; flex-direction: column; align-items: center; justify-content: center; color: #aaa; cursor: pointer; width: 25%; }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: #ccc; font-size: 10px; font-weight: 600; cursor: pointer; }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; }
         .nav-item.active { color: var(--primary-red); }
 
-        /* --- RIDE OVERLAY --- */
+        /* --- RIDE UI --- */
         #ride-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 3000; transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            background: white; z-index: 2000; transform: translateY(100%);
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
             display: flex; flex-direction: column;
         }
         #ride-overlay.active { transform: translateY(0); }
-        
-        #ride-map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
-        .leaflet-control-attribution, .leaflet-control-zoom { display: none; }
 
-        /* Ride Top Card */
+        #ride-map { flex: 1; width: 100%; position: relative; }
+        .leaflet-control-attribution { display: none; }
+
+        /* Top Card */
         #ride-top-card {
-            position: absolute; top: 20px; left: 5%; width: 90%; 
-            background: white; border-radius: 20px; padding: 20px; box-sizing: border-box;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15); z-index: 10;
-            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            display: flex; flex-direction: column; overflow: hidden;
+            position: absolute; top: 20px; left: 15px; right: 15px;
+            background: white; border-radius: 20px; padding: 20px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15); z-index: 1000;
+            transition: 0.3s ease;
         }
         #ride-top-card.collapsed {
             top: 20px; padding: 15px;
         }
-
-        .ride-title { font-weight: 700; margin-bottom: 15px; color: #333; display: flex; justify-content: space-between; align-items: center; }
-        .collapsed .ride-title { display: none; }
+        .ride-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .ride-title { font-weight: 800; font-size: 18px; }
         
-        /* Integrated Close Button */
-        .close-ride-integrated {
+        .close-btn { 
             width: 30px; height: 30px; background: #f0f0f0; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; cursor: pointer;
-            color: #333; font-size: 14px; position: absolute; top: 15px; right: 15px; transition: 0.3s;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; 
         }
-        .collapsed .close-ride-integrated { top: 10px; right: 10px; width: 25px; height: 25px; font-size: 12px; background: #ffebee; color: var(--primary-red); }
 
-        /* Card Content */
-        .loc-inputs { margin-bottom: 10px; }
-        .loc-input-btn {
-            width: 100%; padding: 15px; background: #f8f9fa; border-radius: 12px;
-            margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
-            color: #555; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid #eee;
-            box-sizing: border-box; position: relative;
+        .input-row { 
+            display: flex; align-items: center; gap: 10px; padding: 12px;
+            background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; margin-bottom: 8px; cursor: pointer;
         }
-        .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .dot.blue { background: #2196F3; }
-        .dot.red { background: #D50000; }
-        .collapsed .loc-inputs, .collapsed .vehicle-btn { display: none; }
-
+        .collapsed .input-row, .collapsed .btn-main { display: none; }
+        
         /* Collapsed Summary */
-        .summary-row { display: none; flex-direction: column; gap: 10px; width: 100%; padding-right: 30px; }
-        .collapsed .summary-row { display: flex; }
-        .sum-line { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; color: #333; }
-        .sum-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; }
-        .edit-pencil { color: var(--primary-red); font-size: 12px; padding: 5px; cursor: pointer; margin-left: auto; }
-        .sum-meta { font-size: 11px; color: #888; display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 5px; margin-top: 5px; }
+        .summary-view { display: none; flex-direction: column; gap: 8px; }
+        .collapsed .summary-view { display: flex; }
+        .sum-row { display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 600; }
+        .sum-pen { color: var(--primary-red); padding: 5px; cursor: pointer; }
+        .sum-meta { font-size: 11px; color: #888; border-top: 1px solid #eee; padding-top: 5px; margin-top: 5px; display: flex; justify-content: space-between; }
 
-        /* Button */
-        .btn-red { background:var(--primary-red); color:white; padding:15px; border-radius:15px; border:none; font-weight:700; width:100%; font-size: 14px; cursor: pointer; transition: 0.2s; }
-        .btn-red:active { transform: scale(0.98); }
+        .btn-main {
+            background: var(--primary-red); color: white; border: none; padding: 15px;
+            width: 100%; border-radius: 12px; font-weight: 700; font-size: 15px; margin-top: 5px;
+        }
 
-        /* Glowing User Marker */
-        .glow-marker {
-            width: 20px; height: 20px; background: #2196F3; border-radius: 50%;
-            border: 3px solid white; box-shadow: 0 0 10px rgba(33, 150, 243, 0.6);
-            position: relative;
-        }
-        .glow-marker::after {
-            content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 40px; height: 40px; border-radius: 50%; background: rgba(33, 150, 243, 0.4);
-            animation: pulse 2s infinite; z-index: -1;
-        }
-        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(2); opacity: 0; } }
+        /* Loading / Route Options */
+        #route-loader { display: none; text-align: center; padding: 20px; color: #666; font-size: 13px; }
+        #route-loader.visible { display: block; }
+        .bar-loader { width: 100%; height: 3px; background: #eee; overflow: hidden; border-radius: 2px; margin-bottom: 10px; }
+        .bar-fill { width: 50%; height: 100%; background: var(--primary-red); animation: slide 1s infinite ease-in-out; }
+        @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(200%); } }
 
-        /* Route Selection & Loader */
-        #route-options-wrapper {
-            position: absolute; bottom: 0; left: 0; width: 100%;
-            background: white; border-radius: 30px 30px 0 0;
-            padding: 20px; box-sizing: border-box; box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
-            z-index: 20; transform: translateY(100%); transition: 0.4s; display: flex; flex-direction: column;
+        #route-options { 
+            background: white; border-radius: 25px 25px 0 0; padding: 20px; 
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1); transform: translateY(100%); transition: 0.3s;
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 1001; max-height: 50vh; overflow-y: auto;
         }
-        #route-options-wrapper.active { transform: translateY(0); }
-        
-        .route-opt {
-            padding: 15px; border: 1px solid #eee; border-radius: 15px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center; cursor: pointer;
-            transition: 0.2s; position: relative; overflow: hidden;
-        }
-        .route-opt.selected { border: 2px solid var(--primary-red); background: #fff5f5; }
-        .route-opt.recommended::after {
-            content: 'Recommended'; position: absolute; top: 0; left: 0;
-            background: #4CAF50; color: white; font-size: 9px; padding: 2px 8px;
-            border-bottom-right-radius: 10px; font-weight: 700;
-        }
-        .warn-text { color: #D50000; font-size: 10px; font-weight: 700; display: block; margin-top: 3px; }
+        #route-options.active { transform: translateY(0); }
 
-        /* Full Screen Loader */
-        #fs-loader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.95); z-index: 4000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        .route-card {
+            border: 1px solid #eee; border-radius: 12px; padding: 12px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center; cursor: pointer; position: relative;
         }
-        .spinner { width: 50px; height: 50px; border: 5px solid #eee; border-top-color: var(--primary-red); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .route-card.selected { border: 2px solid var(--primary-red); background: #fffbfb; }
+        .tag-rec { position: absolute; top: 0; left: 0; background: #4CAF50; color: white; font-size: 9px; padding: 2px 6px; border-bottom-right-radius: 8px; }
 
-        /* Location Skeleton */
-        #loc-skeleton-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 5000; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center; padding: 30px;
-        }
-        .sk-pulse { width: 80px; height: 80px; background: #eee; border-radius: 50%; margin-bottom: 20px; animation: pulse-grey 1.5s infinite; }
-        @keyframes pulse-grey { 0% { transform: scale(0.9); opacity: 0.7; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.7; } }
-        
         /* Vehicle Sheet */
         #vehicle-sheet {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 60%;
-            background: white; border-radius: 30px 30px 0 0; padding: 20px;
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.2); z-index: 30;
-            transform: translateY(100%); transition: 0.4s; overflow-y: auto;
+            background: white; border-radius: 25px 25px 0 0; padding: 25px 20px; 
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.2); transform: translateY(100%); transition: 0.3s;
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 1002;
         }
         #vehicle-sheet.active { transform: translateY(0); }
+        .vehicle-scroller { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 10px; scrollbar-width: none; }
+        .v-card { min-width: 90px; text-align: center; border: 1px solid #eee; padding: 15px 10px; border-radius: 12px; }
+        .v-card.active { border-color: var(--primary-red); background: #fff5f5; }
 
         /* Search Modal */
-        #loc-search-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 4500; transform: translateY(100%); transition: 0.3s;
-            display: flex; flex-direction: column; padding: 20px; box-sizing: border-box;
+        #search-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white;
+            z-index: 3000; display: flex; flex-direction: column; transform: translateY(100%); transition: 0.3s;
         }
-        #loc-search-modal.active { transform: translateY(0); }
-        .search-pill-row { display: flex; gap: 10px; margin-bottom: 20px; }
-        .search-pill-btn { flex: 1; padding: 12px; background: #eee; border-radius: 12px; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; }
-        .search-input-box { background: #f8f9fa; border: 1px solid #ddd; border-radius: 15px; padding: 0 15px; display: flex; align-items: center; margin-bottom: 15px; }
-        .search-input-box input { border: none; background: transparent; padding: 15px 0; margin-left: 10px; flex: 1; outline: none; }
+        #search-modal.active { transform: translateY(0); }
+        .search-head { padding: 20px; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center; }
+        .search-bar { flex: 1; background: #f5f5f5; border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 10px; }
+        .search-bar input { border: none; background: transparent; width: 100%; outline: none; font-size: 15px; }
+        .search-results { flex: 1; overflow-y: auto; padding: 10px 20px; }
+        .place-item { padding: 15px 0; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
 
-        /* Setup Wizard (Minified styling) */
-        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:6000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; }
-        .step { display:none; width:100%; max-width:400px; text-align:center; animation:fadeIn 0.3s; }
-        .step.active { display:block; }
-        .input-box input, .input-box select { width:100%; padding:15px; border:2px solid #eee; border-radius:12px; margin-bottom:10px; box-sizing:border-box; }
-        .profile-upload { width:100px; height:100px; background:#f4f4f4; border-radius:50%; margin:0 auto 20px; overflow:hidden; border:2px dashed #ccc; display:flex; align-items:center; justify-content:center; }
+        /* Skeleton Location Loader */
+        #loc-skeleton {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .pulse-circle { width: 60px; height: 60px; background: #eee; border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.6; } }
+
+        /* Glowing User Marker */
+        .user-glow { width: 16px; height: 16px; background: #2196F3; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 15px #2196F3; animation: glow 2s infinite; }
+        @keyframes glow { 0% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(33, 150, 243, 0); } 100% { box-shadow: 0 0 0 0 rgba(33, 150, 243, 0); } }
+
+        /* Toast */
+        #toast { 
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
+            background: #333; color: white; padding: 10px 20px; border-radius: 30px; 
+            font-size: 13px; z-index: 9999; display: none; animation: dropIn 0.3s; 
+        }
+        @keyframes dropIn { from {top:-50px;} to {top:20px;} }
+
+        /* Buttons on Map (Pin) */
+        #pin-confirm-btn {
+            position: absolute; bottom: 30px; left: 20px; right: 20px; 
+            z-index: 1000; display: none;
+        }
+        #map-center-marker {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%);
+            z-index: 500; font-size: 35px; color: #333; pointer-events: none; display: none;
+        }
 
     </style>
 </head>
 <body>
 
-    <!-- TOAST CONTAINER -->
-    <div id="toast-container"></div>
+    <!-- TOAST -->
+    <div id="toast">Notification</div>
 
-    <!-- LOCATION SKELETON / FAILED OVERLAY -->
-    <div id="loc-skeleton-overlay" class="hidden">
-        <div id="loc-loading-content">
-            <div class="sk-pulse"></div>
-            <h3 style="color:#333; margin:0;">Finding your location...</h3>
-            <p style="color:#888; font-size:13px;">Please wait while we connect to GPS</p>
-        </div>
-        <div id="loc-failed-content" class="hidden">
-            <i class="fa-solid fa-location-slash" style="font-size:60px; color:#D50000; margin-bottom:20px;"></i>
-            <h3 style="color:#D50000; margin:0;">Location Access Failed</h3>
-            <p style="color:#555; font-size:14px; margin-bottom:30px;">We cannot book a ride without your location. Please enable GPS in your browser settings.</p>
-            <button class="btn-red" style="width:auto; padding:10px 40px;" onclick="closeLocOverlay()">Close</button>
+    <!-- LOCATION SKELETON -->
+    <div id="loc-skeleton" class="hidden">
+        <div class="pulse-circle"></div>
+        <h3 style="margin-top:20px;">Locating...</h3>
+        <p style="color:#888; font-size:13px; max-width:80%; text-align:center;">Connecting to GPS satellites</p>
+        <div id="loc-failed-msg" class="hidden" style="text-align:center;">
+            <p style="color:#D50000; margin-top:20px;">Location access failed.</p>
+            <button onclick="document.getElementById('loc-skeleton').classList.add('hidden')" style="padding:10px 20px; background:#eee; border:none; border-radius:10px;">Close</button>
         </div>
     </div>
 
     <!-- HEADER -->
     <div id="header-layer">
-        <div class="name-pill" onclick="switchTab('profile')">
-            <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" class="pill-img" id="ui-profile-img">
+        <div class="name-pill">
+            <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" class="pill-img" id="hdr-img">
             <div class="pill-info">
-                <span class="pill-hello">Hello <span id="ui-name">...</span></span>
-                <span class="pill-greeting" id="ui-greeting">...</span>
+                <span style="font-size:10px; opacity:0.8;">Hello</span>
+                <span style="font-weight:700; font-size:13px;" id="hdr-name">User</span>
             </div>
         </div>
-        <div class="lang-pill" onclick="cycleLanguage()">
-            <span id="lang-en" class="active">En</span> · <span id="lang-si">සි</span> · <span id="lang-ta">த</span>
+        <div class="name-pill" style="border-radius:12px; padding:8px;" onclick="alert('Settings')">
+            <i class="fa-solid fa-gear" style="font-size:16px;"></i>
         </div>
     </div>
 
     <!-- MAIN CARD -->
-    <div id="main-card" class="hidden">
-        <!-- Views -->
-        <div id="view-home" class="tab-view active-view">
-            <div class="services-grid">
-                <div class="service-btn" onclick="initRideFlow()">
-                    <div class="svc-img-box"><img src="https://i.ibb.co/cSDnbNVB/car-final-2.jpg" alt="Ride"></div>
-                    <span class="svc-label">Ride</span>
-                </div>
-                <div class="service-btn" onclick="window.location.href='foods.html'">
-                    <div class="svc-img-box"><img src="https://i.ibb.co/8gGtW9xc/bag-final-1.jpg" alt="Food"></div>
-                    <span class="svc-label">Food</span>
-                </div>
-                <div class="service-btn">
-                    <div class="svc-img-box"><img src="https://i.ibb.co/67BshY3t/delivery-guy.png" alt="Flash"></div>
-                    <span class="svc-label">Flash</span>
-                </div>
+    <div id="main-card">
+        <!-- SERVICES -->
+        <div class="services-grid">
+            <div class="service-btn" onclick="startRideFlow()">
+                <div class="svc-icon-box"><img src="https://i.ibb.co/cSDnbNVB/car-final-2.jpg"></div>
+                <span class="svc-label">Ride</span>
             </div>
-            <div class="ad-banner">
-                <div class="ad-badge">Promoted</div>
-                <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg">
+            <div class="service-btn">
+                <div class="svc-icon-box"><img src="https://i.ibb.co/8gGtW9xc/bag-final-1.jpg"></div>
+                <span class="svc-label">Food</span>
             </div>
-            <div class="activity-card" onclick="switchTab('activity')">
-                <div class="act-header"><span class="act-title">Ongoing Activities</span><i class="fa-solid fa-chevron-right"></i></div>
-                <div class="act-content"><i class="fa-solid fa-clipboard-list"></i> No Ongoing Activities</div>
-            </div>
-            <div class="promo-strip-wrapper">
-                <div class="promo-strip-item"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
-                <div class="promo-strip-item"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
+            <div class="service-btn">
+                <div class="svc-icon-box"><img src="https://i.ibb.co/67BshY3t/delivery-guy.png"></div>
+                <span class="svc-label">Flash</span>
             </div>
         </div>
 
-        <div id="view-activity" class="tab-view">
-            <h2 style="margin:0 0 20px 0;">Activity</h2>
-            <div class="empty-state" style="text-align:center; padding:50px 0; color:#aaa;">
-                <i class="fa-solid fa-folder-open" style="font-size:40px; margin-bottom:10px;"></i><br>No recent records
-            </div>
+        <!-- BANNER -->
+        <div class="ad-banner">
+            <div class="ad-badge">Promoted</div>
+            <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg">
         </div>
-        
-        <div id="view-profile" class="tab-view">
-            <div style="text-align:center; margin-bottom:30px;">
-                <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" id="prof-view-img" style="width:90px; height:90px; border-radius:50%; object-fit:cover; border:3px solid #eee;">
-                <h3 id="prof-view-name" style="margin:10px 0 5px 0;">User</h3>
-                <p id="prof-view-email" style="color:#888; font-size:13px; margin:0;">...</p>
+
+        <!-- ACTIVITY -->
+        <div class="activity-card">
+            <div>
+                <div style="font-weight:700; margin-bottom:5px;">Recent Activity</div>
+                <div style="font-size:12px; color:#888;">No rides yet</div>
             </div>
-            <button class="btn-red" style="background:#ffebee; color:#D50000;" onclick="handleLogout()">Log Out</button>
+            <i class="fa-solid fa-chevron-right" style="color:#ccc;"></i>
         </div>
     </div>
 
     <!-- BOTTOM NAV -->
     <div id="bottom-nav">
-        <div class="nav-item active" id="nav-home" onclick="switchTab('home')"><i class="fa-solid fa-house"></i><span>Home</span></div>
-        <div class="nav-item" id="nav-activity" onclick="switchTab('activity')"><i class="fa-solid fa-clock-rotate-left"></i><span>Activity</span></div>
-        <div class="nav-item" id="nav-profile" onclick="switchTab('profile')"><i class="fa-solid fa-user"></i><span>Profile</span></div>
+        <div class="nav-item active"><i class="fa-solid fa-house"></i><span>Home</span></div>
+        <div class="nav-item"><i class="fa-solid fa-clock-rotate-left"></i><span>Activity</span></div>
+        <div class="nav-item"><i class="fa-solid fa-user"></i><span>Profile</span></div>
     </div>
 
     <!-- RIDE OVERLAY -->
-    <div id="ride-overlay" class="hidden">
+    <div id="ride-overlay">
         <div id="ride-map"></div>
-        <i id="map-crosshair" class="fa-solid fa-crosshairs" style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:2; font-size:30px; display:none; text-shadow:0 0 5px white;"></i>
+        <i class="fa-solid fa-location-dot" id="map-center-marker"></i>
         
+        <!-- Top Card -->
         <div id="ride-top-card">
-            <div class="close-ride-integrated" onclick="closeRideOverlay()"><i class="fa-solid fa-xmark"></i></div>
-            <div class="ride-title">Book a Ride</div>
-            
-            <div class="summary-row">
-                <div class="sum-line"><div class="dot blue"></div> <span class="sum-txt" id="sum-pickup">...</span> <i class="fa-solid fa-pen edit-pencil" onclick="editRoute('pickup')"></i></div>
-                <div class="sum-line"><div class="dot red"></div> <span class="sum-txt" id="sum-dropoff">...</span> <i class="fa-solid fa-pen edit-pencil" onclick="editRoute('dropoff')"></i></div>
-                <div class="sum-meta"><span id="meta-dist">0 km</span><span id="meta-type" style="color:var(--primary-red); font-weight:700;">...</span></div>
+            <div class="ride-header">
+                <span class="ride-title">Book a Ride</span>
+                <div class="close-btn" onclick="closeRideFlow()"><i class="fa-solid fa-xmark"></i></div>
             </div>
 
-            <div class="loc-inputs">
-                <div class="loc-input-btn" onclick="openSearch('pickup')"><div class="dot blue"></div> <span id="txt-pickup">Select Your Location</span></div>
-                <div class="loc-input-btn" onclick="openSearch('dropoff')"><div class="dot red"></div> <span id="txt-dropoff">Drop Off Location</span></div>
+            <!-- Full Inputs -->
+            <div class="input-row" onclick="openSearch('pickup')">
+                <div class="dot" style="width:10px; height:10px; background:#2196F3; border-radius:50%;"></div>
+                <span style="font-size:13px; color:#555; flex:1;" id="lbl-pickup">Current Location</span>
             </div>
-            
-            <button class="btn-red vehicle-btn" onclick="startRouteSearch()">Show Vehicle Options</button>
+            <div class="input-row" onclick="openSearch('dropoff')">
+                <div class="dot" style="width:10px; height:10px; background:#D50000; border-radius:50%;"></div>
+                <span style="font-size:13px; color:#555; flex:1;" id="lbl-dropoff">Where to?</span>
+            </div>
+
+            <!-- Collapsed Summary -->
+            <div class="summary-view">
+                <div class="sum-row">
+                    <span><span style="color:#2196F3">●</span> <span id="sum-pickup">...</span></span>
+                    <i class="fa-solid fa-pencil sum-pen" onclick="reEdit('pickup')"></i>
+                </div>
+                <div class="sum-row">
+                    <span><span style="color:#D50000">●</span> <span id="sum-dropoff">...</span></span>
+                    <i class="fa-solid fa-pencil sum-pen" onclick="reEdit('dropoff')"></i>
+                </div>
+                <div class="sum-meta">
+                    <span id="meta-dist">0 km</span>
+                    <span style="color:#D50000; font-weight:700;">Est. Price</span>
+                </div>
+            </div>
+
+            <button class="btn-main vehicle-btn" onclick="calcRoute()">Find Route</button>
+
+            <!-- Route Loader inside card -->
+            <div id="route-loader">
+                <div class="bar-loader"><div class="bar-fill"></div></div>
+                <span>Finding best routes...</span>
+            </div>
         </div>
         
-        <!-- Route Options & Loader -->
-        <div id="fs-loader" class="hidden">
-            <div class="spinner"></div>
-            <h3>Finding best route...</h3>
-        </div>
+        <!-- Pin Button -->
+        <button id="pin-confirm-btn" class="btn-main" onclick="confirmPin()">Set Location</button>
 
-        <div id="route-options-wrapper">
-            <h3 style="margin-top:0; color:#333;">Select Route</h3>
+        <!-- Route Options -->
+        <div id="route-options">
+            <h3 style="margin-top:0;">Select Route</h3>
             <div id="route-list"></div>
-            <button class="btn-red" style="margin-top:15px;" onclick="confirmRouteSelection()">Continue</button>
+            <button class="btn-main" style="margin-top:10px;" onclick="toVehicles()">Continue</button>
         </div>
 
-        <!-- Vehicle Selection -->
+        <!-- Vehicle Sheet -->
         <div id="vehicle-sheet">
             <h3 style="margin-top:0;">Select Vehicle</h3>
-            <div style="display:flex; gap:10px; overflow-x:auto; padding-bottom:10px;">
-                <div style="min-width:90px; padding:10px; border:1px solid #eee; border-radius:10px; text-align:center;">
-                    <i class="fa-solid fa-car-side" style="font-size:24px; color:#555;"></i><br><small>Mini</small><br><b>Rs. 450</b>
+            <div class="vehicle-scroller">
+                <div class="v-card active">
+                    <i class="fa-solid fa-car-side" style="font-size:24px;"></i><br><small>Mini</small><br><b>450 LKR</b>
                 </div>
-                <div style="min-width:90px; padding:10px; border:1px solid #eee; border-radius:10px; text-align:center;">
-                    <i class="fa-solid fa-car" style="font-size:24px; color:#555;"></i><br><small>Sedan</small><br><b>Rs. 700</b>
+                <div class="v-card">
+                    <i class="fa-solid fa-car" style="font-size:24px;"></i><br><small>Sedan</small><br><b>700 LKR</b>
                 </div>
-                <div style="min-width:90px; padding:10px; border:1px solid #eee; border-radius:10px; text-align:center;">
-                    <i class="fa-solid fa-van-shuttle" style="font-size:24px; color:#555;"></i><br><small>Van</small><br><b>Rs. 1100</b>
+                <div class="v-card">
+                    <i class="fa-solid fa-van-shuttle" style="font-size:24px;"></i><br><small>Van</small><br><b>1200 LKR</b>
                 </div>
             </div>
-            <button class="btn-red" style="margin-top:20px;" onclick="showToast('Driver Searching...', 'info')">Request Ride</button>
+            <button class="btn-main" style="margin-top:20px;" onclick="showToast('Searching for drivers...')">Confirm Booking</button>
         </div>
     </div>
 
     <!-- SEARCH MODAL -->
-    <div id="loc-search-modal">
-        <h3 id="search-title" style="margin-top:0;">Set Location</h3>
-        <div class="search-input-box">
-            <i class="fa-solid fa-magnifying-glass" style="color:#aaa;"></i>
-            <input type="text" id="inp-search" placeholder="Search (e.g. Jaffna, Colombo)" onkeyup="handleSearch(event)">
-        </div>
-        <div class="search-pill-row">
-            <div class="search-pill-btn" onclick="setMyLocation()"><i class="fa-solid fa-location-crosshairs"></i> Your Location</div>
-            <div class="search-pill-btn" onclick="startPinPicker()"><i class="fa-solid fa-map-pin"></i> Pick on Map</div>
-        </div>
-        <div id="search-results" style="flex:1; overflow-y:auto;"></div>
-        <button class="btn-red" onclick="closeSearch()">Close</button>
-    </div>
-
-    <!-- SETUP WIZARD -->
-    <div id="setup-wizard" class="hidden">
-        <div class="step active" id="step-1">
-            <h2>Get Started</h2>
-            <div class="input-box"><input type="text" id="inp-name" placeholder="Full Name"></div>
-            <button class="btn-red" onclick="nextStep(1)">Next</button>
-        </div>
-        <div class="step" id="step-2">
-            <h2>Profile Photo</h2>
-            <div class="profile-upload" onclick="document.getElementById('f').click()">
-                <img id="wiz-img" style="width:100%; height:100%; object-fit:cover; display:none;">
-                <i class="fa-solid fa-camera" style="font-size:30px; color:#ccc;" id="wiz-icon"></i>
+    <div id="search-modal">
+        <div class="search-head">
+            <div class="close-btn" onclick="closeSearch()"><i class="fa-solid fa-arrow-left"></i></div>
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass" style="color:#888;"></i>
+                <input type="text" id="inp-search" placeholder="Search city, town or place" onkeyup="liveSearch(event)">
             </div>
-            <input type="file" id="f" class="hidden" onchange="previewImg(event)">
-            <button class="btn-red" onclick="finishSetup()">Finish</button>
+        </div>
+        <div class="search-results" id="res-list">
+            <!-- Results injected here -->
         </div>
     </div>
 
-    <!-- SCRIPTS -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+    <!-- LOGIC -->
+    <script>
+        // -- STATE --
+        let userPos = null;
+        let map, routingControl;
+        let pMark, dMark;
+        let pLoc = null, dLoc = null;
+        let activeField = 'pickup'; // pickup or dropoff
+        let mapMode = 'view'; // view or pin
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4",
-            authDomain: "speedo-acb7c.firebaseapp.com",
-            databaseURL: "https://speedo-acb7c-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "speedo-acb7c",
-            storageBucket: "speedo-acb7c.firebasestorage.app",
-            messagingSenderId: "31066493782",
-            appId: "1:31066493782:web:e3e9dfa209fa855bc17cf7"
+        // -- INITIALIZATION --
+        window.onload = () => {
+            // Check Location
+            const skel = document.getElementById('loc-skeleton');
+            skel.classList.remove('hidden');
+            
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    userPos = [pos.coords.latitude, pos.coords.longitude];
+                    skel.classList.add('hidden');
+                    // Reverse Geo for pickup default
+                    reverseGeo(userPos[0], userPos[1], (addr) => {
+                         pLoc = { lat: userPos[0], lon: userPos[1], name: "Current Location" };
+                         document.getElementById('lbl-pickup').innerText = "Current Location";
+                    });
+                },
+                (err) => {
+                    setTimeout(() => {
+                        document.getElementById('loc-failed-msg').classList.remove('hidden');
+                    }, 5000); // 5 sec timeout
+                },
+                { enableHighAccuracy: true }
+            );
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
 
-        // GLOBALS
-        let userLiveCoords = null;
-        let map = null;
-        let pickupMarker = null;
-        let dropoffMarker = null;
-        let routingControl = null;
-        let pickupLatLng = null;
-        let dropoffLatLng = null;
-        let pickupName = "";
-        let dropoffName = "";
-        let activeSearchMode = "pickup";
-        let tempSelectedRoute = null;
-
-        // LOCAL LOCATIONS DB (Combining with API)
-        const localLocations = [
-            {n:"Colombo Fort", lat:6.9344, lon:79.8428, d:"Colombo, Western"},
-            {n:"Galle Face Green", lat:6.9271, lon:79.8453, d:"Colombo, Western"},
-            {n:"Lotus Tower", lat:6.9275, lon:79.8583, d:"Colombo 10"},
-            {n:"One Galle Face", lat:6.9255, lon:79.8440, d:"Mall, Colombo"},
-            {n:"Jaffna Public Library", lat:9.6615, lon:80.0150, d:"Jaffna, Northern"},
-            {n:"Nallur Kandaswamy Kovil", lat:9.6743, lon:80.0298, d:"Jaffna, Northern"},
-            {n:"Trincomalee Harbour", lat:8.5690, lon:81.2330, d:"Trincomalee, Eastern"},
-            {n:"Koneswaram Temple", lat:8.5833, lon:81.2467, d:"Trincomalee"},
-            {n:"Temple of the Tooth", lat:7.2936, lon:80.6413, d:"Kandy, Central"},
-            {n:"Sigiriya Rock", lat:7.9570, lon:80.7603, d:"Sigiriya, Central"},
-            {n:"Ella Rock", lat:6.8580, lon:81.0520, d:"Ella, Uva"},
-            {n:"Nine Arches Bridge", lat:6.8768, lon:81.0608, d:"Ella, Uva"},
-            {n:"Unawatuna Beach", lat:6.0113, lon:80.2520, d:"Galle, Southern"},
-            {n:"Mirissa Beach", lat:5.9482, lon:80.4716, d:"Matara, Southern"},
-            {n:"Batticaloa Fort", lat:7.7102, lon:81.6967, d:"Batticaloa, Eastern"},
-            {n:"Arugam Bay", lat:6.8415, lon:81.8340, d:"Pottuvil, Eastern"},
-            {n:"Anuradhapura Sacred City", lat:8.3450, lon:80.4000, d:"North Central"}
-        ];
-
-        // INIT
-        window.addEventListener('load', async () => {
-            trackLocation(); // Start GPS tracking immediately
+        // -- RIDE FLOW --
+        function startRideFlow() {
+            if(!userPos) { showToast("Location needed for ride"); return; }
+            document.getElementById('ride-overlay').classList.add('active');
             
-            const stored = localStorage.getItem('speedo_user');
-            if(stored) {
-                document.getElementById('main-skeleton').classList.add('hidden');
-                document.getElementById('main-card').classList.remove('hidden');
-                document.getElementById('ui-name').innerText = JSON.parse(stored).fullName.split(' ')[0];
+            if(!map) {
+                // CartoDB Voyager tiles (Clearer)
+                map = L.map('ride-map', { zoomControl: false }).setView(userPos, 15);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                    attribution: '', maxZoom: 19
+                }).addTo(map);
+
+                // User Pulse Marker
+                const uIcon = L.divIcon({ className: 'user-glow', iconSize:[16,16] });
+                L.marker(userPos, {icon: uIcon}).addTo(map);
+                
+                // Initialize markers
+                pMark = L.marker(userPos, { draggable: true }).addTo(map);
+                pMark.on('dragend', (e) => updateFromDrag('pickup', e));
             } else {
-                document.getElementById('main-skeleton').classList.add('hidden');
-                document.getElementById('setup-wizard').classList.remove('hidden');
-            }
-        });
-
-        // TOAST SYSTEM
-        window.showToast = (msg) => {
-            const c = document.getElementById('toast-container');
-            const t = document.createElement('div'); t.className = 'toast';
-            t.innerHTML = `<i class="fa-solid fa-circle-info" style="color:#4CAF50;"></i> ${msg}`;
-            c.appendChild(t);
-            setTimeout(() => t.remove(), 3000);
-        }
-
-        // LOCATION LOGIC
-        function trackLocation() {
-            if(navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    (pos) => { userLiveCoords = [pos.coords.latitude, pos.coords.longitude]; },
-                    (err) => { console.log("GPS waiting..."); },
-                    { enableHighAccuracy: true }
-                );
+                map.setView(userPos, 15);
             }
         }
 
-        window.initRideFlow = () => {
-            // Show Skeleton Overlay
-            const overlay = document.getElementById('loc-skeleton-overlay');
-            const loadDiv = document.getElementById('loc-loading-content');
-            const failDiv = document.getElementById('loc-failed-content');
+        function closeRideFlow() {
+            document.getElementById('ride-overlay').classList.remove('active');
+            // Reset UI
+            resetRouteUI();
+        }
+
+        function resetRouteUI() {
+            if(routingControl) { map.removeControl(routingControl); routingControl = null; }
+            if(dMark) map.removeLayer(dMark); dMark = null; dLoc = null;
+            document.getElementById('ride-top-card').classList.remove('collapsed');
+            document.getElementById('route-options').classList.remove('active');
+            document.getElementById('vehicle-sheet').classList.remove('active');
+            document.getElementById('lbl-dropoff').innerText = "Where to?";
+            document.querySelector('.vehicle-btn').style.display = 'block';
+            document.querySelector('.input-row').style.display = 'flex';
+        }
+
+        // -- SEARCH & OVERPASS API --
+        function openSearch(type) {
+            activeField = type;
+            document.getElementById('search-modal').classList.add('active');
+            document.getElementById('inp-search').value = '';
+            document.getElementById('inp-search').focus();
             
-            overlay.classList.remove('hidden');
-            loadDiv.classList.remove('hidden');
-            failDiv.classList.add('hidden');
+            // Initial List: API + Map Nearby
+            fetchMapNearby();
+        }
 
-            let attempts = 0;
-            const checkLoc = setInterval(() => {
-                attempts++;
-                if(userLiveCoords) {
-                    clearInterval(checkLoc);
-                    overlay.classList.add('hidden');
-                    openRideUI();
-                } else if(attempts >= 20) { // 10 seconds (20 * 500ms)
-                    clearInterval(checkLoc);
-                    loadDiv.classList.add('hidden');
-                    failDiv.classList.remove('hidden');
-                }
+        function closeSearch() {
+            document.getElementById('search-modal').classList.remove('active');
+        }
+
+        // Fetch cities/towns in Sri Lanka viewport from OSM (The "Map Data" Request)
+        function fetchMapNearby() {
+            const list = document.getElementById('res-list');
+            list.innerHTML = '<div style="padding:15px; color:#888;">Loading nearby places...</div>';
+
+            // Pin on map option
+            const pinBtn = document.createElement('div');
+            pinBtn.className = 'place-item';
+            pinBtn.innerHTML = '<i class="fa-solid fa-map-pin" style="color:#D50000; margin-right:10px;"></i> <b>Pick on Map</b>';
+            pinBtn.onclick = () => { closeSearch(); enablePinMode(); };
+
+            // Overpass Query for Sri Lanka Major Places
+            const query = `[out:json];node["place"~"city|town"](5.9,79.5,9.9,82.0);out body 15;`; 
+            // Gets ~15 major cities/towns in the bounding box of SL
+            
+            fetch("https://overpass-api.de/api/interpreter?data=" + encodeURIComponent(query))
+            .then(r => r.json())
+            .then(data => {
+                list.innerHTML = '';
+                list.appendChild(pinBtn); // Add Pin option first
+
+                // Sort by latitude (North to South) or closeness? Just list them.
+                // Include Northern/Eastern cities explicitly if found
+                data.elements.forEach(el => {
+                    const d = document.createElement('div');
+                    d.className = 'place-item';
+                    d.innerHTML = `<i class="fa-solid fa-location-dot" style="color:#ccc; margin-right:10px;"></i> ${el.tags.name || "Unknown Place"}`;
+                    d.onclick = () => selectLocation(el.lat, el.lon, el.tags.name);
+                    list.appendChild(d);
+                });
+            })
+            .catch(() => {
+                list.innerHTML = '';
+                list.appendChild(pinBtn);
+            });
+        }
+
+        // Live Typing (Nominatim API)
+        let debounce;
+        function liveSearch(e) {
+            clearTimeout(debounce);
+            const q = e.target.value;
+            if(q.length < 3) return;
+
+            debounce = setTimeout(() => {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=lk&limit=5`)
+                .then(r => r.json())
+                .then(data => {
+                    const list = document.getElementById('res-list');
+                    list.innerHTML = '';
+                    data.forEach(item => {
+                        const d = document.createElement('div');
+                        d.className = 'place-item';
+                        d.innerHTML = `<i class="fa-solid fa-magnifying-glass" style="color:#ccc; margin-right:10px;"></i> <b>${item.name || item.display_name.split(',')[0]}</b><br><small style="color:#aaa; margin-left:24px;">${item.display_name}</small>`;
+                        d.onclick = () => selectLocation(item.lat, item.lon, item.name || item.display_name.split(',')[0]);
+                        list.appendChild(d);
+                    });
+                });
             }, 500);
         }
 
-        window.closeLocOverlay = () => document.getElementById('loc-skeleton-overlay').classList.add('hidden');
-
-        // MAP UI
-        function openRideUI() {
-            document.getElementById('ride-overlay').classList.remove('hidden');
-            setTimeout(() => document.getElementById('ride-overlay').classList.add('active'), 10);
-
-            if(!map) {
-                // CartoDB Voyager tiles for better visual
-                map = L.map('ride-map', { zoomControl: false }).setView(userLiveCoords, 15);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; OpenStreetMap &copy; CARTO',
-                    subdomains: 'abcd',
-                    maxZoom: 20
-                }).addTo(map);
-
-                // Glowing User Marker
-                const glowIcon = L.divIcon({ className: 'glow-marker', iconSize: [20, 20], iconAnchor: [10, 10] });
-                L.marker(userLiveCoords, {icon: glowIcon}).addTo(map);
+        function selectLocation(lat, lon, name) {
+            const ll = [parseFloat(lat), parseFloat(lon)];
+            if(activeField === 'pickup') {
+                pLoc = { lat, lon, name };
+                document.getElementById('lbl-pickup').innerText = name;
+                document.getElementById('sum-pickup').innerText = name;
+                if(pMark) pMark.setLatLng(ll); else pMark = L.marker(ll, {draggable:true}).addTo(map);
             } else {
-                map.setView(userLiveCoords, 15);
+                dLoc = { lat, lon, name };
+                document.getElementById('lbl-dropoff').innerText = name;
+                document.getElementById('sum-dropoff').innerText = name;
+                if(dMark) dMark.setLatLng(ll); else {
+                    const redIcon = new L.Icon({ iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png', shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png', iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41] });
+                    dMark = L.marker(ll, {icon:redIcon, draggable:true}).addTo(map);
+                    dMark.on('dragend', (e) => updateFromDrag('dropoff', e));
+                }
             }
-        }
-
-        window.closeRideOverlay = () => {
-            document.getElementById('ride-overlay').classList.remove('active');
-            setTimeout(() => document.getElementById('ride-overlay').classList.add('hidden'), 400);
-            resetMap();
-        }
-
-        function resetMap() {
-            if(pickupMarker) map.removeLayer(pickupMarker);
-            if(dropoffMarker) map.removeLayer(dropoffMarker);
-            if(routingControl) { map.removeControl(routingControl); routingControl = null; }
-            pickupMarker = null; dropoffMarker = null; pickupLatLng = null; dropoffLatLng = null;
-            document.getElementById('ride-top-card').classList.remove('collapsed');
-            document.getElementById('route-options-wrapper').classList.remove('active');
-            document.getElementById('vehicle-sheet').classList.remove('active');
-            document.getElementById('txt-pickup').innerText = "Select Your Location";
-            document.getElementById('txt-dropoff').innerText = "Drop Off Location";
-        }
-
-        // SMART MARKERS (No Duplicates)
-        function updateMarker(type, latlng) {
-            const redIcon = new L.Icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-            });
-            const blueIcon = new L.Icon({
-                iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-                iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
-            });
-
-            if(type === 'pickup') {
-                if(pickupMarker) pickupMarker.setLatLng(latlng);
-                else pickupMarker = L.marker(latlng, {icon: blueIcon}).addTo(map);
-                pickupLatLng = latlng;
-            } else {
-                if(dropoffMarker) dropoffMarker.setLatLng(latlng);
-                else dropoffMarker = L.marker(latlng, {icon: redIcon}).addTo(map);
-                dropoffLatLng = latlng;
-            }
-            
-            // Fit bounds if both exist
-            if(pickupLatLng && dropoffLatLng) {
-                map.fitBounds([pickupLatLng, dropoffLatLng], {padding: [50, 50]});
-            } else {
-                map.setView(latlng, 15);
-            }
-        }
-
-        // SEARCH
-        window.openSearch = (type) => {
-            activeSearchMode = type;
-            document.getElementById('loc-search-modal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('loc-search-modal').classList.add('active'), 10);
-            document.getElementById('search-title').innerText = type === 'pickup' ? "Pick Up" : "Drop Off";
-            document.getElementById('search-results').innerHTML = '';
-            document.getElementById('inp-search').value = '';
-            document.getElementById('inp-search').focus();
-        }
-
-        window.closeSearch = () => {
-            document.getElementById('loc-search-modal').classList.remove('active');
-            setTimeout(() => document.getElementById('loc-search-modal').classList.add('hidden'), 300);
-        }
-
-        window.handleSearch = (e) => {
-            const q = e.target.value.toLowerCase();
-            const resDiv = document.getElementById('search-results');
-            resDiv.innerHTML = '';
-            if(q.length < 2) return;
-
-            // 1. Local Search
-            localLocations.filter(x => x.n.toLowerCase().includes(q)).forEach(x => {
-                const d = document.createElement('div');
-                d.style.padding='15px'; d.style.borderBottom='1px solid #eee';
-                d.innerHTML = `<b>${x.n}</b><br><small style="color:#888">${x.d}</small>`;
-                d.onclick = () => selectLocation(x.lat, x.lon, x.n);
-                resDiv.appendChild(d);
-            });
-
-            // 2. API Search (Nominatim)
-            // Debounce in real app, simplistic here
-            if(q.length > 3) {
-                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=lk&limit=3`)
-                .then(r=>r.json()).then(data => {
-                    data.forEach(x => {
-                        const d = document.createElement('div');
-                        d.style.padding='15px'; d.style.borderBottom='1px solid #eee';
-                        d.innerHTML = `<b>${x.name || x.display_name.split(',')[0]}</b><br><small style="color:#888">${x.display_name}</small>`;
-                        d.onclick = () => selectLocation(x.lat, x.lon, x.name || x.display_name.split(',')[0]);
-                        resDiv.appendChild(d);
-                    });
-                });
-            }
-        }
-
-        window.selectLocation = (lat, lon, name) => {
-            const ll = L.latLng(lat, lon);
-            updateMarker(activeSearchMode, ll);
-            
-            if(activeSearchMode === 'pickup') {
-                pickupName = name;
-                document.getElementById('txt-pickup').innerText = name;
-            } else {
-                dropoffName = name;
-                document.getElementById('txt-dropoff').innerText = name;
-            }
+            map.setView(ll, 16);
             closeSearch();
         }
 
-        window.setMyLocation = () => {
-            if(userLiveCoords) {
-                // Reverse Geo simplified
-                selectLocation(userLiveCoords[0], userLiveCoords[1], "Current Location");
-            }
-        }
-
-        window.startPinPicker = () => {
-            closeSearch();
+        function enablePinMode() {
             document.getElementById('ride-top-card').classList.add('hidden');
-            document.getElementById('map-crosshair').style.display = 'block';
-            
-            const btn = document.createElement('button');
-            btn.className = 'btn-red';
-            btn.innerText = 'Confirm Location';
-            btn.style.position='absolute'; btn.style.bottom='30px'; btn.style.left='10%'; btn.style.width='80%'; btn.style.zIndex='2000';
-            btn.onclick = () => {
-                const c = map.getCenter();
-                selectLocation(c.lat, c.lng, "Pinned Location");
-                document.getElementById('map-crosshair').style.display = 'none';
-                document.getElementById('ride-top-card').classList.remove('hidden');
-                btn.remove();
-            };
-            document.getElementById('ride-overlay').appendChild(btn);
+            document.getElementById('map-center-marker').style.display = 'block';
+            document.getElementById('pin-confirm-btn').style.display = 'block';
         }
 
-        // ROUTE LOGIC
-        window.startRouteSearch = () => {
-            if(!pickupLatLng || !dropoffLatLng) { showToast('Select both locations'); return; }
+        function confirmPin() {
+            const c = map.getCenter();
+            reverseGeo(c.lat, c.lng, (addr) => {
+                selectLocation(c.lat, c.lng, addr);
+                document.getElementById('ride-top-card').classList.remove('hidden');
+                document.getElementById('map-center-marker').style.display = 'none';
+                document.getElementById('pin-confirm-btn').style.display = 'none';
+            });
+        }
 
-            // Show FS Loader
-            document.getElementById('fs-loader').classList.remove('hidden');
+        function reverseGeo(lat, lon, cb) {
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+            .then(r=>r.json()).then(d => cb(d.name || d.address.road || "Pinned Location"));
+        }
 
-            // Simulate API Delay then calculate
+        function updateFromDrag(type, e) {
+            const ll = e.target.getLatLng();
+            reverseGeo(ll.lat, ll.lng, (name) => {
+                if(type==='pickup') { pLoc={lat:ll.lat, lon:ll.lng, name}; document.getElementById('lbl-pickup').innerText=name; }
+                else { dLoc={lat:ll.lat, lon:ll.lng, name}; document.getElementById('lbl-dropoff').innerText=name; }
+            });
+        }
+
+        // -- ROUTING --
+        function calcRoute() {
+            if(!pLoc || !dLoc) { showToast("Set both locations"); return; }
+            
+            // UI Transition
+            const loader = document.getElementById('route-loader');
+            const btn = document.querySelector('.vehicle-btn');
+            
+            btn.style.display = 'none';
+            loader.classList.add('visible');
+
+            // Routing Logic (Leaflet Routing Machine)
             setTimeout(() => {
                 if(routingControl) map.removeControl(routingControl);
                 
                 routingControl = L.Routing.control({
-                    waypoints: [pickupLatLng, dropoffLatLng],
-                    show: false,
+                    waypoints: [ L.latLng(pLoc.lat, pLoc.lon), L.latLng(dLoc.lat, dLoc.lon) ],
+                    show: false, addWaypoints: false, routeWhileDragging: false,
                     lineOptions: { styles: [{color: '#D50000', weight: 5}] },
-                    createMarker: () => null
+                    createMarker: () => null // We use our own markers
                 }).addTo(map);
 
                 routingControl.on('routesfound', (e) => {
                     const r = e.routes[0];
                     const dist = (r.summary.totalDistance / 1000).toFixed(1);
-                    const time = Math.round(r.summary.totalTime / 60);
-
-                    document.getElementById('fs-loader').classList.add('hidden');
                     
-                    // Populate Options
+                    loader.classList.remove('visible');
+                    document.getElementById('ride-top-card').classList.add('collapsed');
+                    
+                    // Show Route Options
                     const list = document.getElementById('route-list');
                     list.innerHTML = `
-                        <div class="route-opt selected recommended" onclick="selectRouteOpt(this, 'Normal', '${dist}')">
-                            <div><b>Normal Route</b><br><small>${dist} km • ${time} mins</small></div>
-                            <div style="font-size:14px; font-weight:700;">Rs. ${Math.round(dist*60)}</div>
+                        <div class="route-card selected" onclick="selectRoute(this)">
+                            <div class="tag-rec">Recommended</div>
+                            <div><b>Normal Route</b><br><small>${dist} km • ${Math.round(r.summary.totalTime/60)} min</small></div>
+                            <i class="fa-solid fa-check-circle" style="color:var(--primary-red)"></i>
                         </div>
-                        <div class="route-opt" onclick="selectRouteOpt(this, 'Expressway', '${dist}')">
-                            <div><b>Expressway</b><br><small>${(dist*1.1).toFixed(1)} km • ${Math.round(time*0.7)} mins</small></div>
-                            <div style="text-align:right;">
-                                <div style="font-size:14px; font-weight:700;">Rs. ${Math.round(dist*75)}</div>
-                                <span class="warn-text">Toll Included</span>
-                            </div>
+                        <div class="route-card" onclick="selectRoute(this)">
+                            <div><b>Expressway</b><br><small>${(dist*1.2).toFixed(1)} km • Faster</small></div>
+                            <small style="color:#D50000; font-weight:700;">Tolls Apply</small>
                         </div>
                     `;
-                    
-                    document.getElementById('ride-top-card').classList.add('collapsed');
-                    document.getElementById('sum-pickup').innerText = pickupName;
-                    document.getElementById('sum-dropoff').innerText = dropoffName;
-                    
-                    // Default selection
-                    tempSelectedRoute = { type: 'Normal', dist: dist };
+                    document.getElementById('route-options').classList.add('active');
                     document.getElementById('meta-dist').innerText = dist + " km";
-                    document.getElementById('meta-type').innerText = "Normal";
-
-                    document.getElementById('route-options-wrapper').classList.add('active');
+                    
+                    // Zoom to fit
+                    map.fitBounds([ [pLoc.lat, pLoc.lon], [dLoc.lat, dLoc.lon] ], {padding:[50,200]}); // Padding bottom for sheet
                 });
-            }, 1500);
+
+            }, 1000); // Fake delay for loader effect
         }
 
-        window.selectRouteOpt = (el, type, dist) => {
-            document.querySelectorAll('.route-opt').forEach(x => x.classList.remove('selected'));
+        function selectRoute(el) {
+            document.querySelectorAll('.route-card').forEach(x => x.classList.remove('selected'));
             el.classList.add('selected');
-            tempSelectedRoute = { type, dist };
-            document.getElementById('meta-dist').innerText = dist + " km";
-            document.getElementById('meta-type').innerText = type;
         }
 
-        window.confirmRouteSelection = () => {
-            document.getElementById('route-options-wrapper').classList.remove('active');
+        function toVehicles() {
+            document.getElementById('route-options').classList.remove('active');
             document.getElementById('vehicle-sheet').classList.add('active');
         }
 
-        window.editRoute = (type) => {
-            // Reset route logic but keep points until changed
+        function reEdit(type) {
             document.getElementById('ride-top-card').classList.remove('collapsed');
-            document.getElementById('route-options-wrapper').classList.remove('active');
+            document.getElementById('route-options').classList.remove('active');
             document.getElementById('vehicle-sheet').classList.remove('active');
-            if(routingControl) { map.removeControl(routingControl); routingControl = null; }
+            if(routingControl) map.removeControl(routingControl);
+            document.querySelector('.vehicle-btn').style.display = 'block';
             openSearch(type);
-        }
-
-        // SETUP & LOGIN (Stubbed for brevity)
-        window.nextStep = (n) => {
-            if(n===1 && !document.getElementById('inp-name').value) return showToast("Enter Name");
-            document.getElementById(`step-${n}`).classList.remove('active');
-            document.getElementById(`step-${n+1}`).classList.add('active');
-        }
-        window.finishSetup = () => {
-            const n = document.getElementById('inp-name').value;
-            localStorage.setItem('speedo_user', JSON.stringify({fullName: n, uid: 'test'}));
-            document.getElementById('setup-wizard').classList.add('hidden');
-            document.getElementById('main-card').classList.remove('hidden');
-            document.getElementById('ui-name').innerText = n.split(' ')[0];
-        }
-        window.handleLogout = () => { localStorage.clear(); location.reload(); }
-        window.switchTab = (t) => {
-            document.querySelectorAll('.tab-view').forEach(x=>x.classList.remove('active-view'));
-            document.getElementById(`view-${t}`).classList.add('active-view');
-            document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
-            document.getElementById(`nav-${t}`).classList.add('active');
         }
 
     </script>
