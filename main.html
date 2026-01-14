@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Speedo - Dashboard</title>
+    <title>Speedo</title>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Noto+Sans+Sinhala:wght@400;700&family=Noto+Sans+Tamil:wght@400;700&display=swap" rel="stylesheet">
@@ -11,16 +11,14 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-
     <style>
         /* --- General Styles --- */
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             font-family: 'Poppins', 'Noto Sans Sinhala', 'Noto Sans Tamil', sans-serif;
-            background-color: #f0f0f0;
+            background-color: #D50000;
             overflow: hidden;
+            user-select: none;
         }
 
         .hidden { display: none !important; }
@@ -28,293 +26,366 @@
         :root {
             --primary-red: #D50000;
             --text-dark: #333;
-            --shadow: 0 4px 15px rgba(0,0,0,0.15);
+            --bg-grey: #f8f9fa;
+            --shadow: 0 4px 20px rgba(0,0,0,0.1);
         }
 
-        /* --- MAP LAYER --- */
-        #map-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1;
-            background: #e5e5e5;
-        }
-        
-        .leaflet-control-attribution { display: none; }
-
-        /* --- UI LAYER --- */
-        #ui-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 10;
-            pointer-events: none;
+        /* --- 1. HEADER --- */
+        #header-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 120px;
+            z-index: 10; padding: 15px; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: flex-start;
         }
 
-        .pointer-auto { pointer-events: auto; }
-
-        /* 1. PROFILE PILL (Top Left) */
-        .header-pill {
-            position: absolute;
-            top: 15px; left: 15px;
-            background: white;
-            padding: 5px 15px 5px 5px; /* Less padding left for image */
+        .name-pill {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 5px 15px 5px 5px;
             border-radius: 40px;
-            box-shadow: var(--shadow);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            max-width: 60%;
+            display: flex; align-items: center; gap: 10px;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white; max-width: 55%; cursor: pointer;
         }
+        .name-pill:active { transform: scale(0.97); }
+        .pill-img { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; border: 2px solid white; }
+        .pill-info { display: flex; flex-direction: column; justify-content: center; }
+        .pill-hello { font-size: 13px; font-weight: 700; line-height: 1.1; }
+        .pill-greeting { font-size: 10px; opacity: 0.9; font-weight: 400; line-height: 1.1; margin-top: 2px; }
 
-        .header-pill:active { transform: scale(0.97); }
-
-        .pill-img {
-            width: 38px; height: 38px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #f0f0f0;
+        .lang-pill {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 10px 15px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white; font-size: 13px; font-weight: 600;
+            cursor: pointer; display: flex; gap: 5px;
         }
+        .lang-pill span { opacity: 0.6; transition: 0.3s; }
+        .lang-pill span.active { opacity: 1; font-weight: 700; text-decoration: underline; }
 
-        .pill-text-col {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-
-        .pill-hello { font-size: 13px; font-weight: 700; color: var(--text-dark); line-height: 1.1; }
-        .pill-greeting { font-size: 10px; color: #888; font-weight: 500; line-height: 1.1; margin-top: 2px; }
-
-        /* 2. LANGUAGE BUTTON (Top Right) */
-        .lang-btn {
-            position: absolute;
-            top: 15px; right: 15px;
-            width: 42px; height: 42px;
+        /* --- 2. MAIN CARD --- */
+        #main-card {
+            position: absolute; bottom: 0; left: 0;
+            width: 100%; height: calc(100% - 90px);
             background: white;
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            box-shadow: var(--shadow);
-            cursor: pointer;
-            font-size: 18px;
-            color: var(--text-dark);
-        }
-
-        .lang-btn:active { transform: scale(0.95); background: #f9f9f9; }
-
-        .lang-dropdown {
-            position: absolute;
-            top: 65px; right: 15px;
-            background: white;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            padding: 8px;
-            display: flex; flex-direction: column;
-            gap: 5px;
-            width: 120px;
-            transform-origin: top right;
-            transition: 0.2s;
-        }
-        .lang-dropdown.closed { opacity: 0; transform: scale(0.9); pointer-events: none; }
-        .lang-opt { padding: 8px; border-radius: 8px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .lang-opt.active { background: #fff0f0; color: var(--primary-red); font-weight: 600; }
-
-        /* 3. CENTER MENU BUTTON (Bottom Center) */
-        .menu-btn {
-            position: absolute;
-            bottom: 40px; 
-            left: 50%;
-            transform: translateX(-50%); /* Center Horizontally */
-            background: white;
-            padding: 12px 25px;
-            border-radius: 50px;
-            display: flex; 
-            align-items: center;
-            gap: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-            cursor: pointer;
-            color: var(--text-dark);
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            z-index: 20;
-        }
-        
-        .menu-btn i { color: var(--primary-red); font-size: 18px; }
-        .menu-btn:active { transform: translateX(-50%) scale(0.95); }
-
-        /* Hide animation for Menu Button */
-        .menu-btn.hidden-down {
-            transform: translate(-50%, 100px); /* Move down off screen */
-            opacity: 0;
-        }
-
-        /* 4. BOTTOM MENU SHEET */
-        .bottom-sheet {
-            position: absolute;
-            bottom: 0; left: 0;
-            width: 100%;
-            background: white;
-            border-radius: 25px 25px 0 0;
-            box-shadow: 0 -5px 30px rgba(0,0,0,0.15);
-            padding: 30px 20px 50px 20px;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.2);
+            z-index: 5;
+            padding: 30px 20px 80px 20px; /* Bottom padding for nav */
             box-sizing: border-box;
-            transform: translateY(120%);
-            transition: transform 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-            z-index: 25; /* Above Menu Button */
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            overflow-y: auto;
+            animation: slideUp 0.5s cubic-bezier(0.25, 1, 0.5, 1);
         }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-        .bottom-sheet.open { transform: translateY(0); }
+        /* --- TAB VIEWS --- */
+        .tab-view { display: none; flex-direction: column; gap: 20px; animation: fadeIn 0.3s ease-in-out; width: 100%; }
+        .tab-view.active-view { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .service-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 28%;
-            cursor: pointer;
+        /* === HOME COMPONENTS === */
+        
+        /* Service Grid */
+        .services-grid { display: flex; justify-content: space-between; gap: 10px; }
+        .service-btn { display: flex; flex-direction: column; align-items: center; width: 32%; cursor: pointer; }
+        .svc-img-box {
+            width: 100%; aspect-ratio: 1/1; background: var(--bg-grey); border-radius: 20px; margin-bottom: 10px;
+            display: flex; justify-content: center; align-items: center; border: 1px solid #eee; overflow: hidden;
+            transition: transform 0.2s;
         }
+        .svc-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .service-btn:active .svc-img-box { transform: scale(0.95); }
+        .svc-label { font-weight: 700; font-size: 14px; color: var(--text-dark); }
 
-        .service-img-box {
+        /* Main 16:9 Banner */
+        .ad-banner {
+            width: 100%; aspect-ratio: 16/9; background: #eee; border-radius: 20px;
+            overflow: hidden; position: relative; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .ad-banner img { width: 100%; height: 100%; object-fit: cover; }
+        .ad-badge { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 2px 8px; border-radius: 5px; font-size: 10px; }
+
+        /* Ongoing Activity Card (Big) */
+        .activity-card {
+            width: 100%; background: white; border: 1px solid #eee; border-radius: 20px; padding: 20px;
+            box-sizing: border-box; box-shadow: 0 5px 15px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; min-height: 110px; display: flex; flex-direction: column; justify-content: center;
+        }
+        .activity-card:active { background: #f9f9f9; transform: scale(0.98); }
+        .act-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .act-title { font-size: 16px; font-weight: 700; color: #333; }
+        .act-content { background: #f8f9fa; border-radius: 12px; padding: 15px; display: flex; align-items: center; gap: 15px; color: #888; }
+        .act-text { font-size: 14px; font-weight: 500; }
+
+        /* Thin Promo Strip (Carousel) */
+        .promo-strip-wrapper {
             width: 100%;
-            aspect-ratio: 1 / 1; /* Square Ratio */
-            border-radius: 18px;
+            overflow-x: auto;
+            white-space: nowrap;
+            display: flex;
+            gap: 15px;
+            padding-bottom: 5px;
+            /* Hide scrollbar but keep functionality */
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
+        }
+        .promo-strip-wrapper::-webkit-scrollbar { display: none; }
+
+        .promo-strip-item {
+            display: inline-block;
+            min-width: 100%; /* Full width cards */
+            aspect-ratio: 32/9; /* Aspect Ratio Answer: 32:9 (Ultrawide Strip) */
+            border-radius: 15px;
             overflow: hidden;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-            background: #f8f8f8;
-            border: 1px solid #eee;
+            position: relative;
+            scroll-snap-align: center;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+        }
+        .promo-strip-item img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* === OTHER VIEWS === */
+        .section-header { font-size: 24px; font-weight: 700; color: #333; margin-bottom: 15px; }
+        
+        /* Activity Tabs */
+        .tabs-pill-container { display: flex; background: #f0f0f0; padding: 5px; border-radius: 15px; margin-bottom: 15px; }
+        .tab-pill { flex: 1; text-align: center; padding: 10px; border-radius: 12px; font-size: 13px; font-weight: 600; color: #666; cursor: pointer; }
+        .tab-pill.active { background: white; color: var(--primary-red); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 200px; color: #aaa; text-align: center; }
+        .empty-state i { font-size: 40px; margin-bottom: 15px; color: #ddd; }
+
+        /* Profile */
+        .profile-header { display: flex; flex-direction: column; align-items: center; margin-bottom: 25px; }
+        .profile-big-img { width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #f0f0f0; margin-bottom: 10px; }
+        .profile-name { font-size: 18px; font-weight: 700; color: #333; margin: 0; }
+        .profile-email { font-size: 13px; color: #888; margin: 0; }
+        .profile-menu-item { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; border-bottom: 1px solid #f5f5f5; cursor: pointer; }
+        .menu-left { display: flex; align-items: center; gap: 15px; font-size: 14px; font-weight: 500; color: #333; }
+        .menu-left i { width: 25px; color: #888; }
+        .logout-btn { margin-top: 30px; width: 100%; padding: 15px; border-radius: 15px; background: #ffebee; color: #D50000; font-weight: 700; border: none; cursor: pointer; }
+
+        /* Promotions Grid */
+        .promo-grid { display: grid; grid-template-columns: 1fr; gap: 15px; }
+        .promo-card-lg { width: 100%; border-radius: 20px; overflow: hidden; aspect-ratio: 2/1; position: relative; }
+        .promo-card-lg img { width: 100%; height: 100%; object-fit: cover; }
+        .promo-text { padding: 10px 0; }
+        .promo-text h4 { margin: 0; font-size: 15px; color: #333; }
+        .promo-text p { margin: 2px 0 0; font-size: 12px; color: #888; }
+
+        /* --- 3. BOTTOM NAVIGATION --- */
+        #bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            height: 70px; background: white;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            z-index: 20;
+            display: flex; justify-content: space-around; align-items: center;
+            border-top: 1px solid #f0f0f0;
         }
 
-        .service-img-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s;
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: #aaa; cursor: pointer; width: 25%; /* 4 items = 25% */ height: 100%;
         }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; transition: 0.3s; }
+        .nav-item span { font-size: 10px; font-weight: 500; }
+        .nav-item.active { color: var(--primary-red); }
+        .nav-item.active i { transform: translateY(-2px); }
 
-        .service-item:active .service-img-box img { transform: scale(1.05); }
-
-        .service-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #333;
-            text-align: center;
+        /* --- SKELETON --- */
+        #main-skeleton {
+            position: absolute; top: 90px; left: 0; width: 100%; height: calc(100% - 90px);
+            background: white; border-radius: 30px 30px 0 0; z-index: 15;
+            padding: 30px 20px; box-sizing: border-box;
         }
-
-        /* Overlay */
-        #menu-overlay {
-            position: absolute; top:0; left:0; width:100%; height:100%;
-            z-index: 22; display: none; background: rgba(0,0,0,0.05);
-        }
-        #menu-overlay.active { display: block; }
-
-        /* --- SKELETON LOADER --- */
-        #ui-skeleton {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; pointer-events: none;
-        }
-        .sk-pill {
-            position: absolute; top: 15px; left: 15px; width: 140px; height: 48px; border-radius: 40px; background: #eee;
-        }
-        .sk-lang {
-            position: absolute; top: 15px; right: 15px; width: 42px; height: 42px; border-radius: 50%; background: #eee;
-        }
-        .sk-menu {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 110px; height: 50px; border-radius: 50px; background: #eee;
-        }
-        .shimmer {
-            animation: shimmer 1.5s infinite linear;
-            background: linear-gradient(to right, #eeeeee 8%, #e0e0e0 18%, #eeeeee 33%);
-            background-size: 800px 104px;
-        }
+        .shimmer { animation: shimmer 1.5s infinite linear; background: linear-gradient(to right, #f0f0f0 8%, #e0e0e0 18%, #f0f0f0 33%); background-size: 800px 104px; }
+        .sk-row { display: flex; gap: 15px; margin-bottom: 30px; }
+        .sk-sq { width: 33%; aspect-ratio: 1/1; border-radius: 20px; }
+        .sk-banner { width: 100%; aspect-ratio: 16/9; border-radius: 20px; margin-bottom: 20px; }
         @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
+
+        /* --- SETUP WIZARD --- */
+        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:5000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
+        .wizard-container { width:100%; max-width:400px; text-align:center; }
+        .step { display:none; width:100%; animation:fadeIn 0.4s; }
+        .step.active { display:flex; flex-direction:column; }
+        .btn-red { background:var(--primary-red); color:white; padding:15px; border-radius:30px; border:none; font-weight:700; width:100%; margin-top:15px; }
+        .input-box input, .input-box select { width:100%; padding:15px; border:2px solid #eee; border-radius:12px; margin-bottom:10px; outline:none; box-sizing:border-box; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
     </style>
 </head>
 <body>
 
-    <!-- MAP -->
-    <div id="map-container"></div>
-
-    <!-- UI LAYER -->
-    <div id="ui-layer" class="hidden">
-        
-        <!-- Top Left: Profile Pill (Click -> Profile) -->
-        <div class="header-pill pointer-auto" onclick="window.location.href='profile.html'">
-            <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" class="pill-img" id="ui-profile-img" alt="User">
-            <div class="pill-text-col">
+    <!-- 1. HEADER -->
+    <div id="header-layer">
+        <!-- Name Pill -> Goes to Profile -->
+        <div class="name-pill" onclick="switchTab('profile')">
+            <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" class="pill-img" id="ui-profile-img">
+            <div class="pill-info">
                 <span class="pill-hello"><span data-i18n="hello">Hello</span> <span id="ui-name">...</span></span>
                 <span class="pill-greeting" id="ui-greeting">...</span>
             </div>
         </div>
+        <!-- Language Pill -->
+        <div class="lang-pill" onclick="cycleLanguage()">
+            <span id="lang-en" class="active">En</span> · <span id="lang-si">සි</span> · <span id="lang-ta">த</span>
+        </div>
+    </div>
 
-        <!-- Top Right: Language -->
-        <div class="lang-btn pointer-auto" onclick="toggleLangMenu()">
-            <i class="fa-solid fa-earth-americas"></i>
+    <!-- 2. MAIN CARD -->
+    <div id="main-card" class="hidden">
+        
+        <!-- === VIEW: HOME === -->
+        <div id="view-home" class="tab-view active-view">
+            <!-- Services -->
+            <div class="services-grid">
+                <div class="service-btn">
+                    <div class="svc-img-box"><img src="https://i.ibb.co/cSDnbNVB/car-final-2.jpg" alt="Ride"></div>
+                    <span class="svc-label" data-i18n="ride">Ride</span>
+                </div>
+                <div class="service-btn" onclick="window.location.href='foods.html'">
+                    <div class="svc-img-box"><img src="https://i.ibb.co/8gGtW9xc/bag-final-1.jpg" alt="Food"></div>
+                    <span class="svc-label" data-i18n="food">Food</span>
+                </div>
+                <div class="service-btn">
+                    <div class="svc-img-box"><img src="https://i.ibb.co/67BshY3t/delivery-guy.png" alt="Flash"></div>
+                    <span class="svc-label" data-i18n="flash">Flash</span>
+                </div>
+            </div>
+
+            <!-- Ad Banner -->
+            <div class="ad-banner">
+                <div class="ad-badge">Promoted</div>
+                <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg" alt="Promo">
+            </div>
+
+            <!-- Ongoing Activity (Switches to Activity View) -->
+            <div class="activity-card" onclick="switchTab('activity')">
+                <div class="act-header">
+                    <span class="act-title" data-i18n="ongoing_title">Ongoing Activities</span>
+                    <i class="fa-solid fa-chevron-right act-icon" style="color:#aaa; font-size:14px;"></i>
+                </div>
+                <div class="act-content">
+                    <i class="fa-solid fa-clipboard-list" style="font-size:20px;"></i>
+                    <span class="act-text" data-i18n="ongoing_none">No Ongoing Activities</span>
+                </div>
+            </div>
+
+            <!-- Thin Promo Strip (Carousel) -->
+            <div class="promo-strip-wrapper">
+                <!-- Promo Item 1 (Opens Ride) -->
+                <div class="promo-strip-item" onclick="handlePromoClick('ride')">
+                    <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg" alt="Promo 1">
+                </div>
+                <!-- Promo Item 2 (Opens Food - External) -->
+                <div class="promo-strip-item" onclick="handlePromoClick('food')">
+                    <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg" alt="Promo 2">
+                </div>
+                 <!-- Promo Item 3 (Opens Flash) -->
+                 <div class="promo-strip-item" onclick="handlePromoClick('flash')">
+                    <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg" alt="Promo 3">
+                </div>
+            </div>
+
         </div>
 
-        <div class="lang-dropdown closed pointer-auto" id="lang-menu">
-            <div class="lang-opt active" onclick="setLanguage('en')" id="opt-en">English</div>
-            <div class="lang-opt" onclick="setLanguage('si')" id="opt-si">සිංහල</div>
-            <div class="lang-opt" onclick="setLanguage('ta')" id="opt-ta">தமிழ்</div>
+        <!-- === VIEW: ACTIVITY === -->
+        <div id="view-activity" class="tab-view">
+            <div class="section-header" data-i18n="activity">Activity</div>
+            <div class="tabs-pill-container">
+                <div class="tab-pill active">Upcoming</div>
+                <div class="tab-pill">History</div>
+            </div>
+            <div class="empty-state">
+                <i class="fa-regular fa-folder-open"></i>
+                <p>No recent activities</p>
+            </div>
         </div>
 
-        <!-- Bottom Center: Menu Button -->
-        <div class="menu-btn pointer-auto" id="main-menu-btn" onclick="openMenu()">
-            <i class="fa-solid fa-bars"></i>
-            <span>Menu</span>
-        </div>
-
-        <!-- Menu Overlay (Click to close) -->
-        <div id="menu-overlay" onclick="closeMenu()"></div>
-
-        <!-- Bottom Sheet -->
-        <div class="bottom-sheet pointer-auto" id="bottom-sheet">
+        <!-- === VIEW: PROMOTIONS === -->
+        <div id="view-promotions" class="tab-view">
+            <div class="section-header" data-i18n="promotions">Promotions</div>
             
-            <!-- 1. RIDE -->
-            <div class="service-item">
-                <div class="service-img-box">
-                    <img src="https://i.ibb.co/cSDnbNVB/car-final-2.jpg" alt="Ride">
+            <div class="promo-grid">
+                <div class="promo-item">
+                    <div class="promo-card-lg"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
+                    <div class="promo-text"><h4>20% Off Rides</h4><p>Use code SPEEDO20</p></div>
                 </div>
-                <span class="service-label" data-i18n="ride">Ride</span>
-            </div>
-
-            <!-- 2. FOOD -->
-            <div class="service-item" onclick="window.location.href='foods.html'">
-                <div class="service-img-box">
-                    <img src="https://i.ibb.co/8gGtW9xc/bag-final-1.jpg" alt="Food">
+                <div class="promo-item">
+                    <div class="promo-card-lg"><img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg"></div>
+                    <div class="promo-text"><h4>Free Delivery</h4><p>On food orders over Rs. 2000</p></div>
                 </div>
-                <span class="service-label" data-i18n="food">Food</span>
             </div>
+        </div>
 
-            <!-- 3. FLASH -->
-            <div class="service-item">
-                <div class="service-img-box">
-                    <img src="https://i.ibb.co/67BshY3t/delivery-guy.png" alt="Flash">
-                </div>
-                <span class="service-label" data-i18n="flash">Flash</span>
+        <!-- === VIEW: PROFILE === -->
+        <div id="view-profile" class="tab-view">
+            <div class="profile-header">
+                <img src="https://i.ibb.co/5xb03Q1/default-avatar.jpg" id="prof-view-img" class="profile-big-img">
+                <h3 class="profile-name" id="prof-view-name">User</h3>
+                <p class="profile-email" id="prof-view-email">...</p>
             </div>
-
+            <div class="profile-menu">
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-user"></i> Edit Profile</div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-bookmark"></i> Saved Places</div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-credit-card"></i> Payment Methods</div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+                <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-circle-question"></i> Help & Support</div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+            </div>
+            <button class="logout-btn" onclick="handleLogout()">Log Out</button>
         </div>
 
     </div>
 
-    <!-- SKELETON LOADER -->
-    <div id="ui-skeleton">
-        <div class="sk-pill shimmer"></div>
-        <div class="sk-lang shimmer"></div>
-        <div class="sk-menu shimmer"></div>
+    <!-- 3. BOTTOM NAVIGATION -->
+    <div id="bottom-nav">
+        <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+            <i class="fa-solid fa-house"></i>
+            <span data-i18n="home">Home</span>
+        </div>
+        <div class="nav-item" id="nav-activity" onclick="switchTab('activity')">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span data-i18n="activity">Activity</span>
+        </div>
+        <div class="nav-item" id="nav-promotions" onclick="switchTab('promotions')">
+            <i class="fa-solid fa-tag"></i>
+            <span data-i18n="promotions">Promotions</span>
+        </div>
+        <div class="nav-item" id="nav-profile" onclick="switchTab('profile')">
+            <i class="fa-solid fa-user"></i>
+            <span data-i18n="profile">Profile</span>
+        </div>
     </div>
 
-    <!-- LEAFLET JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    
+    <!-- SKELETON -->
+    <div id="main-skeleton">
+        <div class="sk-row"><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div></div>
+        <div class="sk-banner shimmer"></div>
+    </div>
+
+    <!-- SETUP WIZARD -->
+    <div id="setup-wizard" class="hidden">
+        <div class="wizard-container">
+            <h2 style="color:#D50000;">Get Started</h2>
+            <div style="color:red; font-size:12px; margin-bottom:10px;" id="wizard-error"></div>
+            <div class="step active" id="step-1"><div class="input-box"><input type="text" id="inp-name" placeholder="Full Name"></div><button class="btn-red" onclick="wNext(1)">Next</button></div>
+            <div class="step" id="step-2"><div class="input-box"><input type="email" id="inp-email" placeholder="Email"></div><button class="btn-red" onclick="wNext(2)">Next</button></div>
+            <div class="step" id="step-3"><div class="input-box"><input type="text" value="Sri Lanka" disabled></div><button class="btn-red" onclick="wNext(3)">Next</button></div>
+            <div class="step" id="step-4"><div class="input-box"><select id="inp-province" onchange="loadDistricts()"></select></div><button class="btn-red" onclick="wNext(4)">Next</button></div>
+            <div class="step" id="step-5"><div class="input-box"><select id="inp-district"></select></div><button class="btn-red" onclick="wNext(5)">Next</button></div>
+            <div class="step" id="step-6">
+                <div style="width:100px; height:100px; background:#eee; border-radius:50%; margin:0 auto 10px; overflow:hidden;" onclick="document.getElementById('f').click()"><img id="wiz-img" style="width:100%; height:100%; object-fit:cover; display:none;"><i id="wiz-icon" class="fa-solid fa-camera" style="line-height:100px; color:#aaa;"></i></div>
+                <input type="file" id="f" class="hidden" onchange="prevImg(event)">
+                <div style="font-size:12px; margin-bottom:10px;"><input type="checkbox" id="chk"> Agree Terms</div><button class="btn-red" onclick="finishSetup()">Finish</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4",
             authDomain: "speedo-acb7c.firebaseapp.com",
@@ -328,108 +399,99 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // VARS
-        let map;
         let currentUser = null;
+        let base64Profile = "";
         let currentLang = localStorage.getItem('speedo_lang') || 'en';
 
         const i18n = {
-            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash" },
-            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්" },
-            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்" }
+            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", ongoing_title:"Ongoing Activities", ongoing_none:"No Ongoing Activities" },
+            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්", home:"මුල් පිටුව", activity:"ක්‍රියාකාරකම්", promotions:"දීමනා", profile:"ගිණුම", ongoing_title:"පවතින ක්‍රියාකාරකම්", ongoing_none:"කිසිවක් නොමැත" },
+            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", ongoing_title:"தற்போதைய", ongoing_none:"எதுவுமில்லை" }
         };
 
-        // --- INIT ---
+        const slData = { "Western": ["Colombo", "Gampaha"], "Central": ["Kandy", "Matale"], "Southern": ["Galle", "Matara"] };
+
         window.addEventListener('load', async () => {
             const stored = localStorage.getItem('speedo_user');
             if(!stored) { window.location.href = "index.html"; return; }
             currentUser = JSON.parse(stored);
 
-            initMap();
-            
-            setTimeout(() => {
-                revealUI();
-                updateLanguageUI();
-            }, 800);
+            try {
+                const snap = await get(ref(db, 'users/' + currentUser.uid));
+                const data = snap.val();
+                if(data) currentUser = data;
+
+                if(currentUser.profileCompleted) {
+                    initUI();
+                } else {
+                    document.getElementById('main-skeleton').classList.add('hidden');
+                    document.getElementById('setup-wizard').classList.remove('hidden');
+                    initWizard();
+                }
+            } catch(e) {
+                if(currentUser.profileCompleted) initUI();
+                else document.getElementById('setup-wizard').classList.remove('hidden');
+            }
         });
 
-        // --- MAP ---
-        function initMap() {
-            // Colombo
-            map = L.map('map-container', { 
-                zoomControl: false,
-                minZoom: 12,
-                maxZoom: 19,
-                attributionControl: false
-            }).setView([6.9271, 79.8612], 15);
-
-            // OpenStreetMap with High Cache Buffer
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                // keepBuffer: 20 keeps 20 screens worth of tiles in memory
-                keepBuffer: 20, 
-                updateWhenIdle: false // Load while panning for smoothness
-            }).addTo(map);
-        }
-
-        // --- UI REVEAL ---
-        function revealUI() {
-            document.getElementById('ui-skeleton').classList.add('hidden');
-            document.getElementById('ui-layer').classList.remove('hidden');
-
-            const firstName = currentUser.fullName ? currentUser.fullName.split(' ')[0] : 'User';
-            document.getElementById('ui-name').innerText = firstName;
-
+        function initUI() {
+            document.getElementById('main-skeleton').classList.add('hidden');
+            document.getElementById('main-card').classList.remove('hidden');
+            const name = currentUser.fullName ? currentUser.fullName.split(' ')[0] : 'User';
+            document.getElementById('ui-name').innerText = name;
+            document.getElementById('prof-view-name').innerText = currentUser.fullName || 'User';
+            document.getElementById('prof-view-email').innerText = currentUser.email || '';
             if(currentUser.profilePic) {
                 document.getElementById('ui-profile-img').src = currentUser.profilePic;
+                document.getElementById('prof-view-img').src = currentUser.profilePic;
             }
+            updateLangState();
         }
 
-        // --- MENU LOGIC ---
-        window.openMenu = function() {
-            document.getElementById('bottom-sheet').classList.add('open');
-            document.getElementById('menu-overlay').classList.add('active');
-            // Hide Menu Button
-            document.getElementById('main-menu-btn').classList.add('hidden-down');
+        // --- NAVIGATION SPA ---
+        window.switchTab = function(tab) {
+            document.querySelectorAll('.tab-view').forEach(el => el.classList.remove('active-view'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`view-${tab}`).classList.add('active-view');
+            document.getElementById(`nav-${tab}`).classList.add('active');
         }
 
-        window.closeMenu = function() {
-            document.getElementById('bottom-sheet').classList.remove('open');
-            document.getElementById('menu-overlay').classList.remove('active');
-            // Show Menu Button
-            document.getElementById('main-menu-btn').classList.remove('hidden-down');
+        window.handlePromoClick = function(type) {
+            if(type === 'food') window.location.href = 'foods.html';
+            else if(type === 'ride') alert('Redirecting to Ride Booking...');
+            else alert('Opening Flash Delivery...');
         }
 
-        // --- LANG & TIME ---
-        window.toggleLangMenu = () => document.getElementById('lang-menu').classList.toggle('closed');
-
-        window.setLanguage = function(lang) {
-            currentLang = lang;
-            localStorage.setItem('speedo_lang', lang);
-            document.getElementById('lang-menu').classList.add('closed');
-            updateLanguageUI();
+        window.handleLogout = function() {
+            if(confirm("Log out?")) { localStorage.removeItem('speedo_user'); window.location.href = "index.html"; }
         }
 
-        function updateLanguageUI() {
+        // --- LANGUAGE ---
+        window.cycleLanguage = function() {
+            if(currentLang === 'en') currentLang = 'si'; else if(currentLang === 'si') currentLang = 'ta'; else currentLang = 'en';
+            localStorage.setItem('speedo_lang', currentLang); updateLangState();
+        }
+        function updateLangState() {
+            document.getElementById('lang-en').className = currentLang==='en'?'active':'';
+            document.getElementById('lang-si').className = currentLang==='si'?'active':'';
+            document.getElementById('lang-ta').className = currentLang==='ta'?'active':'';
             document.querySelectorAll('[data-i18n]').forEach(el => {
-                const key = el.getAttribute('data-i18n');
-                if(i18n[currentLang][key]) el.innerText = i18n[currentLang][key];
+                const k = el.getAttribute('data-i18n'); if(i18n[currentLang][k]) el.innerText = i18n[currentLang][k];
             });
             updateGreeting();
-            document.querySelectorAll('.lang-opt').forEach(el => el.classList.remove('active'));
-            document.getElementById('opt-'+currentLang).classList.add('active');
         }
-
         function updateGreeting() {
-            const h = new Date().getHours();
-            let key = 'morning';
-            if(h >= 12 && h < 17) key = 'afternoon';
-            else if(h >= 17) key = 'evening';
-            document.getElementById('ui-greeting').innerText = i18n[currentLang][key];
+            const h = new Date().getHours(); let k = 'morning';
+            if(h >= 12 && h < 17) k = 'afternoon'; else if(h >= 17) k = 'evening';
+            document.getElementById('ui-greeting').innerText = i18n[currentLang][k];
         }
 
-        setInterval(updateGreeting, 60000);
-
+        // --- WIZARD ---
+        function initWizard() { const s=document.getElementById('inp-province'); for(let p in slData) s.add(new Option(p,p)); }
+        window.loadDistricts = () => { const p=document.getElementById('inp-province').value; const d=document.getElementById('inp-district'); d.innerHTML=''; if(slData[p]) slData[p].forEach(x=>d.add(new Option(x,x))); }
+        window.wNext = (n) => { document.getElementById(`step-${n}`).classList.remove('active'); document.getElementById(`step-${n+1}`).classList.add('active'); }
+        window.prevImg = (e) => { const f=e.target.files[0]; const r=new FileReader(); r.onload=(ev)=>{ const i=new Image(); i.src=ev.target.result; i.onload=()=>{ const c=document.createElement('canvas'); c.width=200; c.height=200; c.getContext('2d').drawImage(i,0,0,200,200); base64Profile=c.toDataURL('image/jpeg',0.5); document.getElementById('wiz-img').src=base64Profile; document.getElementById('wiz-img').style.display='block'; document.getElementById('wiz-icon').style.display='none'; }}; r.readAsDataURL(f); }
+        window.finishSetup = async () => { if(!document.getElementById('chk').checked) return alert("Accept terms"); const up={fullName:document.getElementById('inp-name').value, email:document.getElementById('inp-email').value, profilePic:base64Profile, profileCompleted:true}; await update(ref(db, 'users/'+currentUser.uid), up); currentUser={...currentUser,...up}; localStorage.setItem('speedo_user',JSON.stringify(currentUser)); document.getElementById('setup-wizard').classList.add('hidden'); initUI(); }
     </script>
 </body>
 </html>
