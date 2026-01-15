@@ -218,7 +218,13 @@
         .perm-icon { font-size: 60px; color: var(--primary-red); margin-bottom: 20px; animation: pulse 1s infinite; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .perm-text { color: var(--primary-red); font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-        .settings-btn { background: #eee; color: #333; margin-top: 10px; }
+        .perm-sub { color: #666; font-size: 14px; margin: 0; padding: 0 20px; }
+
+        /* --- APP WARNING MODAL --- */
+        #app-warn-modal { background: rgba(0,0,0,0.8); z-index: 5500; }
+        .warn-card { text-align: center; color: white; padding: 30px; }
+        .warn-card h3 { color: #fff; margin-top: 0; }
+        .warn-card p { color: #ddd; font-size: 14px; line-height: 1.5; margin-bottom: 20px; }
 
         /* --- RIDE WINDOW --- */
         #ride-overlay {
@@ -228,15 +234,10 @@
             display: flex; flex-direction: column;
         }
         #ride-overlay.active { transform: translateY(0); }
-        .close-ride-btn {
-            position: absolute; top: 20px; right: 20px; z-index: 200;
-            width: 40px; height: 40px; background: white; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; color: #333; font-size: 18px;
-        }
+        
         #ride-map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; background: #e5e5e5; }
         .leaflet-control-zoom, .leaflet-control-attribution { display: none !important; }
-        .leaflet-routing-container { display: none !important; } /* Hide default LRM controls */
+        .leaflet-routing-container { display: none !important; } 
 
         /* Ride Top Card */
         #ride-top-card {
@@ -246,17 +247,38 @@
             transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
             display: flex; flex-direction: column;
         }
-        #ride-top-card.collapsed { top: 70px; padding: 15px; }
-        .ride-title { font-weight: 700; margin-bottom: 15px; color: #333; display: flex; justify-content: space-between; }
-        .collapsed .ride-title { display: none; }
+
+        /* Pill Mode (Minimized) */
+        .ride-pill-mode {
+            display: none;
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            width: auto; min-width: 150px;
+            background: white; border-radius: 30px; padding: 10px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 20;
+            justify-content: space-between; align-items: center;
+            border: 1px solid #eee;
+        }
+        .collapsed .ride-pill-mode { display: flex; }
+
+        .pill-btn { width: 32px; height: 32px; border-radius: 50%; border: none; background: #f5f5f5; color: #333; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; }
+        .pill-btn.close { color: #D50000; background: #ffebee; }
+        
+        /* Expanded Mode */
+        #ride-top-card.collapsed { padding: 0; height: 0; overflow: hidden; border-radius: 20px; box-shadow: none; background: transparent; border: none; }
+        .collapsed .ride-title, .collapsed .loc-inputs, .collapsed .vehicle-btn, .collapsed .summary-row { display: none; }
+        .collapsed .close-ride-btn-inline { display: none; } 
+
+        .close-ride-btn-inline {
+            position: absolute; top: 15px; right: 15px; 
+            width: 30px; height: 30px; background: #f5f5f5; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #555; z-index: 50; border: none;
+        }
+
+        .ride-title { font-weight: 700; margin-bottom: 15px; color: #333; text-align: center; }
         
         .summary-row { display: none; flex-direction: column; gap: 8px; width: 100%; }
-        .collapsed .summary-row { display: flex; }
-        .collapsed .loc-inputs, .collapsed .vehicle-btn { display: none; }
-        .sum-line { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 500; color: #333; justify-content: space-between; }
-        .sum-left { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
-        .sum-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%; }
-        .sum-meta { font-size: 11px; color: #888; font-weight: 600; display: flex; justify-content: space-between; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; }
 
         .loc-input-btn {
             width: 100%; padding: 15px; background: #f8f9fa; border-radius: 12px;
@@ -267,7 +289,6 @@
         .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
         .dot.blue { background: #2196F3; }
         .dot.red { background: #D50000; }
-        .edit-icon { color: var(--primary-red); cursor: pointer; padding: 5px; }
         
         /* Location Search Popup */
         #loc-search-modal {
@@ -287,7 +308,7 @@
         }
         .search-input-box input { border: none; background: transparent; padding: 15px 0; margin-left: 10px; flex: 1; outline: none; }
         
-        /* --- ROUTE SELECTION MODAL (Bottom Sheet) --- */
+        /* --- ROUTE SELECTION MODAL --- */
         #route-select-modal {
             position: absolute; bottom: 0; left: 0; width: 100%;
             background: white; border-radius: 30px 30px 0 0;
@@ -316,6 +337,8 @@
         }
         #route-info-fullscreen.active { transform: translateY(0); }
         .route-detail-row { padding: 15px 0; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .direction-step { padding: 10px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; color: #444; }
+        .direction-step i { color: var(--primary-red); width: 20px; text-align: center; margin-right: 10px; }
 
         /* --- VEHICLE SELECTION SHEET --- */
         #vehicle-sheet {
@@ -353,7 +376,10 @@
             background: rgba(0,0,0,0.5); z-index: 7000; display: none; justify-content: center; align-items: center;
         }
         #confirm-modal-overlay.active { display: flex; }
-        .confirm-box { background: white; padding: 30px; border-radius: 20px; width: 85%; text-align: center; animation: popIn 0.3s; }
+        .confirm-box { 
+            background: white; padding: 25px; border-radius: 20px; width: 300px; text-align: center; animation: popIn 0.3s; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
 
         #pin-drop-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -361,7 +387,7 @@
             display: flex; flex-direction: column;
         }
         #pin-drop-overlay.active { transform: translateY(0); }
-        #pin-map { width: 100%; height: 100%; background: #e5e5e5; position: absolute; top:0; left:0; }
+        #pin-map { width: 100%; height: 100%; background: #e5e5e5; position: absolute; top:0; left:0; z-index: 1; }
         
         #pin-controls {
             position: absolute; bottom: 0; width: 100%; background: white;
@@ -373,12 +399,13 @@
         .pin-status.valid { color: #4CAF50; font-weight: 700; }
         .pin-status.invalid { color: #D50000; font-weight: 700; }
 
-        #map-crosshair {
+        /* Pin Drop Crosshair - Fixed Z-Index */
+        .crosshair-container {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            z-index: 5; pointer-events: none; font-size: 35px; color: var(--primary-red);
-            text-shadow: 0 0 10px white;
+            z-index: 5; pointer-events: none; text-align: center;
         }
-        .radius-circle { border: 2px dashed #D50000; background: rgba(213, 0, 0, 0.1); border-radius: 50%; }
+        .crosshair-icon { font-size: 35px; color: var(--primary-red); text-shadow: 0 0 10px white; }
+        .radius-circle { border: 2px dashed #D50000; background: rgba(213, 0, 0, 0.1); border-radius: 50%; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); }
 
         /* --- TOAST --- */
         #toast {
@@ -401,10 +428,8 @@
     <!-- LOCATION PERMISSION BLOCKER -->
     <div id="block-permission-modal">
         <i class="fa-solid fa-location-dot perm-icon"></i>
-        <div class="perm-text">To Continue, Grant Location Access</div>
-        <p style="font-size:12px; color:#666; max-width:80%; margin:0 auto 20px auto;">We need your location to provide services. Please allow access.</p>
-        <button class="btn-red" style="width: auto; padding: 10px 30px;" onclick="window.location.reload()">Retry</button>
-        <button class="btn-red settings-btn" style="width: auto; padding: 10px 30px;" onclick="alert('Please open your Browser Settings -> Site Settings -> Location -> Allow.')">Open Settings</button>
+        <div class="perm-text" data-i18n="loading_app">Loading App</div>
+        <p class="perm-sub" data-i18n="loc_perm_msg">Please turn on your device's location to proceed</p>
     </div>
 
     <!-- HEADER -->
@@ -441,7 +466,7 @@
             </div>
 
             <div class="ad-banner">
-                <div class="ad-badge">Promoted</div>
+                <div class="ad-badge" data-i18n="promoted">Promoted</div>
                 <img src="https://i.ibb.co/0y4f8HBn/56bfb5ea-125e-4071-a5dc-63762dbddc05.jpg" alt="Promo">
             </div>
 
@@ -471,7 +496,7 @@
             </div>
             <div class="empty-state">
                 <i class="fa-regular fa-folder-open"></i>
-                <p>No activity records found</p>
+                <p data-i18n="no_records">No activity records found</p>
             </div>
         </div>
 
@@ -481,7 +506,7 @@
             <div class="promo-grid" id="promo-container">
                 <div class="empty-state" id="promo-loader">
                     <div class="loader-spin" style="width:20px; height:20px; border-width:2px;"></div>
-                    <p>Loading offers...</p>
+                    <p data-i18n="loading_offers">Loading offers...</p>
                 </div>
             </div>
         </div>
@@ -499,7 +524,7 @@
                 <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-credit-card"></i> <span data-i18n="payment">Payment Methods</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
                 <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-circle-question"></i> <span data-i18n="support">Help & Support</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
             </div>
-            <button class="logout-btn" onclick="handleLogout()">Log Out</button>
+            <button class="logout-btn" onclick="handleLogout()" data-i18n="logout">Log Out</button>
         </div>
     </div>
 
@@ -528,54 +553,46 @@
     <!-- RIDE OVERLAY -->
     <div id="ride-overlay" class="hidden">
         <div id="ride-map"></div>
-        <i id="map-crosshair" class="fa-solid fa-crosshairs hidden"></i>
-        <div class="close-ride-btn hidden" id="ride-close-x" onclick="closeRideOverlay()"><i class="fa-solid fa-xmark"></i></div>
+        
+        <!-- Pill Mode (Minimized) -->
+        <div class="ride-pill-mode">
+            <button class="pill-btn close" onclick="closeRideOverlay()"><i class="fa-solid fa-xmark"></i></button>
+            <button class="pill-btn" onclick="expandTopCard()"><i class="fa-solid fa-chevron-down"></i></button>
+        </div>
 
         <div id="ride-top-card">
+            <!-- Inline Close Button (Only visible when expanded) -->
+            <button class="close-ride-btn-inline" onclick="closeRideOverlay()"><i class="fa-solid fa-xmark"></i></button>
+
             <div class="ride-title"><span data-i18n="book_ride">Book a Ride</span></div>
             
-            <div class="summary-row">
-                <div class="sum-line">
-                    <div class="sum-left"><div class="dot blue"></div> <span class="sum-txt" id="sum-pickup">...</span></div>
-                    <i class="fa-solid fa-pen edit-icon" onclick="resetRoute(); openSearch('pickup')"></i>
-                </div>
-                <div class="sum-line">
-                    <div class="sum-left"><div class="dot red"></div> <span class="sum-txt" id="sum-dropoff">...</span></div>
-                    <i class="fa-solid fa-pen edit-icon" onclick="resetRoute(); openSearch('dropoff')"></i>
-                </div>
-                <div class="sum-meta">
-                    <span id="route-dist">0 km</span>
-                    <span id="route-type" style="color:var(--primary-red);">Select Route</span>
-                </div>
-            </div>
-
             <div class="loc-inputs">
                 <div class="loc-input-btn" onclick="openSearch('pickup')">
-                    <div class="dot blue"></div> <span id="txt-pickup">Select Your Location</span>
+                    <div class="dot blue"></div> <span id="txt-pickup" data-i18n="select_loc">Select Your Location</span>
                 </div>
                 <div class="loc-input-btn" onclick="openSearch('dropoff')">
-                    <div class="dot red"></div> <span id="txt-dropoff">Drop Off Location</span>
+                    <div class="dot red"></div> <span id="txt-dropoff" data-i18n="dropoff_loc">Drop Off Location</span>
                 </div>
             </div>
             
-            <button class="btn-red vehicle-btn" id="btn-show-routes" onclick="calculateRoutes()" data-i18n="show_routes">Find Routes</button>
+            <button class="btn-red vehicle-btn" id="btn-show-routes" onclick="calculateRoutes()" data-i18n="find_routes">Find Best Route</button>
             <button class="btn-red vehicle-btn hidden" id="btn-show-vehicles" onclick="showVehicleSheet()" data-i18n="show_vehicles">Show Vehicle Options</button>
         </div>
         
         <!-- Route Selection Modal -->
         <div id="route-select-modal">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3 style="margin:0; color:#333;">Select Route</h3>
+                <h3 style="margin:0; color:#333;" data-i18n="select_route">Select Route</h3>
                 <button onclick="closeRouteModal()" style="border:none; background:none; font-size:20px; color:#999;">&times;</button>
             </div>
             <div id="route-options-container"></div>
-            <button class="btn-red" style="margin-top:10px;" id="btn-route-continue" onclick="confirmRouteSelection()" disabled>Continue</button>
+            <button class="btn-red" style="margin-top:10px;" id="btn-route-continue" onclick="confirmRouteSelection()" disabled data-i18n="continue">Continue</button>
         </div>
 
         <!-- Vehicle Sheet -->
         <div id="vehicle-sheet">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3 style="margin:0; color:#333;">Choose Vehicle</h3>
+                <h3 style="margin:0; color:#333;" data-i18n="choose_vehicle">Choose Vehicle</h3>
                 <button onclick="closeVehicleSheet()" style="border:none; background:none; font-size:20px; color:#999;">&times;</button>
             </div>
             
@@ -585,37 +602,47 @@
 
             <div class="book-action-area">
                 <div>
-                    <div style="font-size:12px; color:#666;">Estimated Total</div>
+                    <div style="font-size:12px; color:#666;" data-i18n="est_total">Estimated Total</div>
                     <div class="est-price-lg" id="total-price-display">LKR 0.00</div>
                 </div>
-                <button class="btn-red" id="btn-confirm-vehicle" style="width: auto; padding: 12px 30px;" disabled onclick="openBookingConfirm()">Book</button>
+                <button class="btn-red" id="btn-confirm-vehicle" style="width: auto; padding: 12px 30px;" disabled onclick="openBookingConfirm()" data-i18n="book">Book</button>
             </div>
         </div>
     </div>
 
     <!-- SEARCH MODAL -->
     <div id="loc-search-modal">
-        <h3 style="margin-top:0; color:#333;" id="search-title">Set Location</h3>
+        <h3 style="margin-top:0; color:#333;" id="search-title" data-i18n="set_location">Set Location</h3>
         <div class="search-input-box">
             <i class="fa-solid fa-magnifying-glass" style="color:#aaa;"></i>
-            <input type="text" id="inp-search-loc" placeholder="Search places..." onkeyup="handleSearchInput(event)">
+            <input type="text" id="inp-search-loc" data-i18n="search_placeholder" placeholder="Search places..." onkeyup="handleSearchInput(event)">
         </div>
         <div class="search-pill-row">
-            <div class="search-pill-btn" id="btn-my-loc" onclick="setMyLocation()"><i class="fa-solid fa-location-crosshairs"></i> Your Location</div>
-            <div class="search-pill-btn" onclick="startPinPicker()"><i class="fa-solid fa-map-pin"></i> Pick on Map</div>
+            <div class="search-pill-btn" id="btn-my-loc" onclick="setMyLocation()"><i class="fa-solid fa-location-crosshairs"></i> <span data-i18n="your_loc">Your Location</span></div>
+            <div class="search-pill-btn" onclick="startPinPicker()"><i class="fa-solid fa-map-pin"></i> <span data-i18n="pick_map">Pick on Map</span></div>
         </div>
         <div id="search-results" style="flex:1; overflow-y:auto;"></div>
-        <button class="btn-red" onclick="closeSearch()">Close</button>
+        <button class="btn-red" onclick="closeSearch()" data-i18n="close">Close</button>
     </div>
 
     <!-- FULL SCREEN ROUTE INFO -->
     <div id="route-info-fullscreen">
         <div style="display:flex; align-items:center; margin-bottom:20px;">
             <button onclick="document.getElementById('route-info-fullscreen').classList.remove('active')" style="border:none; background:none; font-size:20px; margin-right:15px;"><i class="fa-solid fa-arrow-left"></i></button>
-            <h2 style="margin:0; color:#333;">Route Details</h2>
+            <h2 style="margin:0; color:#333;" data-i18n="route_details">Route Details</h2>
         </div>
         <div id="route-info-content" style="overflow-y:auto; flex:1;">
             <!-- Details injected -->
+        </div>
+    </div>
+
+    <!-- APP WARNING MODAL -->
+    <div id="app-warn-modal" class="hidden">
+        <div class="warn-card">
+            <h3 style="color:#D50000; margin-bottom:15px;" data-i18n="important">Important</h3>
+            <p data-i18n="warn_msg">Keep app open after booking a ride to maintain a consistent connection with the database and driver. Closing the app might break the connection, which could lead to errors.</p>
+            <div style="font-size:14px; margin-bottom:20px;"><input type="checkbox" id="chk-warn"> <span data-i18n="dont_show">Do not show again</span></div>
+            <button class="btn-red" style="background:white; color:#333;" onclick="dismissWarn()" data-i18n="close">Close</button>
         </div>
     </div>
 
@@ -623,11 +650,11 @@
     <div id="confirm-modal-overlay">
         <div class="confirm-box">
             <div style="font-size:40px; color:#4CAF50; margin-bottom:10px;"><i class="fa-solid fa-circle-check"></i></div>
-            <h3 style="margin:0 0 10px 0; color:#333;">Confirm Booking?</h3>
+            <h3 style="margin:0 0 10px 0; color:#333;" data-i18n="confirm_booking">Confirm Booking?</h3>
             <p style="font-size:13px; color:#666; margin-bottom:20px;" id="confirm-text">Ride details...</p>
             <div style="display:flex; gap:10px;">
-                <button class="btn-red" style="background:#eee; color:#333;" onclick="closeConfirmModal()">Close</button>
-                <button class="btn-red" onclick="proceedToPinDrop()">Confirm</button>
+                <button class="btn-red" style="background:#eee; color:#333;" onclick="closeConfirmModal()" data-i18n="close">Close</button>
+                <button class="btn-red" onclick="proceedToPinDrop()" data-i18n="confirm">Confirm</button>
             </div>
         </div>
     </div>
@@ -635,39 +662,43 @@
     <!-- PIN DROP OVERLAY -->
     <div id="pin-drop-overlay">
         <div id="pin-map"></div>
-        <i class="fa-solid fa-location-crosshair" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); font-size:30px; color:#D50000; z-index:5;"></i>
+        
+        <!-- Crosshair Container (Fixed z-index) -->
+        <div class="crosshair-container">
+            <i class="fa-solid fa-location-crosshair crosshair-icon"></i>
+        </div>
         
         <div id="pin-controls">
-            <p style="margin:0; font-size:13px; color:#666;">Drag map to place pin within 10m of pickup point.</p>
-            <div id="pin-status-text" class="pin-status">Calculating distance...</div>
-            <button class="btn-red" id="btn-final-book" disabled onclick="finishBooking()">Book Now</button>
+            <p style="margin:0; font-size:13px; color:#666;" data-i18n="drag_map">Drag map to place pin within 10m of pickup point.</p>
+            <div id="pin-status-text" class="pin-status" data-i18n="calculating">Calculating distance...</div>
+            <button class="btn-red" id="btn-final-book" disabled onclick="finishBooking()" data-i18n="book_now">Book Now</button>
         </div>
     </div>
 
     <!-- SETUP WIZARD -->
     <div id="setup-wizard" class="hidden">
         <div class="wizard-container">
-            <h2 style="color:#D50000; margin-bottom: 5px;">Get Started</h2>
+            <h2 style="color:#D50000; margin-bottom: 5px;" data-i18n="get_started">Get Started</h2>
             <div style="color:red; font-size:12px; margin-bottom:15px; min-height:18px;" id="wizard-error"></div>
-            <div class="step active" id="step-1"><div class="input-box"><label>Full Name</label><input type="text" id="inp-name" placeholder="John Doe"></div><button class="btn-red" onclick="wNext(1)">Next</button></div>
-            <div class="step" id="step-2"><div class="input-box"><label>Email Address</label><input type="email" id="inp-email" placeholder="example@gmail.com"></div><button class="btn-red" onclick="wNext(2)">Next</button></div>
-            <div class="step" id="step-3"><div class="input-box"><label>Country</label><input type="text" value="Sri Lanka" disabled></div><button class="btn-red" onclick="wNext(3)">Next</button></div>
-            <div class="step" id="step-4"><div class="input-box"><label>Province</label><select id="inp-province" onchange="loadDistricts()"><option value="">Select Province</option></select></div><button class="btn-red" onclick="wNext(4)">Next</button></div>
-            <div class="step" id="step-5"><div class="input-box"><label>District</label><select id="inp-district"><option value="">Select District</option></select></div><button class="btn-red" onclick="wNext(5)">Next</button></div>
-            <div class="step" id="step-6"><div class="profile-upload-container" onclick="document.getElementById('f').click()"><img id="wiz-img" style="width:100%; height:100%; object-fit:cover; display:none;"><i id="wiz-icon" class="fa-solid fa-camera" style="line-height:100px; color:#aaa;"></i></div><input type="file" id="f" class="hidden" onchange="prevImg(event)"><div style="font-size:12px; margin-bottom:10px;"><input type="checkbox" id="chk"> Agree to <span onclick="openTerms()" style="color:#D50000; font-weight:700;">Terms & Conditions</span></div><button class="btn-red" onclick="finishSetup()">Finish</button></div>
+            <div class="step active" id="step-1"><div class="input-box"><label data-i18n="full_name">Full Name</label><input type="text" id="inp-name" placeholder="John Doe"></div><button class="btn-red" onclick="wNext(1)" data-i18n="next">Next</button></div>
+            <div class="step" id="step-2"><div class="input-box"><label data-i18n="email">Email Address</label><input type="email" id="inp-email" placeholder="example@gmail.com"></div><button class="btn-red" onclick="wNext(2)" data-i18n="next">Next</button></div>
+            <div class="step" id="step-3"><div class="input-box"><label data-i18n="country">Country</label><input type="text" value="Sri Lanka" disabled></div><button class="btn-red" onclick="wNext(3)" data-i18n="next">Next</button></div>
+            <div class="step" id="step-4"><div class="input-box"><label data-i18n="province">Province</label><select id="inp-province" onchange="loadDistricts()"><option value="" data-i18n="select_prov">Select Province</option></select></div><button class="btn-red" onclick="wNext(4)" data-i18n="next">Next</button></div>
+            <div class="step" id="step-5"><div class="input-box"><label data-i18n="district">District</label><select id="inp-district"><option value="" data-i18n="select_dist">Select District</option></select></div><button class="btn-red" onclick="wNext(5)" data-i18n="next">Next</button></div>
+            <div class="step" id="step-6"><div class="profile-upload-container" onclick="document.getElementById('f').click()"><img id="wiz-img" style="width:100%; height:100%; object-fit:cover; display:none;"><i id="wiz-icon" class="fa-solid fa-camera" style="line-height:100px; color:#aaa;"></i></div><input type="file" id="f" class="hidden" onchange="prevImg(event)"><div style="font-size:12px; margin-bottom:10px;"><input type="checkbox" id="chk"> <span data-i18n="agree_terms">Agree to</span> <span onclick="openTerms()" style="color:#D50000; font-weight:700;" data-i18n="terms">Terms & Conditions</span></div><button class="btn-red" onclick="finishSetup()" data-i18n="finish">Finish</button></div>
         </div>
     </div>
     
     <!-- TERMS MODAL -->
     <div id="terms-modal" class="hidden">
         <div class="modal-card">
-            <h3 style="color:#D50000; margin-top:0;">Terms & Conditions</h3>
+            <h3 style="color:#D50000; margin-top:0;" data-i18n="terms">Terms & Conditions</h3>
             <div style="font-size:13px; color:#555; line-height:1.6; max-height:60vh; overflow-y:auto; margin-bottom:20px;">
-                <p><b>1. Acceptance</b><br>By using Speedo, you agree to our terms.</p>
-                <p><b>2. Lost Items</b><br>We care about your lost/stolen and other items. However, please ensure you check your belongings before leaving the vehicle.</p>
-                <p><b>3. User Conduct</b><br>Respect drivers and follow laws.</p>
+                <p><b>1. Acceptance</b><br><span data-i18n="t1">By using Speedo, you agree to our terms.</span></p>
+                <p><b>2. Lost Items</b><br><span data-i18n="t2">We care about your lost/stolen and other items. However, please ensure you check your belongings before leaving vehicle.</span></p>
+                <p><b>3. User Conduct</b><br><span data-i18n="t3">Respect drivers and follow laws.</span></p>
             </div>
-            <button class="btn-red" onclick="closeTerms()" style="margin-top:0;">Close</button>
+            <button class="btn-red" onclick="closeTerms()" style="margin-top:0;" data-i18n="close">Close</button>
         </div>
     </div>
 
@@ -695,7 +726,7 @@
         
         // Map Globals
         let map = null;
-        let pinMap = null; // Separate map for pin dropping
+        let pinMap = null; 
         let routingControl = null;
         let markersLayer = null;
         let radiusCircle = null;
@@ -709,16 +740,70 @@
         let searchCache = {};
         let routeAlternatives = [];
         let selectedRouteIndex = 0;
-        let routePolylines = []; // Store custom polyline objects
+        let routePolylines = []; 
         let selectedVehicleType = null;
         let pinDropLat = null;
         let pinDropLng = null;
 
-        // --- DATA & I18N ---
+        // --- TRANSLATIONS ---
         const i18n = {
-            en: { hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", ride: "Ride", food: "Food", flash: "Flash", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", ongoing_title:"Ongoing Activities", ongoing_none:"No Ongoing Activities", ongoing:"Ongoing", completed:"Completed", book_ride:"Book a Ride", show_vehicles:"Show Vehicle Options", app_warn:"To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride", edit_profile: "Edit Profile", saved_places:"Saved Places", payment:"Payment Methods", support:"Help & Support", show_routes:"Find Routes" },
-            si: { hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", ride: "ගමන්", food: "ආහාර", flash: "තැපැල්", home:"මුල් පිටුව", activity:"ක්‍රියාකාරකම්", promotions:"දීමනා", profile:"ගිණුම", ongoing_title:"පවතින ක්‍රියාකාරකම්", ongoing_none:"කිසිවක් නොමැත", ongoing:"පවතින", completed:"නිමවූ", book_ride:"ගමනක් යන්න", show_vehicles:"වාහන පෙන්වන්න", app_warn:"සේවාව සමග රැඳී සිටීමට කරුණාකර ඇප් එක වසන්න එපා. එසේ කිරීමෙන් ඔබගේ ගමනට බාධා සිදුවිය හැක.", edit_profile: "ගිණුම සකසන්න", saved_places:"සුරැකුම්", payment:"ගෙවීම් ක්‍රම", support:"උදව්", show_routes:"මාර්ග සොයන්න" },
-            ta: { hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", ride: "சவாரி", food: "உணவு", flash: "கூரியர்", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", ongoing_title:"தற்போதைய", ongoing_none:"எதுவுமில்லை", ongoing:"தற்போதைய", completed:"முடிந்தது", book_ride:"சவாரி பதிவு", show_vehicles:"வாகனங்கள்", app_warn:"சேவையுடன் இணைந்திருக்க செயலியை மூட வேண்டாம்.", edit_profile: "சுயவிவரம் திருத்து", saved_places:"சேமித்த இடங்கள்", payment:"கட்டண முறைகள்", support:"உதவி", show_routes:"வழிகளை கண்டறியவும்" }
+            en: {
+                hello: "Hello", morning: "Good Morning", afternoon: "Good Afternoon", evening: "Good Evening", 
+                ride: "Ride", food: "Food", flash: "Flash", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", 
+                ongoing_title:"Ongoing Activities", ongoing_none:"No Ongoing Activities", ongoing:"Ongoing", completed:"Completed", 
+                book_ride:"Book a Ride", show_vehicles:"Show Vehicle Options", 
+                app_warn:"To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride", 
+                edit_profile: "Edit Profile", saved_places:"Saved Places", payment:"Payment Methods", support:"Help & Support", 
+                show_routes:"Find Best Route", loading_app:"Loading App", loc_perm_msg:"Please turn on your device's location to proceed",
+                important: "Important", warn_msg: "Keep app open after booking a ride to maintain a consistent connection with the database and driver. Closing the app might break the connection, which could lead to errors.",
+                dont_show: "Do not show again", select_route: "Select Route", continue: "Continue", choose_vehicle: "Choose Vehicle", est_total: "Estimated Total", book: "Book",
+                select_loc: "Select Your Location", dropoff_loc: "Drop Off Location", set_location: "Set Location", search_placeholder: "Search places...", 
+                your_loc: "Your Location", pick_map: "Pick on Map", route_details: "Route Details", confirm_booking: "Confirm Booking?", confirm: "Confirm",
+                drag_map: "Drag map to place pin within 10m of pickup point.", book_now: "Book Now", calculating: "Calculating distance...",
+                get_started: "Get Started", full_name: "Full Name", email: "Email Address", country: "Country", province: "Province", district: "District", 
+                select_prov: "Select Province", select_dist: "Select District", next: "Next", agree_terms: "Agree to", terms: "Terms & Conditions", finish: "Finish",
+                logout: "Log Out", promoted: "Promoted", loading_offers: "Loading offers...", no_records: "No activity records found",
+                recommended: "Recommended", expressway: "Expressway", tolls: "Tolls May Apply", no_tolls: "No Tolls", 
+                still_dev: "Still Developing", close: "Close"
+            },
+            si: {
+                hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", 
+                ride: "ගමන්", food: "ආහාර", flash: "තැපැල්", home:"මුල් පිටුව", activity:"ක්‍රියාකාරකම්", promotions:"දීමනා", profile:"ගිණුම", 
+                ongoing_title:"පවතින ක්‍රියාකාරකම්", ongoing_none:"කිසිවක් නොමැත", ongoing:"පවතින", completed:"නිමවූ", 
+                book_ride:"ගමනක් යන්න", show_vehicles:"වාහන පෙන්වන්න", 
+                app_warn:"සේවාව සමග රැඳී සිටීමට කරුණාකර ඇප් එක වසන්න එපා. එසේ කිරීමෙන් ඔබගේ ගමනට බාධා සිදුවිය හැක.", 
+                edit_profile: "ගිණුම සකසන්න", saved_places:"සුරැකුම්", payment:"ගෙවීම් ක්‍රම", support:"උදව්", 
+                show_routes:"හොඳම මාර්ගය සොයන්න", loading_app:"යෙදුම පූරණය වේ", loc_perm_msg:"ඉදිරිපත්තික ස්ථානය සක්‍රීය කරන්න",
+                important: "වැදගත්", warn_msg: "ගමන් වාරණයක් කිරීමෙන් පසු දත්ත මූලාශ්‍රය සහ රියදුරු සමඟ ස්ථාවර සම්බන්ධතාවක් පවත්වා ගැනීම සඳහා යෙදුම විවෘතව තබන්න. යෙදුම වසා ඇත්නම් සම්බන්ධතාව බිඳ වැටීමට හේතු විය හැකි අතර එය දෝෂ වලට තුඩු දිය හැක.",
+                dont_show: "නැවත නොපෙන්වන්න", select_route: "මාර්ගය තෝරන්න", continue: "ඉදිරිපත් කරන්න", choose_vehicle: "වාහනයක් තෝරන්න", est_total: "ඇස්තමික එකතුව", book: "දැන් ගන්න",
+                select_loc: "ඔබේ පිහිටුව තෝරන්න", dropoff_loc: "බැසීමේ ස්ථානය", set_location: "ස්ථානය සකසන්න", search_placeholder: "ස්ථාන සොයන්න...", 
+                your_loc: "ඔබේ පිහිටුව", pick_map: "සිතියමේ තෝරන්න", route_details: "මාර්ග විස්තර", confirm_booking: "දැන් ගන්නද?", confirm: "තහවුරු කරන්න",
+                drag_map: "පිකප් ලකුණ පිකප් ලකුණු වළාගැනීමේ ප්‍රදේශය තුළ 10m අවට සිතියම අදියරන්න.", book_now: "දැන් ගන්න", calculating: "දුර ගණනය කරමින්...",
+                get_started: "ආරම්භ කරන්න", full_name: "සම්පූර්ණ නම", email: "විද්‍යුතර ලිපිනය", country: "රට", province: "පළාත් පළාත", district: "දිස්ත්‍රික්කය", 
+                select_prov: "පළාත් පළාතක් තෝරන්න", select_dist: "දිස්ත්‍රික්කයක් තෝරන්න", next: "ඊළඟ", agree_terms: "එකඟ වන්න", terms: "කොන්දේසි හා නියම", finish: "අවසන්",
+                logout: "පිටත් වන්න", promoted: "ප්‍රචාරය කළ", loading_offers: "ඉල්ලීම් පූරණය වේ...", no_records: "ක්‍රියාකාරකම් වාර්තා හමු නොවිණ",
+                recommended: "නිර්දේශිත", expressway: "අධිවේගී මාර්ගය", tolls: "බද්ද අයක්තුව", no_tolls: "බද්ද නොමැත", 
+                still_dev: "තවම සංවර්ධනය වෙමින්", close: "වසන්න"
+            },
+            ta: { 
+                hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", 
+                ride: "சவாரி", food: "உணவு", flash: "கூரியர்", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", 
+                ongoing_title:"தற்போதைய", ongoing_none:"எதுவுமில்லை", ongoing:"தற்போதைய", completed:"முடிந்தது", 
+                book_ride:"சவாரி பதிவு", show_vehicles:"வாகனங்கள்", 
+                app_warn:"சேவையுடன் இணைந்திருக்க செயலியை மூட வேண்டாம்.", 
+                edit_profile: "சுயவிவரம் திருத்து", saved_places:"சேமித்த இடங்கள்", payment:"கட்டண முறைகள்", support:"உதவி", 
+                show_routes:"சிறந்த வழியைக் கண்டறியவும்", loading_app:"செயலி ஏற்றப்படுகிறது", loc_perm_msg:"தொடர்ந்து செல்ல உங்கள் சாதனத்தின் இருப்பிடத்தை இயக்கவும்",
+                important: "முக்கியமானது", warn_msg: "பயணம் முடிந்தவுடன் டேட்டாபேஸ் மற்றும் ஓட்டுநருடன் நிலையான இணைப்பைப் பராமரிக்க செயலியைத் திறந்து வைக்கவும். செயலியை மூடினால் இணைப்பு துண்டிக்கலாம், இது பிழைகளுக்கு வழிவகுக்கலாம்.",
+                dont_show: "மீண்டும் காட்ட வேண்டாம்", select_route: "வழியைத் தேர்வு செய்", continue: "தொடரவும்", choose_vehicle: "வாகனத்தைத் தேர்வு செய்", est_total: "மதிப்பிடப்பட்ட மொத்தம்", book: "முன்பதிவு செய்",
+                select_loc: "உங்கள் இருப்பிடத்தைத் தேர்வு செய்க", dropoff_loc: "இறங்குமிடம்", set_location: "இருப்பிடத்தை அமைக்கவும்", search_placeholder: "இடங்களைத் தேடவும்...", 
+                your_loc: "உங்கள் இருப்பிடம்", pick_map: "வரைபடத்தில் தேர்வு செய்", route_details: "வழி விவரங்கள்", confirm_booking: "முன்பதிவை உறுதிப்படுத்தவா?", confirm: "உறுதிப்படுத்து",
+                drag_map: "பிக்கப்பில் 10மீ ஆரத்திற்குள் பின்னை வைக்க வரைபடத்தை இழுக்கவும்.", book_now: "இப்போது முன்பதிவு செய்", calculating: "தூரம் கணக்கிறது...",
+                get_started: "தொடங்கு", full_name: "முழு பெயர்", email: "மின்னஞ்சல் முகவரி", country: "நாடு", province: "மாகாணம்", district: "மாவட்டம்", 
+                select_prov: "மாகாணத்தைத் தேர்வு செய்", select_dist: "மாவட்டத்தைத் தேர்வு செய்", next: "அடுத்தது", agree_terms: "ஒப்புக்கொள்", terms: "விதிமுறைகள் மற்றும் நிபந்தனைகள்", finish: "முடி",
+                logout: "வெளியேறு", promoted: "உந்தப்படுத்தப்பட்டது", loading_offers: "சலுகைகள் ஏற்றப்படுகின்றன...", no_records: "செயல்பாடு பதிவுகள் ஏதும் இல்லை",
+                recommended: "பரிந்துரைக்கப்படுகிறது", expressway: "விரைவுச்சாலை", tolls: "டோல் விலை பொருந்தும்", no_tolls: "டோல்கள் இல்லை", 
+                still_dev: "இன்னும் வளர்ச்சியில் உள்ளது", close: "மூடு"
+            }
         };
 
         const slData = {
@@ -792,11 +877,11 @@
                 const snap = await get(ref(db, 'promotions'));
                 const promos = snap.val();
                 container.innerHTML = '';
-                if(!promos) { container.innerHTML = '<div class="empty-state"><p>No active promotions</p></div>'; return; }
+                if(!promos) { container.innerHTML = `<div class="empty-state"><p data-i18n="no_promos" class="translatable">No active promotions</p></div>`; return; }
                 Object.values(promos).forEach(p => {
                     container.innerHTML += `<div class="promo-item"><div class="promo-card-lg"><img src="${p.image || 'https://via.placeholder.com/300x150'}"></div><div class="promo-text"><h4>${p.title}</h4><p>${p.description}</p></div></div>`;
                 });
-            } catch(e) { container.innerHTML = '<div class="empty-state"><p>Failed to load offers</p></div>'; }
+            } catch(e) { container.innerHTML = '<div class="empty-state"><p data-i18n="failed_load" class="translatable">Failed to load offers</p></div>'; }
         }
 
         window.switchTab = function(tab) {
@@ -815,13 +900,23 @@
         window.openRideOverlay = function() {
             document.getElementById('ride-overlay').classList.remove('hidden');
             setTimeout(() => document.getElementById('ride-overlay').classList.add('active'), 10);
-            document.getElementById('ride-close-x').classList.remove('hidden');
+            
+            // Show App Warning if not dismissed
+            if(!localStorage.getItem('warn_dismissed')) {
+                document.getElementById('app-warn-modal').classList.remove('hidden');
+            }
+
             if(!map) {
                 map = L.map('ride-map', { zoomControl: false }).setView(userLiveCoords || [6.9271, 79.8612], 13);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }).addTo(map);
                 markersLayer = L.layerGroup().addTo(map);
                 if(userLiveCoords) { map.setView(userLiveCoords, 15); L.marker(userLiveCoords).addTo(markersLayer); }
             }
+        }
+
+        window.dismissWarn = function() {
+            if(document.getElementById('chk-warn').checked) localStorage.setItem('warn_dismissed', 'true');
+            document.getElementById('app-warn-modal').classList.add('hidden');
         }
 
         window.closeRideOverlay = function() {
@@ -831,20 +926,16 @@
         }
 
         window.resetRoute = function() {
+            document.getElementById('ride-top-card').classList.remove('collapsed');
             if(routingControl) { map.removeControl(routingControl); routingControl = null; }
             routePolylines.forEach(p => map.removeLayer(p));
             routePolylines = [];
             routeAlternatives = [];
             
-            document.getElementById('ride-top-card').classList.remove('collapsed');
             document.getElementById('route-select-modal').classList.remove('active');
             document.getElementById('vehicle-sheet').classList.remove('active');
-            document.getElementById('txt-pickup').innerText = "Select Your Location";
-            document.getElementById('txt-dropoff').innerText = "Drop Off Location";
-            document.getElementById('sum-pickup').innerText = "...";
-            document.getElementById('sum-dropoff').innerText = "...";
-            document.getElementById('route-dist').innerText = "0 km";
-            document.getElementById('route-type').innerText = "Select Route";
+            document.getElementById('txt-pickup').innerText = i18n[currentLang].select_loc;
+            document.getElementById('txt-dropoff').innerText = i18n[currentLang].dropoff_loc;
             
             document.getElementById('btn-show-routes').classList.remove('hidden');
             document.getElementById('btn-show-vehicles').classList.add('hidden');
@@ -854,12 +945,16 @@
             if(dropoffLatLng) L.marker(dropoffLatLng, {icon: redIcon}).addTo(markersLayer);
         }
 
+        window.expandTopCard = function() {
+            document.getElementById('ride-top-card').classList.remove('collapsed');
+        }
+
         // Search & Locations
         window.openSearch = function(type) {
             activeSearchType = type;
             document.getElementById('loc-search-modal').classList.remove('hidden');
             setTimeout(() => document.getElementById('loc-search-modal').classList.add('active'), 10);
-            document.getElementById('search-title').innerText = type === 'pickup' ? "Pick Up Location" : "Drop Off Location";
+            document.getElementById('search-title').innerText = type === 'pickup' ? i18n[currentLang].select_loc : i18n[currentLang].dropoff_loc;
             if(type === 'dropoff') document.getElementById('btn-my-loc').classList.add('hidden');
             else document.getElementById('btn-my-loc').classList.remove('hidden');
             document.getElementById('search-results').innerHTML = '';
@@ -876,7 +971,6 @@
             if(q.length < 3) return;
             if(searchCache[q]) { displaySearchResults(searchCache[q]); return; }
             debounceTimer = setTimeout(async () => {
-                // Use Nominatim with Sri Lanka focus
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=lk&limit=8&addressdetails=1`);
                 const data = await res.json();
                 searchCache[q] = data;
@@ -905,7 +999,7 @@
             } catch(e) { return "Pinned Location"; }
         }
         window.setMyLocation = async function() {
-            if(!userLiveCoords) return showToast("Location not waiting yet...");
+            if(!userLiveCoords) return showToast(i18n[currentLang].loc_perm_msg);
             const lat = userLiveCoords[0], lon = userLiveCoords[1];
             const addr = await getAddressFromLatLon(lat, lon);
             selectSearchResult(lat, lon, addr);
@@ -927,18 +1021,17 @@
         window.startPinPicker = function() {
             closeSearch();
             mapMode = 'pick';
-            document.getElementById('map-crosshair').classList.remove('hidden');
             document.getElementById('ride-top-card').classList.add('hidden');
+            
             const btn = document.createElement('button');
             btn.id = 'temp-confirm-pin';
             btn.className = 'btn-red';
             btn.style.position='absolute'; btn.style.bottom='20px'; btn.style.left='10%'; btn.style.width='80%'; btn.style.zIndex='2000';
-            btn.innerText = "Confirm Location";
+            btn.innerText = i18n[currentLang].confirm;
             btn.onclick = async () => {
                 const c = map.getCenter();
                 const addr = await getAddressFromLatLon(c.lat, c.lng);
                 selectSearchResult(c.lat, c.lng, addr);
-                document.getElementById('map-crosshair').classList.add('hidden');
                 document.getElementById('ride-top-card').classList.remove('hidden');
                 btn.remove();
             };
@@ -953,9 +1046,12 @@
 
         // --- ROUTING LOGIC ---
         window.calculateRoutes = function() {
-            if(!pickupLatLng || !dropoffLatLng) return showToast("Please select both locations.");
+            if(!pickupLatLng || !dropoffLatLng) return showToast(i18n[currentLang].select_loc);
+            
+            document.getElementById('ride-top-card').classList.add('collapsed');
+            
             document.getElementById('route-select-modal').classList.add('active');
-            document.getElementById('route-options-container').innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Finding routes...</div>';
+            document.getElementById('route-options-container').innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i></div>';
             
             if(routingControl) { map.removeControl(routingControl); routingControl = null; }
             routePolylines.forEach(p => map.removeLayer(p));
@@ -964,12 +1060,12 @@
             routingControl = L.Routing.control({
                 waypoints: [pickupLatLng, dropoffLatLng],
                 show: false, addWaypoints: false, routeWhileDragging: false,
-                fitSelectedRoutes: false, // We handle fit manually
-                altLineOptions: { styles: [{color: '#ccc', weight: 4, opacity: 0.6}] }, // Placeholder
+                fitSelectedRoutes: false, 
+                altLineOptions: { styles: [{color: '#ccc', weight: 4, opacity: 0.6}] }, 
                 lineOptions: { styles: [{color: '#D50000', weight: 5}] },
                 showAlternatives: true,
                 createMarker: function() { return null; },
-                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' }) // Public OSRM
+                router: L.Routing.osrmv1({ serviceUrl: 'https://router.project-osrm.org/route/v1' })
             }).addTo(map);
 
             routingControl.on('routesfound', function(e) {
@@ -983,50 +1079,38 @@
             const container = document.getElementById('route-options-container');
             container.innerHTML = '';
             if(routes.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">No routes found.</div>';
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;" data-i18n="no_routes">No routes found.</div>';
                 return;
             }
 
-            // Sort routes to identify "Best"
-            // Assuming 0 is usually fastest/shortest from OSRM
             routes.forEach((route, i) => {
                 const distKm = (route.summary.totalDistance / 1000).toFixed(1);
                 const timeMin = Math.round(route.summary.totalTime / 60);
                 
-                // Logic for badges
                 let badgeHTML = '';
                 let isRec = (i === 0);
                 
-                // Heuristic for "Cheaper" vs "Faster"
-                // Compare time vs distance ratio
-                if (isRec) {
-                     badgeHTML += `<div class="badge-rec">Recommended</div>`;
-                } else if (route.summary.totalTime < routes[0].summary.totalTime * 1.2) {
-                     // If time is comparable but distance might differ
-                     // badgeHTML += `<div class="badge-fast">Similar Time</div>`;
-                }
+                if (isRec) badgeHTML += `<div class="badge-rec">${i18n[currentLang].recommended}</div>`;
                 
-                // Check name for highway
                 if(route.name && route.name.toLowerCase().includes('expressway')) {
-                    badgeHTML += `<div class="badge-fast">Expressway</div><div class="badge-toll">Tolls May Apply</div>`;
+                    badgeHTML += `<div class="badge-fast">${i18n[currentLang].expressway}</div><div class="badge-toll">${i18n[currentLang].tolls}</div>`;
                 } else {
-                    badgeHTML += `<span style="font-size:10px; color:#4CAF50; font-weight:600;">No Tolls</span>`;
+                    badgeHTML += `<span style="font-size:10px; color:#4CAF50; font-weight:600;">${i18n[currentLang].no_tolls}</span>`;
                 }
 
                 const div = document.createElement('div');
-                div.className = `route-opt ${i === 0 ? 'selected' : ''}`; // Default select first
+                div.className = `route-opt ${i === 0 ? 'selected' : ''}`; 
                 div.innerHTML = `
                     ${badgeHTML}
                     <div style="flex:1; margin-left:10px;">
                         <div style="font-weight:700; color:#333;">${distKm} km • ${timeMin} mins</div>
-                        <div style="font-size:12px; color:#666;">${route.name || 'Standard Route'}</div>
+                        <div style="font-size:12px; color:#666;">${route.name || i18n[currentLang].select_route}</div>
                     </div>
                     <i class="fa-solid fa-circle-info" style="color:#aaa; font-size:18px; padding:10px;" onclick="openRouteInfo(event, ${i})"></i>
                 `;
                 div.onclick = (e) => selectRoute(i, e);
                 container.appendChild(div);
 
-                // Draw polylines
                 const color = (i === 0) ? '#D50000' : '#ccc';
                 const opacity = (i === 0) ? 1 : 0.5;
                 const polyline = L.polyline(route.coordinates, {color: color, weight: 5, opacity: opacity}).addTo(map);
@@ -1042,22 +1126,37 @@
             const distKm = (route.summary.totalDistance / 1000).toFixed(2);
             const timeMin = Math.round(route.summary.totalTime / 60);
             
+            let directionsHTML = '';
+            if(route.instructions && route.instructions.length > 0) {
+                directionsHTML = `<div style="margin-top:20px;"><h4 style="margin:0 0 10px 0;">${i18n[currentLang].select_route}</h4>`;
+                route.instructions.forEach(inst => {
+                    directionsHTML += `
+                        <div class="direction-step">
+                            <i class="fa-solid fa-arrow-turn-${inst.modifier || 'right'}"></i> 
+                            <span>${inst.text} (${(inst.distance/1000).toFixed(1)} km)</span>
+                        </div>
+                    `;
+                });
+                directionsHTML += '</div>';
+            }
+
             const content = document.getElementById('route-info-content');
             content.innerHTML = `
-                <div class="route-detail-row"><span><b>Distance</b></span> <span>${distKm} km</span></div>
-                <div class="route-detail-row"><span><b>Duration</b></span> <span>${timeMin} mins</span></div>
-                <div class="route-detail-row"><span><b>Route Type</b></span> <span>${route.name || 'Standard'}</span></div>
-                <div class="route-detail-row"><span><b>Tolls</b></span> <span>${route.name && route.name.toLowerCase().includes('express') ? 'Yes (Estimated)' : 'None'}</span></div>
-                <div style="padding:20px; background:#f9f9f9; border-radius:10px; font-size:12px; color:#666; line-height:1.6;">
+                <div class="route-detail-row"><span><b>${i18n[currentLang].distance || "Distance"}</b></span> <span>${distKm} km</span></div>
+                <div class="route-detail-row"><span><b>${i18n[currentLang].duration || "Duration"}</b></span> <span>${timeMin} mins</span></div>
+                <div class="route-detail-row"><span><b>${i18n[currentLang].route_type || "Route Type"}</b></span> <span>${route.name || 'Standard'}</span></div>
+                <div class="route-detail-row"><span><b>${i18n[currentLang].tolls || "Tolls"}</b></span> <span>${route.name && route.name.toLowerCase().includes('express') ? i18n[currentLang].tolls : i18n[currentLang].no_tolls}</span></div>
+                ${directionsHTML}
+                <div style="padding:20px; background:#f9f9f9; border-radius:10px; font-size:12px; color:#666; line-height:1.6; margin-top:20px;">
                     This route is calculated using real-time traffic data where available. 
-                    ${route.name && route.name.toLowerCase().includes('expressway') ? 'Highway toll charges are not included in the fare estimate and must be paid separately to the driver.' : ''}
+                    ${route.name && route.name.toLowerCase().includes('expressway') ? i18n[currentLang].toll_warn : ''}
                 </div>
             `;
             document.getElementById('route-info-fullscreen').classList.add('active');
         }
 
         window.selectRoute = function(index, e) {
-            if(e.target.closest('.fa-circle-info')) return; // Ignore if clicked info icon
+            if(e.target.closest('.fa-circle-info')) return; 
             selectedRouteIndex = index;
             const opts = document.querySelectorAll('.route-opt');
             opts.forEach((opt, i) => {
@@ -1065,7 +1164,6 @@
                 else opt.classList.remove('selected');
             });
 
-            // Update Map Colors
             routePolylines.forEach((line, i) => {
                 if(i === index) { line.setStyle({color: '#D50000', opacity: 1, weight: 5}); line.bringToFront(); }
                 else { line.setStyle({color: '#ccc', opacity: 0.5, weight: 4}); }
@@ -1074,21 +1172,10 @@
 
         window.closeRouteModal = function() {
             document.getElementById('route-select-modal').classList.remove('active');
-            // If closing without selecting, ensure map is clean or reset to default
         }
 
         window.confirmRouteSelection = function() {
             closeRouteModal();
-            const route = routeAlternatives[selectedRouteIndex];
-            const distKm = (route.summary.totalDistance / 1000).toFixed(1);
-            const timeMin = Math.round(route.summary.totalTime / 60);
-            
-            document.getElementById('route-dist').innerText = distKm + " km";
-            document.getElementById('route-type').innerText = route.name || "Selected Route";
-            document.getElementById('sum-pickup').innerText = pickupAddr;
-            document.getElementById('sum-dropoff').innerText = dropoffAddr;
-            
-            document.getElementById('ride-top-card').classList.add('collapsed');
             showVehicleSheet();
         }
 
@@ -1110,66 +1197,47 @@
 
         function calculatePrice(vehicleType, distMeters) {
             let distKm = distMeters / 1000;
-            if (distKm < 0.1) distKm = 0.1; // Min base
+            if (distKm < 0.1) distKm = 0.1; 
 
             let price = 0;
             let bookingFee = 0;
-            
-            // Rates based on prompt logic + derived from 450m example
-            // The example: 450m (0.45km). Bike: 150, Tuk: 250, Car Cheap: 405, Car: 630, Van: 800.
-            // Note: Prompt says prices include "15% low vehicle fees and late night". 
-            // To get clean rates, I reverse engineer roughly, but primarily follow the step-logic for > 1km.
             
             const multiplier = getNightMultiplier();
             const displaySurcharge = multiplier > 1 ? true : false;
 
             if (vehicleType === 'bike') {
-                // Base 100 (1st km). 
-                // Example 0.45km -> 150. Means Base 100 (covers 1st km) + 50 Booking Fee? 
-                // Let's assume 1st km = 100. Booking = 50.
-                // Total 150. * 1.15 (fees) = 172.50 (Close enough for estimation, will stick to prompt breakdown logic strictly)
-                
-                bookingFee = 50;
-                if (distKm <= 1) price = 100;
-                else if (distKm <= 10) price = 100 + (distKm - 1) * 65; // 6.5/100m
-                else if (distKm <= 50) price = 100 + (9 * 65) + (distKm - 10) * 60; // 6.0/100m
-                else price = 100 + (9 * 65) + (40 * 60) + (distKm - 50) * 50; // 5.0/100m
+                // Bike: 150/- for 2km. After every 1-500mtr 25/-
+                if (distKm <= 2) {
+                    price = 150;
+                } else {
+                    const extraKm = distKm - 2;
+                    const segments = Math.ceil(extraKm * 2); // 500m segments
+                    price = 150 + (segments * 25);
+                }
+                bookingFee = 50; 
 
             } else if (vehicleType === 'tuk') {
-                // Base 100.
-                // 2-5km (0.70/100m = 7/km)
-                // 5-10km (0.65/100m = 6.5/km)
-                // >10km (0.60/100m = 6/km)
-                // Example 0.45km -> 250. Base 100 + 150 Booking? High booking fee for Tuk is standard.
-                bookingFee = 150; 
+                // Tuk: Base 150. Rate 70/km.
+                bookingFee = 100; 
                 if (distKm <= 1) price = 100;
-                else if (distKm <= 2) price = 100 + (distKm - 1) * 70;
-                else if (distKm <= 5) price = 100 + 70 + (distKm - 2) * 70;
-                else if (distKm <= 10) price = 100 + (3 * 70) + (distKm - 5) * 65;
-                else price = 100 + (3 * 70) + (5 * 65) + (distKm - 10) * 60;
+                else price = 100 + (distKm * 70);
 
             } else if (vehicleType === 'car_cheap') {
-                // Example 0.45km -> 405. 
-                // Let's assume Base 60 + Rate 45/km? 
-                // 405 total. / 1.15 (fees) = 352 raw.
-                // Let's use standard Uber/PickMe approximation: Base 60 + 30/km
-                bookingFee = 60;
-                price = 60 + (distKm * 30); 
+                // Cheap Car: Base 150. Rate 90/km.
+                bookingFee = 120;
+                price = 150 + (distKm * 90); 
             } else if (vehicleType === 'car') {
-                // Example 0.45km -> 630. / 1.15 = 547 raw.
-                // Base 80 + 50/km?
-                bookingFee = 80;
-                price = 80 + (distKm * 50);
+                // Car: Base 200. Rate 110/km.
+                bookingFee = 150;
+                price = 200 + (distKm * 110);
             } else if (vehicleType === 'van') {
-                // Example 0.45km -> 800. / 1.15 = 695 raw.
-                // Base 100 + 60/km?
-                bookingFee = 100;
-                price = 100 + (distKm * 60);
+                // Van: Base 250. Rate 140/km.
+                bookingFee = 200;
+                price = 250 + (distKm * 140);
             }
 
             let total = Math.ceil((price + bookingFee) * multiplier);
             
-            // Format
             return {
                 total: total,
                 base: Math.ceil(price),
@@ -1197,7 +1265,7 @@
 
             const vehicles = [
                 { type: 'bike', label: 'Bike', img: 'https://i.ibb.co/zhCP7Scs/Image-fx-11.jpg', pax: 1 },
-                { type: 'tuk', label: 'Tuk Tuk', img: 'https://i.ibb.co/mCYgMWHs/Image-fx-10.jpg', pax: 2 },
+                { type: 'tuk', label: 'Tuk Tuk', img: 'https://i.ibb.co/mCYgMWHs/Image-fx-10.jpg', pax: 3 }, 
                 { type: 'car_cheap', label: 'Mini (Cheap)', img: 'https://i.ibb.co/YBPQrmgr/download.jpg', pax: 3, dollar: '💲' },
                 { type: 'car', label: 'Car', img: 'https://i.ibb.co/YBPQrmgr/download.jpg', pax: 4, dollar: '💲💲' },
                 { type: 'van', label: 'Van', img: 'https://i.ibb.co/8nxbpwmj/download.jpg', pax: 10 }
@@ -1241,7 +1309,7 @@
         window.openBookingConfirm = function() {
             const price = document.getElementById('total-price-display').innerText;
             const vehicleName = document.querySelector(`.vehicle-item.selected .v-name`).innerText;
-            document.getElementById('confirm-text').innerHTML = `${vehicleName} <br> ${document.getElementById('sum-pickup').innerText} to ${document.getElementById('sum-dropoff').innerText} <br> ${price}`;
+            document.getElementById('confirm-text').innerHTML = `${vehicleName} <br> ${document.getElementById('txt-pickup').innerText} to ${document.getElementById('txt-dropoff').innerText} <br> ${price}`;
             document.getElementById('confirm-modal-overlay').classList.add('active');
         }
 
@@ -1252,25 +1320,20 @@
         window.proceedToPinDrop = function() {
             closeConfirmModal();
             closeVehicleSheet();
-            document.getElementById('ride-close-x').classList.add('hidden');
-            document.getElementById('ride-top-card').classList.add('hidden');
+            document.getElementById('ride-top-card').classList.add('hidden'); 
             document.getElementById('pin-drop-overlay').classList.add('active');
             
-            // Init Pin Map if not exists
             if(!pinMap) {
                 pinMap = L.map('pin-map', { zoomControl: false }).setView(pickupLatLng, 18);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }).addTo(pinMap);
-                
-                // Draw 10m radius circle at exact pickup
                 radiusCircle = L.circle(pickupLatLng, { color: '#D50000', fillColor: '#D50000', fillOpacity: 0.1, radius: 10, weight: 1 }).addTo(pinMap);
             } else {
                 pinMap.setView(pickupLatLng, 18);
                 radiusCircle.setLatLng(pickupLatLng);
             }
             
-            // Listen to move
             pinMap.on('move', checkPinDistance);
-            checkPinDistance(); // Initial check
+            checkPinDistance(); 
         }
 
         function checkPinDistance() {
@@ -1281,7 +1344,7 @@
             const btn = document.getElementById('btn-final-book');
             
             if(dist <= 10) {
-                statusEl.innerText = "Good location! Within radius.";
+                statusEl.innerText = i18n[currentLang].select_loc; // Reusing generic text or specific "Good location"
                 statusEl.className = "pin-status valid";
                 btn.disabled = false;
                 pinDropLat = center.lat;
@@ -1295,10 +1358,10 @@
 
         window.finishBooking = function() {
             document.getElementById('pin-drop-overlay').classList.remove('active');
-            showToast("Still Developing");
+            showToast(i18n[currentLang].still_dev);
             setTimeout(() => {
-                document.getElementById('ride-close-x').classList.remove('hidden');
                 document.getElementById('ride-top-card').classList.remove('hidden');
+                document.getElementById('ride-top-card').classList.remove('collapsed');
                 closeRideOverlay();
             }, 2000);
         }
@@ -1333,7 +1396,7 @@
         function initWizard() { const s=document.getElementById('inp-province'); for(let p in slData) s.add(new Option(p,p)); }
         window.loadDistricts = () => {
             const p = document.getElementById('inp-province').value;
-            const d = document.getElementById('inp-district'); d.innerHTML = '<option value="">Select District</option>';
+            const d = document.getElementById('inp-district'); d.innerHTML = `<option value="">${i18n[currentLang].select_dist}</option>`;
             if(slData[p]) slData[p].forEach(x => d.add(new Option(x,x)));
         }
         window.wNext = (n) => {
