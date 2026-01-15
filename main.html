@@ -209,11 +209,16 @@
         /* TERMS & MODALS */
         #terms-modal, #location-timeout-modal, #emergency-modal, #police-list-modal, #app-warn-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 10000; /* High z-index */
+            background: rgba(0,0,0,0.6); z-index: 6000;
             display: none; justify-content: center; align-items: center;
             backdrop-filter: blur(2px);
         }
-        #app-warn-modal.active, #emergency-modal.active, #police-list-modal.active, #location-timeout-modal.active, #terms-modal.active { display: flex; }
+        
+        /* WHITE BACKGROUND MODALS (Requested) */
+        #app-warn-modal.active, #emergency-modal.active, #police-list-modal.active, #location-timeout-modal.active {
+            background: white; /* Changed to white */
+        }
+        .warn-content-white { background: white; width: 90%; max-width: 400px; border-radius: 20px; padding: 25px; text-align: center; color: black; box-shadow: 0 10px 30px rgba(0,0,0,0.3); animation: popIn 0.3s ease-out; }
 
         .modal-card {
             background: white; width: 90%; max-width: 400px;
@@ -224,14 +229,14 @@
         @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         /* Location Timeout Modal */
-        #location-timeout-modal { background: rgba(0,0,0,0.7); z-index: 12000; text-align: center; }
-        .loc-timeout-content { text-align: center; color: white; }
+        #location-timeout-modal { z-index: 12000; }
+        .loc-timeout-content { text-align: center; color: black; } /* Black text */
         .perm-icon { font-size: 60px; color: var(--primary-red); margin-bottom: 20px; animation: pulse 1s infinite; }
 
         /* Emergency Modal */
         .emergency-options { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
         .emergency-btn {
-            flex: 1; padding: 20px; border: none; border-radius: 15px;
+            flex:1; padding: 20px; border: none; border-radius: 15px;
             font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: 0.2s;
         }
@@ -248,6 +253,24 @@
         .police-name { font-weight: 600; font-size: 14px; }
         .police-number { font-weight: 700; color: var(--primary-red); font-size: 16px; cursor: pointer; text-decoration: none; }
         .police-number:hover { text-decoration: underline; }
+
+        /* --- PLACES MODAL (Google Maps Embed) --- */
+        #places-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 15000; /* Highest Z-Index */
+            display: none; justify-content: center; align-items: center; flex-direction: column;
+        }
+        #places-overlay.active { display: flex; }
+        .places-close-btn {
+            position: absolute; top: 20px; right: 20px;
+            width: 40px; height: 40px; background: white; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); cursor: pointer; color: #333; font-size: 18px; border: 1px solid #eee;
+            z-index: 15010;
+        }
+        #google-maps-frame {
+            width: 100%; height: 100%; border: none;
+        }
 
         /* --- RIDE WINDOW --- */
         #ride-overlay {
@@ -487,7 +510,7 @@
                     <img src="https://i.ibb.co/jPsHYHg6/Image-fx-15.jpg" alt="Emergency">
                     <span class="action-label" data-i18n="emergency">Emergency</span>
                 </div>
-                <div class="action-pill">
+                <div class="action-pill" onclick="openPlacesModal()">
                     <img src="https://i.ibb.co/WWpPXQCr/Image-fx-14.jpg" alt="Places">
                     <span class="action-label" data-i18n="places">Places</span>
                 </div>
@@ -571,6 +594,14 @@
     <div id="main-skeleton">
         <div class="sk-row"><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div><div class="sk-sq shimmer"></div></div>
         <div class="sk-banner shimmer"></div>
+    </div>
+
+    <!-- PLACES OVERLAY (Google Maps Embed) -->
+    <div id="places-overlay">
+        <div class="places-close-btn" onclick="closePlacesModal()">
+            <i class="fa-solid fa-xmark"></i>
+        </div>
+        <iframe id="google-maps-frame" src="" allowfullscreen></iframe>
     </div>
 
     <!-- RIDE OVERLAY -->
@@ -659,9 +690,9 @@
         </div>
     </div>
 
-    <!-- EMERGENCY MODAL -->
+    <!-- EMERGENCY MODAL (White Background) -->
     <div id="emergency-modal">
-        <div class="modal-card" style="text-align: center;">
+        <div class="warn-content-white">
             <h3 style="color:#D50000; margin-top:0;" data-i18n="emergency">Emergency</h3>
             <div class="emergency-options">
                 <button class="emergency-btn btn-police" onclick="openPoliceList()">
@@ -671,49 +702,49 @@
                     <i class="fa-solid fa-truck-medical"></i> <span data-i18n="health">Health (1990)</span>
                 </button>
             </div>
-            <button class="btn-red" style="background:#eee; color:#333; margin-top:20px;" onclick="closeEmergencyModal()" data-i18n="close">Close</button>
+            <button class="btn-red" style="background:#f5f5f5; color:#333; margin-top:20px;" onclick="closeEmergencyModal()" data-i18n="close">Close</button>
         </div>
     </div>
 
-    <!-- POLICE LIST MODAL -->
+    <!-- POLICE LIST MODAL (White Background) -->
     <div id="police-list-modal">
-        <div class="modal-card">
+        <div class="warn-content-white" style="text-align: left;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h3 style="margin:0; color:#333;" data-i18n="police">Police Contacts</h3>
                 <button onclick="closePoliceModal()" style="border:none; background:none; font-size:20px; color:#999;">&times;</button>
             </div>
             <div class="police-list">
                 <div class="police-item">
-                    <span class="police-name">Emergency Police</span>
+                    <span class="police-name" data-i18n="police_emergency">Emergency Police</span>
                     <a href="tel:119" class="police-number">119</a>
                 </div>
                 <div class="police-item">
-                    <span class="police-name">Tourist Police</span>
+                    <span class="police-name" data-i18n="police_tourist">Tourist Police</span>
                     <a href="tel:0112433333" class="police-number">011 243 3333</a>
                 </div>
                 <div class="police-item">
-                    <span class="police-name">Traffic Police</span>
+                    <span class="police-name" data-i18n="police_traffic">Traffic Police</span>
                     <a href="tel:0112444444" class="police-number">011 244 4444</a>
                 </div>
                 <div class="police-item">
-                    <span class="police-name">Police Hotline</span>
+                    <span class="police-name" data-i18n="police_hotline">Police Hotline</span>
                     <a href="tel:0112693333" class="police-number">011 269 3333</a>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- APP WARNING MODAL (Top Z-Index) -->
+    <!-- APP WARNING MODAL (White Background) -->
     <div id="app-warn-modal">
-        <div class="warn-card" style="background: rgba(0,0,0,0.85); padding: 30px;">
+        <div class="warn-content-white">
             <h3 style="color:#D50000; margin-bottom:15px;" data-i18n="important">Important</h3>
-            <p data-i18n="warn_msg">Keep app open after booking a ride to maintain a consistent connection with the database and driver. Closing the app might break the connection, which could lead to errors.</p>
+            <p data-i18n="warn_msg">Keep app open after booking a ride to maintain a consistent connection with database and driver. Closing the app might break connection, which could lead to errors.</p>
             <div style="font-size:14px; margin-bottom:20px;"><input type="checkbox" id="chk-warn"> <span data-i18n="dont_show">Do not show again</span></div>
-            <button class="btn-red" style="background:white; color:#333;" onclick="dismissWarn()" data-i18n="close">Close</button>
+            <button class="btn-red" style="background:#f5f5f5; color:#333;" onclick="dismissWarn()" data-i18n="close">Close</button>
         </div>
     </div>
 
-    <!-- LOCATION TIMEOUT MODAL (After 10s) -->
+    <!-- LOCATION TIMEOUT MODAL (White Background) -->
     <div id="location-timeout-modal">
         <div class="loc-timeout-content">
             <i class="fa-solid fa-location-dot perm-icon"></i>
@@ -819,7 +850,11 @@
         let selectedVehicleType = null;
         let pinDropLat = null;
         let pinDropLng = null;
-        let locationTimeoutTriggered = false;
+        
+        // Location Logic Flags
+        let isLocationFound = false;
+        let locationRetryInterval = null;
+        let locationPopupShown = false;
 
         // --- TRANSLATIONS ---
         const i18n = {
@@ -831,7 +866,7 @@
                 app_warn:"To keep connected with this service and app, please do not close app. If you close app, it will affect your ride", 
                 edit_profile: "Edit Profile", saved_places:"Saved Places", payment:"Payment Methods", support:"Help & Support", 
                 show_routes:"Find Best Route", loc_perm_msg:"Please turn on your device's location to continue",
-                important: "Important", warn_msg: "Keep app open after booking a ride to maintain a consistent connection with the database and driver. Closing the app might break the connection, which could lead to errors.",
+                important: "Important", warn_msg: "Keep app open after booking a ride to maintain a consistent connection with database and driver. Closing the app might break the connection, which could lead to errors.",
                 dont_show: "Do not show again", select_route: "Select Route", continue: "Continue", choose_vehicle: "Choose Vehicle", est_total: "Estimated Total", book: "Book",
                 select_loc: "Select Your Location", dropoff_loc: "Drop Off Location", set_location: "Set Location", search_placeholder: "Search places...", 
                 your_loc: "Your Location", pick_map: "Pick on Map", route_details: "Route Details", confirm_booking: "Confirm Booking?", confirm: "Confirm",
@@ -841,7 +876,8 @@
                 logout: "Log Out", loading_offers: "Loading offers...", no_records: "No activity records found",
                 recommended: "Recommended", expressway: "Expressway", tolls: "Tolls May Apply", no_tolls: "No Tolls", 
                 still_dev: "Still Developing", close: "Close",
-                emergency: "Emergency", police: "Police", health: "Health (1990)", places: "Places"
+                emergency: "Emergency", police: "Police", health: "Health (1990)", places: "Places",
+                police_emergency: "Emergency Police", police_tourist: "Tourist Police", police_traffic: "Traffic Police", police_hotline: "Police Hotline"
             },
             si: {
                 hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", 
@@ -852,7 +888,7 @@
                 edit_profile: "ගිණුම සකසන්න", saved_places:"සුරැකුම්", payment:"ගෙවීම් ක්‍රම", support:"උදව්", 
                 show_routes:"හොඳම මාර්ගය සොයන්න", loc_perm_msg:"ඉදිරිපත්තික ස්ථානය සක්‍රීය කරන්න",
                 important: "වැදගත්", warn_msg: "ගමන් වාරණයක් කිරීමෙන් පසු දත්ත මූලාශ්‍රය සහ රියදුරු සම්ඟ ස්ථාවර සම්බන්ධතාවක් පවත්වා ගැනීම සඳහා යෙදුම විවෘතව තුඩු දිය හැක.",
-                dont_show: "නැවත නොපෙන්වන්න", select_route: "මාර්ගය තෝරන්න", continue: "ඉදිරිපත් කරන්න", choose_vehicle: "වාහනයක් තෝරන්න", est_total: "ඇස්තම එකතුව", book: "දැන් ගන්න",
+                dont_show: "නැවත නොපෙන්වන්", select_route: "මාර්ගය තෝරන්න", continue: "ඉදිරිපත් කරන්න", choose_vehicle: "වාහනයක් තෝරන්න", est_total: "ඇස්තම එකතුව", book: "දැන් ගන්න",
                 select_loc: "ඔබේ පිහිටුව තෝරන්න", dropoff_loc: "බැසීමේ ස්ථානය", set_location: "ස්ථානය සකසන්න", search_placeholder: "ස්ථාන සොයන්න...", 
                 your_loc: "ඔබේ පිහිටුව", pick_map: "සිතියමේ තෝරන්න", route_details: "මාර්ග විස්තර", confirm_booking: "දැන් ගන්නද?", confirm: "තහවුරු කරන්න",
                 drag_map: "පිකප් ලකුණ පිකප් ලකුණු වළාගැනීමේ ප්‍රදේශය තුළ 10m අවට සිතියම අදියරන්න.", book_now: "දැන් ගන්න", calculating: "දුර ගණනය කරමින්...",
@@ -871,9 +907,9 @@
                 app_warn:"சேவையுடன் இணைந்திருக்க செயலியை மூட வேண்டாம்.", 
                 edit_profile: "சுயவிவரம் திருத்து", saved_places:"சேமித்த இடங்கள்", payment:"கட்டண முறைகள்", support:"உதவி", 
                 show_routes:"சிறந்த வழியைக் கண்டறியவும்", loc_perm_msg:"தொடர்ந்து செல்ல உங்கள் சாதனத்தின் இருப்பிடத்தை இயக்கவும்",
-                important: "முக்கியமானது", warn_msg: "பயணம் முடிந்தவுடன் டேட்டாபேஸ் மற்றும் ஓட்டுநருடன் நிலையான இணைப்பைப் பராமரிக்க செயலியைத் திறந்து வைக்கவும். செயலியை மூடினால் இணைப்பு துண்டிக்கலாம், இது பிழைகளுக்கு வழிவகுக்கலாம்.",
-                dont_show: "மீண்டும் காட்ட வேண்டாம்", select_route: "வழியைத் தேர்வு செய்", continue: "தொடரவும்", choose_vehicle: "வாகனத்தைத் தேர்வு செய்", est_total: "மதிப்பிட்ட மொத்தம்", book: "முன்பதிவு செய்",
-                select_loc: "உங்கள் இருப்பிடத்தைத் தேர்வு செய்க", dropoff_loc: "இறங்குமிடம்", set_location: "இருப்பிடத்தை அமைக்கவும்", search_placeholder: "இடங்களைத் தேடவும்...", 
+                important: "முக்கியமானது", warn_msg: "பயணம் முடிந்தவுடன் டேட்டாபேஸ் மற்றும் ஓட்டுநருடன் நிலையான் இணைப்பைப் பராமரிக்க செயலியைத் திறந்து வைக்கவும். செயலியை மூடினால் இணைப்பு துண்டிக்கலாம், இது பிழைகளுக்கு வழிவகுக்கலாம்.",
+                dont_show: "மீண்டும் காட்ட வேண்டாம்", select_route: "வழி யைத் தேர்வு செய்", continue: "தொடரவும்", choose_vehicle: "வாகனத்தைத் தேர்வு செய்", est_total: "மதிப்பிட்பட்ட மொத்தம்", book: "முன்பதிவு செய்",
+                select_loc: "உங்கள் இருப்பிடத்தைத் தேர்வு செய்", dropoff_loc: "இறங்குமிடம்", set_location: "இருப்பிடத்தை அமைக்கவும்", search_placeholder: "இடங்களைத் தேடவும்...", 
                 your_loc: "உங்கள் இருப்பிடம்", pick_map: "வரைபடத்தில் தேர்வு செய்", route_details: "வழி விவரங்கள்", confirm_booking: "முன்பதிவை உறுதிப்படுத்தவா?", confirm: "உறுதிப்படுத்து",
                 drag_map: "பிக்கப்பில் 10மீ ஆரத்திற்குள் பின்னை வைக்க வரைபடத்தை இழுக்கவும்.", book_now: "இப்போது முன்பதிவு செய்", calculating: "தூரம் கணக்கிறது...",
                 get_started: "தொடங்கு", full_name: "முழு பெயர்", email: "மின்னஞ்சல் முகவரி", country: "நாடு", province: "மாகாணம்", district: "மாவட்டம்", 
@@ -881,7 +917,8 @@
                 logout: "வெளியேறு", loading_offers: "சலுகைகள் ஏற்றப்படுகின்றன...", no_records: "செயல்பாடு பதிவுகள் ஏதும் இல்லை",
                 recommended: "பரிந்துரைக்கப்படுகிறது", expressway: "விரைவுச்சாலை", tolls: "டோல் விலை பொருந்தும்", no_tolls: "டோல்கள் இல்லை", 
                 still_dev: "இன்னும் வளர்ச்சியில் உள்ளது", close: "மூடு",
-                emergency: "அவசரமானது", police: "காவல்", health: "சுகாதாரம் (1990)", places: "இடங்கள்"
+                emergency: "அவசரமானது", police: "காவல்", health: "சுகாதாரம் (1990)", places: "இடங்கள்",
+                police_emergency: "அவசரமானது காவல்", police_tourist: "சுற்றுயாளர் காவல்", police_traffic: "போக்கு காவல்", police_hotline: "காவல் ஹாட்லைன்"
             }
         };
 
@@ -899,16 +936,21 @@
 
         // --- INIT ---
         window.addEventListener('load', async () => {
-            // Removed initial location blocker. Show skeleton immediately.
+            // 1. Skeleton immediately
             const stored = localStorage.getItem('speedo_user');
             if(!stored) { window.location.href = "index.html"; return; }
             currentUser = JSON.parse(stored);
 
-            // Start 10s timer for location
+            // 2. Hard Retry Loop for location
+            checkLocationLoop();
+
+            // 3. 10 Second Timer for Popup (Only if NOT found by then)
             setTimeout(() => {
-                if(!userLiveCoords && !locationTimeoutTriggered) {
+                if (!isLocationFound && !locationPopupShown) {
                     document.getElementById('location-timeout-modal').classList.add('active');
-                    locationTimeoutTriggered = true;
+                    locationPopupShown = true;
+                    // Stop retry loop to save battery once user sees the error
+                    if(locationRetryInterval) clearInterval(locationRetryInterval);
                 }
             }, 10000);
 
@@ -927,6 +969,32 @@
                 else { document.getElementById('main-skeleton').classList.add('hidden'); document.getElementById('setup-wizard').classList.remove('hidden'); }
             }
         });
+
+        // ROBUST LOCATION FETCHER
+        function checkLocationLoop() {
+            if (!navigator.geolocation) return;
+
+            const handleLocationSuccess = (pos) => {
+                if(pos && pos.coords) {
+                    isLocationFound = true;
+                    userLiveCoords = [pos.coords.latitude, pos.coords.longitude];
+                    // Hide popup if visible
+                    document.getElementById('location-timeout-modal').classList.remove('active');
+                }
+            };
+
+            const handleLocationError = () => {
+                // Only show timeout popup via the setTimeout, not here
+            };
+
+            navigator.geolocation.getCurrentPosition(handleLocationSuccess, handleLocationError, {enableHighAccuracy: true, timeout: 10000});
+            navigator.geolocation.watchPosition(handleLocationSuccess, handleLocationError, {enableHighAccuracy: true});
+            
+            // Hard Retry: Check every 2 seconds
+            locationRetryInterval = setInterval(() => {
+                navigator.geolocation.getCurrentPosition(handleLocationSuccess, null, {enableHighAccuracy: true, maximumAge: 5000});
+            }, 2000);
+        }
 
         function initUI() {
             document.getElementById('main-skeleton').classList.add('hidden');
@@ -983,6 +1051,21 @@
         }
         window.callHealth = function() {
             window.location.href = "tel:1990";
+        }
+
+        // --- PLACES MODAL LOGIC ---
+        window.openPlacesModal = function() {
+            document.getElementById('places-overlay').classList.add('active');
+            const iframe = document.getElementById('google-maps-frame');
+            // If user location is found, center on them. Else Sri Lanka.
+            let center = "6.9271,79.8612"; // Default Colombo
+            if(userLiveCoords) {
+                center = `${userLiveCoords[0]},${userLiveCoords[1]}`;
+            }
+            iframe.src = `https://www.google.com/maps?q=Sri+Lanka&output=embed&center=${center}`;
+        }
+        window.closePlacesModal = function() {
+            document.getElementById('places-overlay').classList.remove('active');
         }
 
         // --- RIDE & MAP LOGIC ---
@@ -1061,7 +1144,6 @@
             if(q.length < 3) return;
             if(searchCache[q]) { displaySearchResults(searchCache[q]); return; }
             debounceTimer = setTimeout(async () => {
-                // Nominatim OSM Data with detailed address results
                 const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=lk&limit=10&addressdetails=1`);
                 const data = await res.json();
                 searchCache[q] = data;
@@ -1090,7 +1172,10 @@
             } catch(e) { return "Pinned Location"; }
         }
         window.setMyLocation = async function() {
-            if(!userLiveCoords) return showToast(i18n[currentLang].loc_perm_msg);
+            if(!isLocationFound || !userLiveCoords) {
+                showToast(i18n[currentLang].loc_perm_msg);
+                return;
+            }
             const lat = userLiveCoords[0], lon = userLiveCoords[1];
             const addr = await getAddressFromLatLon(lat, lon);
             selectSearchResult(lat, lon, addr);
@@ -1202,7 +1287,7 @@
                 div.onclick = (e) => selectRoute(i, e);
                 container.appendChild(div);
 
-                // Default Grey, Selected Red
+                // Default Grey, Selected Red (requested)
                 const color = (i === 0) ? '#D50000' : '#ccc';
                 const opacity = (i === 0) ? 1 : 0.5;
                 const polyline = L.polyline(route.coordinates, {color: color, weight: 5, opacity: opacity}).addTo(map);
@@ -1266,6 +1351,7 @@
                 else opt.classList.remove('selected');
             });
 
+            // Highlight logic
             routePolylines.forEach((line, i) => {
                 if(i === index) { line.setStyle({color: '#D50000', opacity: 1, weight: 5}); line.bringToFront(); }
                 else { line.setStyle({color: '#ccc', opacity: 0.5, weight: 4}); }
@@ -1319,8 +1405,7 @@
             const displaySurcharge = multiplier > 1 ? true : false;
 
             if (vehicleType === 'bike') {
-                // 0.5km -> 150. Rate = 200/km (for simplicity). Or Base 50 + 200*0.5 = 150.
-                // Let's go with Base 50 + Rate 200.
+                // 0.5km -> 150. Rate = 200/km. Or Base 50 + Rate 200.
                 const base = 50;
                 const rate = 200;
                 price = base + (distKm * rate);
