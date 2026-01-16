@@ -225,7 +225,7 @@
             font-size: 20px; color: #333; cursor: pointer; z-index: 10;
         }
 
-        .emergency-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .emergency-grid { display: grid; grid-template-columns:1fr 1fr 1fr; gap: 10px; margin-top: 10px; }
         .e-btn { background: #eee; border-radius: 15px; padding: 15px 5px; text-align: center; cursor: pointer; border: none; transition: 0.2s; }
         .e-btn:active { background: #ddd; }
         .e-btn i { font-size: 20px; margin-bottom: 5px; display: block; }
@@ -885,8 +885,35 @@
                 } else {
                     initUI();
                 }
-            } catch(e) { initUI(); }
+            } catch(e) { 
+                // Fallback if DB read fails but local storage has data
+                if(!currentUser.profileCompleted) {
+                    document.getElementById('main-skeleton').classList.add('hidden');
+                    document.getElementById('setup-wizard').classList.remove('hidden');
+                    initWizard();
+                } else {
+                    initUI();
+                }
+            }
         });
+
+        // FIX: initWizard function to populate provinces
+        function initWizard() {
+            const provSelect = document.getElementById('inp-province');
+            const distSelect = document.getElementById('inp-district');
+            
+            // Clear and Populate Provinces
+            provSelect.innerHTML = `<option value="" data-i18n="select_prov">Select Province</option>`;
+            for (let p in slData) {
+                const opt = document.createElement('option');
+                opt.value = p;
+                opt.text = p;
+                provSelect.appendChild(opt);
+            }
+
+            // Reset Districts
+            distSelect.innerHTML = `<option value="" data-i18n="select_dist">Select District</option>`;
+        }
 
         function initUI() {
             document.getElementById('main-skeleton').classList.add('hidden');
@@ -922,13 +949,9 @@
         }
         
         // --- WIZARD LOGIC ---
-        function initWizard() {
-            const s=document.getElementById('inp-province'); 
-            slData.forEach((v, k) => s.add(new Option(k,k)));
-        }
         window.loadDistricts = () => {
             const p = document.getElementById('inp-province').value;
-            const d = document.getElementById('inp-district'); d.innerHTML = `<option value="">Select District</option>`;
+            const d = document.getElementById('inp-district'); d.innerHTML = `<option value="" data-i18n="select_dist">Select District</option>`;
             if(slData[p]) slData[p].forEach(x => d.add(new Option(x,x)));
         }
         window.wNext = (n) => {
