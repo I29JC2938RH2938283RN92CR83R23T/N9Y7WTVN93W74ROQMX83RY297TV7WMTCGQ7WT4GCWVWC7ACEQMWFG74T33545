@@ -422,7 +422,8 @@
         .searching-card {
             background: white; width: 90%; border-radius: 20px;
             padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            text-align: center; position: absolute; bottom: 40px; left: 5%;
+            text-align: center; position: absolute; bottom: 40px; 
+            left: 50%; transform: translateX(-50%);
         }
         
         .linear-loader {
@@ -449,6 +450,25 @@
             0% { width: 0; height: 0; opacity: 1; } 
             100% { width: 2000px; height: 2000px; opacity: 0; } 
         }
+
+        /* DRIVER FOUND OVERLAY */
+        #driver-found-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.0); z-index: 2400;
+            display: none; pointer-events: none;
+        }
+        #driver-found-overlay.active { display: block; }
+        .driver-top-bar {
+            position: absolute; top: 20px; left: 5%; width: 90%;
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex; align-items: center; gap: 15px; z-index: 10;
+        }
+        .driver-avatar { width: 50px; height: 50px; border-radius: 50%; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .driver-info h3 { margin: 0; font-size: 16px; color: #333; }
+        .driver-info p { margin: 2px 0 0 0; font-size: 12px; color: #777; }
+        .driver-rating { color: #FFC107; font-weight: 700; font-size: 12px; }
+        .trip-status-pill { background: #4CAF50; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-top: 5px; display: inline-block; }
 
         /* FLASH MODAL STYLES */
         .flash-option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
@@ -605,15 +625,29 @@
             <div class="radar-pulse animate" style="top: 50%; left: 50%; animation-delay: 2s;"></div>
         </div>
 
+        <!-- DRIVER FOUND OVERLAY -->
+        <div id="driver-found-overlay">
+            <div class="driver-top-bar" id="driver-ui-card" style="display:none;">
+                <div class="driver-avatar">
+                    <i class="fa-solid fa-user" style="font-size:24px; color:#aaa;"></i>
+                </div>
+                <div class="driver-info">
+                    <h3 id="found-driver-name">Driver Name</h3>
+                    <p id="found-driver-vehicle">Toyota Vitz - CA-1234</p>
+                    <span class="trip-status-pill">Arriving in 5 mins</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Searching Driver Overlay -->
         <div id="searching-driver-overlay">
-            <h3 style="color:#333; margin-top:0;" data-i18n="finding_rider">Finding nearby drivers...</h3>
+            <h3 style="color:#333; margin-top:0;" id="search-main-text">Finding closest partner...</h3>
             <div class="searching-card">
                 <div style="font-size:40px; color:#ccc; margin-bottom:10px;">
                     <i class="fa-solid fa-car-side"></i>
                 </div>
-                <div style="font-weight:700; font-size:18px; color:#333;" id="search-status-text">Connecting (500m)</div>
-                <div style="font-size:13px; color:#888; margin-bottom:15px;" id="search-sub-text">Please wait, we are expanding the search area.</div>
+                <div style="font-weight:700; font-size:18px; color:#333;" id="search-status-text">Connecting to network...</div>
+                <div style="font-size:13px; color:#888; margin-bottom:15px;" id="search-sub-text">Estimated: 2-5 mins</div>
                 
                 <div class="linear-loader">
                     <i class="fa-solid fa-car-side car-anim-icon"></i>
@@ -850,7 +884,7 @@
     <!-- LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get, update, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, update, push, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4",
@@ -891,6 +925,10 @@
         let pinDropLat = null;
         let pinDropLng = null;
         let flashItem = null;
+        
+        // Real-time Booking Globals
+        let currentRideId = null;
+        let rideListener = null;
         let searchTimer = null;
 
         // Pin Drop State
@@ -917,8 +955,8 @@
                 logout: "Log Out", promoted: "Promoted", loading_offers: "Loading offers...", no_records: "No activity records found",
                 recommended: "Recommended", expressway: "Expressway", tolls: "Tolls May Apply", no_tolls: "No Tolls", 
                 still_dev: "Service developing", close: "Close", emergency_title: "Emergency", emergency_msg: "Tap to call 1990 Ambulance immediately.",
-                flash_service: "Flash Service", finding_rider: "Finding nearby drivers...", update_home: "Update Home Location", recent: "Recent Searches",
-                confirm_location: "Confirm Location", set_home_title: "Set Home Location"
+                flash_service: "Flash Service", update_home: "Update Home Location", recent: "Recent Searches",
+                confirm_location: "Confirm Location", set_home_title: "Set Home Location", cancel: "Cancel"
             },
             si: {
                 hello: "ආයුබෝවන්", morning: "සුබ උදෑසනක්", afternoon: "සුබ දහවල් කාලයක්", evening: "සුබ සැන්දෑවක්", 
@@ -938,8 +976,8 @@
                 logout: "පිටත් වන්න", promoted: "ප්‍රචාරය කළ", loading_offers: "ඉල්ලීම් පූරණය වේ...", no_records: "ක්‍රියාකාරකම් වාර්තා හමු නොවිණ",
                 recommended: "නිර්දේශිත", expressway: "අධිවේගී මාර්ගය", tolls: "බද්ද අයක්තුව", no_tolls: "බද්ද නොමැත", 
                 still_dev: "සේවාව සංවර්ධනය වෙමින්", close: "වසන්න", emergency_title: "අවදානම්", emergency_msg: "1990 ගිලන් රථයට ඇමතීමට ඔබන්න.",
-                flash_service: "ෆ්ලෑෂ් සේවාව", finding_rider: "අසල රියදුරන් සොයමින්...", update_home: "නිවස යාවත්කාලීන කරන්න", recent: "මෑත සෙවුම්",
-                confirm_location: "ස්ථානය තහවුරු කරන්න", set_home_title: "නිවස සකසන්න"
+                flash_service: "ෆ්ලෑෂ් සේවාව", update_home: "නිවස යාවත්කාලීන කරන්න", recent: "මෑත සෙවුම්",
+                confirm_location: "ස්ථානය තහවුරු කරන්න", set_home_title: "නිවස සකසන්න", cancel: "අවලංගු කරන්න"
             },
             ta: { 
                 hello: "வணக்கம்", morning: "காலை வணக்கம்", afternoon: "மதிய வணக்கம்", evening: "மாலை வணக்கம்", 
@@ -959,8 +997,8 @@
                 logout: "வெளியேறு", promoted: "உந்தப்படுத்தப்பட்டது", loading_offers: "சலுகைகள் ஏற்றப்படுகின்றன...", no_records: "செயல்பாடு பதிவுகள் ஏதும் இல்லை",
                 recommended: "பரிந்துரைக்கப்படுகிறது", expressway: "விரைவுச்சாலை", tolls: "டோல் விலை பொருந்தும்", no_tolls: "டோல்கள் இல்லை", 
                 still_dev: "இன்னும் வளர்ச்சியில் உள்ளது", close: "மூடு", emergency_title: "அவசரம்", emergency_msg: "உடனடியாக 1990 ஆம்புலன்ஸை அழைக்க தட்டவும்.",
-                flash_service: "பிளாஷ் சேவை", finding_rider: "அருகிலுள்ள ஓட்டுநர்களைத் தேடுகிறது...", update_home: "வீட்டு இடத்தைப் புதுப்பிக்கவும்", recent: "சமீபத்திய தேடல்கள்",
-                confirm_location: "இடத்தை உறுதிப்படுத்தவும்", set_home_title: "வீட்டு இடத்தை அமைக்கவும்"
+                flash_service: "பிளாஷ் சேவை", update_home: "வீட்டு இடத்தைப் புதுப்பிக்கவும்", recent: "சமீபத்திய தேடல்கள்",
+                confirm_location: "இடத்தை உறுதிப்படுத்தவும்", set_home_title: "வீட்டு இடத்தை அமைக்கவும்", cancel: "ரத்து"
             }
         };
 
@@ -988,7 +1026,6 @@
                 const data = snap.val();
                 if(data) {
                     currentUser = data;
-                    // Check for Home
                     if(data.home) homeLocation = data.home;
                 }
                 if(currentUser.profileCompleted) initUI();
@@ -1010,14 +1047,11 @@
                 if(pos && pos.coords) {
                     userLiveCoords = [pos.coords.latitude, pos.coords.longitude];
                     modal.style.display = 'none'; modal.classList.add('hidden');
-                    // DO NOT center map here automatically to avoid "auto-center on user" bug.
-                    // Only center if opening ride overlay for the first time and no pickup is set.
                 }
             };
             const handleLocationError = () => { modal.style.display = 'flex'; modal.classList.remove('hidden'); };
             if(navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(handleLocationSuccess, handleLocationError, {enableHighAccuracy: true});
-                // We watch to update coords, but we won't force map.setView in the loop.
                 navigator.geolocation.watchPosition((pos) => {
                     userLiveCoords = [pos.coords.latitude, pos.coords.longitude];
                 }, handleLocationError, {enableHighAccuracy: true});
@@ -1105,13 +1139,11 @@
             }
 
             if(!map) {
-                // Initialize map. If we have user coords, center there ONCE. Else Colombo.
                 const startCoords = userLiveCoords || [6.9271, 79.8612];
                 map = L.map('ride-map', { zoomControl: false }).setView(startCoords, 13);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '' }).addTo(map);
                 markersLayer = L.layerGroup().addTo(map);
             } else {
-                // Only invalidate size, do not re-center automatically unless it's a fresh state
                 setTimeout(() => map.invalidateSize(), 300);
             }
         }
@@ -1125,7 +1157,6 @@
             document.getElementById('ride-overlay').classList.remove('active');
             setTimeout(() => document.getElementById('ride-overlay').classList.add('hidden'), 400);
             
-            // Cancel search if active
             if(searchTimer) cancelSearch();
 
             resetRoute();
@@ -1142,6 +1173,8 @@
             document.getElementById('ride-top-card').classList.remove('collapsed');
             document.getElementById('searching-driver-overlay').classList.remove('active');
             document.getElementById('radar-container').style.display = 'none';
+            document.getElementById('driver-found-overlay').classList.remove('active');
+            document.getElementById('driver-ui-card').style.display = 'none';
         }
 
         window.resetRoute = function() {
@@ -1174,13 +1207,11 @@
             const titleKey = type === 'pickup' ? 'select_loc' : 'dropoff_loc';
             document.getElementById('search-title').innerText = i18n[currentLang][titleKey];
             
-            // Show/Hide My Location based on type
             if(type === 'dropoff') document.getElementById('btn-my-loc').classList.add('hidden');
             else document.getElementById('btn-my-loc').classList.remove('hidden');
             
             document.getElementById('inp-search-loc').value = '';
             
-            // Show History & Home initially
             handleSearchFocus(); 
         }
         window.closeSearch = function() {
@@ -1189,7 +1220,6 @@
         }
 
         window.handleSearchFocus = function() {
-            // Show History/Home container, hide API results
             document.getElementById('search-history-container').style.display = 'flex';
             document.getElementById('search-results').style.display = 'none';
             renderHistoryAndHome();
@@ -1202,7 +1232,6 @@
             
             histList.innerHTML = '';
 
-            // 1. Render Home
             if(homeLocation) {
                 homeSection.classList.remove('hidden');
                 document.getElementById('home-display-addr').innerText = homeLocation.address;
@@ -1210,7 +1239,6 @@
                 homeSection.classList.add('hidden');
             }
 
-            // 2. Render History (Last 3)
             let history = currentUser.searchHistory || [];
             if(history.length > 0) {
                 histSection.classList.remove('hidden');
@@ -1238,11 +1266,10 @@
             const q = e.target.value;
             
             if(q.length === 0) {
-                handleSearchFocus(); // Show history
+                handleSearchFocus(); 
                 return;
             }
 
-            // Hide history/home, show results
             document.getElementById('search-history-container').style.display = 'none';
             document.getElementById('search-results').style.display = 'block';
 
@@ -1277,24 +1304,19 @@
             });
         }
 
-        // Save to history logic
         async function addToHistory(name, address, lat, lng) {
             let history = currentUser.searchHistory || [];
-            // Remove if duplicate exists
             history = history.filter(h => h.lat !== lat || h.lng !== lng);
-            // Add to front
             history.unshift({name, address, lat, lng});
-            // Keep max 3
             if(history.length > 3) history = history.slice(0, 3);
             
             currentUser.searchHistory = history;
-            localStorage.setItem('speedo_user', JSON.stringify(currentUser)); // optimistic update
+            localStorage.setItem('speedo_user', JSON.stringify(currentUser)); 
             try {
                 await update(ref(db, 'users/' + currentUser.uid), { searchHistory: history });
             } catch(e) { console.error("History save failed", e); }
         }
 
-        // HOME MANAGEMENT
         window.openSetHomeMap = function() {
             pinDropMode = 'set_home';
             closeSearch();
@@ -1310,7 +1332,6 @@
         async function selectSearchResult(lat, lon, name, fullAddr) {
             const latlng = L.latLng(lat, lon);
             
-            // Save to history if it's not setting home
             if(pinDropMode !== 'set_home') {
                 addToHistory(name, fullAddr || name, lat, lon);
             }
@@ -1323,17 +1344,12 @@
                 dropoffLatLng = latlng; dropoffAddr = name;
                 document.getElementById('txt-dropoff').innerText = name;
                 L.marker(latlng, {icon: redIcon}).addTo(markersLayer);
-            } else if (activeSearchType === 'home') {
-                // Setting home location
-                // Handled in finalizePinAction
             }
             
-            // Center map on selection
             if(map) map.setView(latlng, 15);
             closeSearch();
         }
 
-        // Pin Map Logic (Refactored for 500m and non-user centering)
         window.startPinPicker = function() {
             pinDropMode = activeSearchType === 'pickup' ? 'booking_pickup' : 'booking_drop';
             closeSearch();
@@ -1344,7 +1360,6 @@
         function openPinMapInternal() {
             document.getElementById('pin-drop-overlay').classList.add('active');
             
-            // Determine start point for the pin map
             let startCoords = userLiveCoords || [6.9271, 79.8612];
             
             if(pinDropMode === 'booking_pickup' && pickupLatLng) {
@@ -1363,7 +1378,7 @@
             } else {
                 pinMap.setView(startCoords, 16);
                 radiusCircle.setLatLng(startCoords);
-                radiusCircle.setRadius(500); // 500m as requested
+                radiusCircle.setRadius(500); 
                 setTimeout(() => pinMap.invalidateSize(), 300);
             }
             
@@ -1401,22 +1416,18 @@
             iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
         });
 
-        // --- PIN DROP LOGIC (500m Radius) ---
         function checkPinDistance() {
             const center = pinMap.getCenter();
-            // Target depends on mode
             let target = null;
             if(pinDropMode === 'booking_pickup' && pickupLatLng) target = L.latLng(pickupLatLng.lat, pickupLatLng.lng);
             else if(pinDropMode === 'booking_drop' && dropoffLatLng) target = L.latLng(dropoffLatLng.lat, dropoffLatLng.lng);
             else if(pinDropMode === 'set_home' && homeLocation) target = L.latLng(homeLocation.lat, homeLocation.lng);
             
-            // If no target (first time setting), distance is 0 essentially
             const dist = target ? center.distanceTo(target) : 0;
             
             const statusEl = document.getElementById('pin-status-text');
             const btn = document.getElementById('btn-final-pin');
             
-            // 500m radius logic
             if(dist <= 500) {
                 statusEl.innerText = i18n[currentLang].confirm_location;
                 statusEl.className = "pin-status valid";
@@ -1436,7 +1447,6 @@
             const addr = await getAddressFromLatLon(center.lat, center.lng);
 
             if(pinDropMode === 'set_home') {
-                // Save Home
                 homeLocation = { lat: center.lat, lng: center.lng, address: addr };
                 currentUser.home = homeLocation;
                 localStorage.setItem('speedo_user', JSON.stringify(currentUser));
@@ -1448,7 +1458,6 @@
                 return;
             }
 
-            // Regular Booking Flow
             if(pinDropMode === 'booking_pickup') {
                 pickupLatLng = L.latLng(pinDropLat, pinDropLng);
                 pickupAddr = addr;
@@ -1459,7 +1468,6 @@
                 document.getElementById('txt-dropoff').innerText = addr;
             }
 
-            // Add marker to main map
             if(map) {
                 map.setView([pinDropLat, pinDropLng], 15);
                 markersLayer.clearLayers();
@@ -1741,86 +1749,36 @@
             closeVehicleSheet();
             document.getElementById('ride-top-card').classList.add('hidden'); 
             
-            // Use pin drop overlay for final confirmation of pickup accuracy (500m)
-            pinDropMode = 'booking_final'; // Special mode just to confirm position before booking
+            pinDropMode = 'booking_final'; 
             
             openPinMapInternal();
             document.getElementById('pin-instruction').innerText = "Confirm pickup point before booking.";
             document.getElementById('btn-final-pin').innerText = "Confirm & Book";
         }
 
-        // --- DRIVER SEARCHING LOGIC (NEW) ---
-        window.startDriverSearch = function() {
-            // UI Setup
-            document.getElementById('searching-driver-overlay').classList.add('active');
-            document.getElementById('radar-container').style.display = 'block';
-            
-            let radius = 500;
-            const statusText = document.getElementById('search-status-text');
-            const subText = document.getElementById('search-sub-text');
-            
-            // Animation Loop
-            let tick = 0;
-            searchTimer = setInterval(() => {
-                tick++;
-                if(tick === 1) {
-                    radius = 500;
-                    statusText.innerText = `Connecting (${radius}m)`;
-                    subText.innerText = "Searching nearby drivers...";
-                } else if (tick === 4) {
-                    radius = 1000;
-                    statusText.innerText = `Searching wider... (${radius}m)`;
-                    subText.innerText = "No drivers found nearby, expanding radius.";
-                } else if (tick === 7) {
-                    radius = 2000;
-                    statusText.innerText = `Expanding... (${radius}m)`;
-                    subText.innerText = "Hang tight, finding the best match.";
-                } else if (tick >= 10) {
-                    // Simulate found driver
-                    driverFound();
-                }
-            }, 2000);
-        }
-
-        window.cancelSearch = function() {
-            if(searchTimer) {
-                clearInterval(searchTimer);
-                searchTimer = null;
-            }
-            document.getElementById('searching-driver-overlay').classList.remove('active');
-            document.getElementById('radar-container').style.display = 'none';
-            document.getElementById('ride-top-card').classList.remove('hidden');
-            showToast("Request Cancelled");
-        }
-
-        function driverFound() {
-            clearInterval(searchTimer);
-            searchTimer = null;
-            document.getElementById('searching-driver-overlay').classList.remove('active');
-            document.getElementById('radar-container').style.display = 'none';
-            
-            // Here you would normally transition to the "Driver Arriving" view.
-            // For this demo, we will confirm booking and reset to Home or show Success.
-            finishBooking();
-        }
-
-        // Override finalizePinAction to trigger search if in 'booking_final' mode
+        // --- REAL DB BOOKING LOGIC (Fixed to connect with Rider App) ---
         const originalFinalize = window.finalizePinAction;
         window.finalizePinAction = async function() {
             if(pinDropMode === 'booking_final') {
                 document.getElementById('pin-drop-overlay').classList.remove('active');
-                startDriverSearch(); // Start the PickMe style searching
+                startDriverSearch(); 
             } else {
                 originalFinalize();
             }
         }
 
-        window.finishBooking = async function() {
-            // Send to Firebase
+        window.startDriverSearch = async function() {
+            // 1. Map internal vehicle types to Rider App categories
+            let mappedVehicleType = selectedVehicleType;
+            if(mappedVehicleType === 'tuk') mappedVehicleType = 'Tuk Tuk';
+            else if(mappedVehicleType === 'car_cheap') mappedVehicleType = 'Car';
+            else if(mappedVehicleType === 'car') mappedVehicleType = 'Car';
+
+            // 2. Prepare Data
             const rideData = {
                 serviceType: activeServiceType,
-                status: 'requesting',
-                vehicleType: selectedVehicleType,
+                status: 'requesting', // CRITICAL: Rider App listens for this
+                vehicleType: mappedVehicleType, // CRITICAL: Rider App filters by this
                 pickup: { lat: pinDropLat || pickupLatLng.lat, lng: pinDropLng || pickupLatLng.lng, addr: pickupAddr },
                 dropoff: { lat: dropoffLatLng.lat, lng: dropoffLatLng.lng, addr: dropoffAddr },
                 price: document.getElementById('total-price-display').innerText,
@@ -1830,16 +1788,98 @@
                 note: activeServiceType==='flash' ? document.getElementById('flash-note').value : ''
             };
 
+            // 3. Push to DB immediately
             try {
-                await push(ref(db, 'rides'), rideData);
-                showToast("Driver Found! Booking Confirmed.");
-                setTimeout(() => {
-                    // Clean up UI
-                    closeRideOverlay();
-                }, 2000);
+                const newRideRef = await push(ref(db, 'rides'), rideData);
+                currentRideId = newRideRef.key;
+                
+                // 4. Start Listening for Driver Response
+                listenForDriverResponse();
+                
+                // 5. Show UI
+                document.getElementById('searching-driver-overlay').classList.add('active');
+                document.getElementById('radar-container').style.display = 'block';
+                
+                // 6. Timer to update text (UX only)
+                let searchPhase = 0;
+                document.getElementById('search-main-text').innerText = "Finding closest partner...";
+                document.getElementById('search-status-text').innerText = "Searching...";
+                document.getElementById('search-sub-text').innerText = "Estimated: 2-5 mins";
+
+                searchTimer = setInterval(() => {
+                    searchPhase++;
+                    if(searchPhase === 1) {
+                         document.getElementById('search-status-text').innerText = "Looking nearby...";
+                    } else if (searchPhase >= 4) {
+                         document.getElementById('search-main-text').innerText = "We'll soon find you a driver";
+                         document.getElementById('search-status-text').innerText = "Still connecting...";
+                    }
+                }, 3000);
+
             } catch(e) {
-                showToast("Error booking ride");
+                console.error(e);
+                showToast("Error connecting to network");
+                cancelSearch();
             }
+        }
+
+        function listenForDriverResponse() {
+            rideListener = onValue(ref(db, `rides/${currentRideId}`), (snapshot) => {
+                const data = snapshot.val();
+                
+                // If ride is cancelled (by user or driver timeout logic)
+                if(!data || data.status === 'cancelled' || data.status === 'ended') {
+                    if(rideListener) rideListener();
+                    cancelSearchUI();
+                    return;
+                }
+
+                // Driver Found!
+                if(data.status === 'driver_found' && !document.getElementById('driver-found-overlay').classList.contains('active')) {
+                    // Stop searching animation
+                    if(searchTimer) clearInterval(searchTimer);
+                    
+                    document.getElementById('searching-driver-overlay').classList.remove('active');
+                    document.getElementById('radar-container').style.display = 'none';
+                    
+                    // Show Driver Found UI
+                    document.getElementById('driver-found-overlay').classList.add('active');
+                    document.getElementById('driver-ui-card').style.display = 'flex';
+                    
+                    // Populate Details
+                    document.getElementById('found-driver-name').innerText = data.driverName || "Partner";
+                    document.getElementById('found-driver-vehicle').innerText = data.vehiclePlate || "Vehicle Plate";
+
+                    // Map Logic: Draw Route
+                    // (Optional: Add marker for driver if coordinates provided, else just show route)
+                    // Assuming driver coordinates update later in a real app
+                    
+                    showToast("Driver Found!");
+                }
+            });
+        }
+
+        window.cancelSearch = async function() {
+            if(currentRideId) {
+                try {
+                    await update(ref(db, `rides/${currentRideId}`), { status: 'cancelled' });
+                } catch(e) { console.error("Cancel error", e); }
+            }
+            cancelSearchUI();
+        }
+
+        function cancelSearchUI() {
+            if(searchTimer) clearInterval(searchTimer);
+            if(rideListener) rideListener();
+            
+            currentRideId = null;
+            document.getElementById('searching-driver-overlay').classList.remove('active');
+            document.getElementById('radar-container').style.display = 'none';
+            document.getElementById('driver-found-overlay').classList.remove('active');
+            document.getElementById('driver-ui-card').style.display = 'none';
+            
+            // Reset to selection UI if cancelled early
+            document.getElementById('ride-top-card').classList.remove('hidden');
         }
 
         function showToast(msg) {
