@@ -171,7 +171,7 @@
         @keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }
 
         /* --- SETUP WIZARD --- */
-        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:5000; display:flex; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
+        #setup-wizard { position: fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:5000; display:none; flex-direction:column; justify-content:center; align-items:center; padding:20px; box-sizing:border-box; }
         .wizard-container { width:100%; max-width:400px; text-align:center; position: relative; }
         .step { display:none; width:100%; animation:fadeIn 0.4s; }
         .step.active { display:flex; flex-direction:column; }
@@ -180,11 +180,13 @@
         .input-box label { font-size:13px; font-weight:600; color:#333; display:block; text-align:left; margin-bottom:5px; }
         .profile-upload-container { width:100px; height:100px; background:#f4f4f4; border-radius:50%; margin:0 auto 15px; overflow:hidden; position:relative; border: 2px dashed #ccc; }
         
-        /* EMERGENCY MODAL FIXED */
-        #emergency-modal, #block-permission-modal, #terms-modal, #flash-modal {
+        /* EMERGENCY, FLASH, TERMS, WARNING MODALS */
+        /* Force all modals hidden initially by ID */
+        #emergency-modal, #block-permission-modal, #terms-modal, #flash-modal, #app-warn-modal, #confirm-modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 6000;
-            display: flex; justify-content: center; align-items: center;
+            display: none; /* Forced display none */
+            justify-content: center; align-items: center;
             backdrop-filter: blur(2px);
         }
         .modal-card {
@@ -194,13 +196,14 @@
             animation: popIn 0.3s ease-out; max-height: 85vh; overflow-y: auto;
             position: relative; /* For absolute close button */
         }
-        /* Close button inside modal */
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* Close Button Style */
         .modal-close-btn {
             position: absolute; top: 15px; right: 15px;
             background: #f0f0f0; border: none; width: 30px; height: 30px;
             border-radius: 50%; font-weight: bold; color: #555; cursor: pointer; z-index: 10;
         }
-        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 
         /* --- LOCATION BLOCKER --- */
         #block-permission-modal { background: white; text-align: center; flex-direction: column; z-index: 9999; }
@@ -396,7 +399,7 @@
         .pin-status.valid { color: #4CAF50; font-weight: 700; }
         .pin-status.invalid { color: #D50000; font-weight: 700; }
 
-        /* --- FLASH MODAL STYLES --- */
+        /* FLASH MODAL STYLES */
         .flash-option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
         .flash-opt { border: 1px solid #eee; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; }
         .flash-opt.selected { border-color: var(--flash-yellow); background: #fffde7; }
@@ -510,7 +513,7 @@
             </div>
             <div class="profile-menu">
                 <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-user"></i> <span data-i18n="edit_profile">Edit Profile</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
-                <div class="profile-menu-item"><div class="menu-left"><i class="fa-solid fa-kit-medical" style="color: #D50000;"></i> <span data-i18n="emergency">Emergency Services</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
+                <div class="profile-menu-item" onclick="openEmergency()"><div class="menu-left"><i class="fa-solid fa-kit-medical" style="color: #D50000;"></i> <span data-i18n="emergency">Emergency Services</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
                 <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-bookmark"></i> <span data-i18n="saved_places">Saved Places</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
                 <div class="profile-menu-item"><div class="menu-left"><i class="fa-regular fa-circle-question"></i> <span data-i18n="support">Help & Support</span></div><i class="fa-solid fa-chevron-right" style="color:#ddd"></i></div>
             </div>
@@ -573,7 +576,7 @@
         <div id="route-select-modal">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h3 style="margin:0; color:#333;" data-i18n="select_route">Select Route</h3>
-                <button onclick="closeRouteModal()" style="border:none; background:none; font-size:20px; color:#999;">&times;</button>
+                <button onclick="document.getElementById('route-select-modal').classList.remove('active')" style="border:none; background:none; font-size:20px; color:#999;">&times;</button>
             </div>
             <div id="route-options-container"></div>
             <button class="btn-red" style="margin-top:10px;" id="btn-route-continue" onclick="confirmRouteSelection()" disabled data-i18n="continue">Continue</button>
@@ -583,7 +586,7 @@
         <div id="vehicle-sheet">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                 <h3 style="margin:0; color:#333;" data-i18n="choose_vehicle">Choose Vehicle</h3>
-                <button onclick="closeVehicleSheet()" style="border:none; background:none; font-size:20px; color:#999;">&times;</button>
+                <button onclick="document.getElementById('vehicle-sheet').classList.remove('active')" style="border:none; background:none; font-size:20px; color:#999;">&times;</button>
             </div>
             
             <div class="vehicle-list" id="vehicle-list-container">
@@ -612,13 +615,13 @@
             <div class="search-pill-btn" onclick="startPinPicker()"><i class="fa-solid fa-map-pin"></i> <span data-i18n="pick_map">Pick on Map</span></div>
         </div>
         <div id="search-results" style="flex:1; overflow-y:auto;"></div>
-        <button class="btn-red" onclick="closeSearch()" data-i18n="close">Close</button>
+        <button class="btn-red" onclick="document.getElementById('loc-search-modal').classList.remove('active')" data-i18n="close">Close</button>
     </div>
 
     <!-- FLASH MODAL -->
     <div id="flash-modal">
         <div class="modal-card">
-            <button class="modal-close-btn" onclick="document.getElementById('flash-modal').classList.remove('active')">&times;</button>
+            <button class="modal-close-btn" onclick="document.getElementById('flash-modal').style.display='none'">&times;</button>
             <h3 style="color:var(--flash-yellow); margin-top:0;" data-i18n="flash_service">Flash Service</h3>
             <p style="font-size:13px; color:#555;">What needs to be delivered?</p>
             
@@ -665,7 +668,7 @@
     <!-- EMERGENCY MODAL -->
     <div id="emergency-modal">
         <div class="modal-card" style="text-align:center;">
-            <button class="modal-close-btn" onclick="document.getElementById('emergency-modal').classList.remove('active')">&times;</button>
+            <button class="modal-close-btn" onclick="document.getElementById('emergency-modal').style.display='none'">&times;</button>
             <div style="font-size:50px; color:#d32f2f; margin-bottom:10px;"><i class="fa-solid fa-truck-medical"></i></div>
             <h3 style="margin:0 0 10px 0; color:#333;" data-i18n="emergency_title">Emergency Services</h3>
             <p style="font-size:13px; color:#666; margin-bottom:20px;" data-i18n="emergency_msg">Tap below to call Ambulance immediately.</p>
@@ -674,10 +677,10 @@
     </div>
 
     <!-- APP WARNING MODAL -->
-    <div id="app-warn-modal" class="hidden">
+    <div id="app-warn-modal">
         <div class="warn-card">
             <h3 style="color:#D50000; margin-bottom:15px;" data-i18n="important">Important</h3>
-            <p data-i18n="warn_msg">Keep app open after booking a ride to maintain a consistent connection with the database and driver. Closing the app might break the connection, which could lead to errors.</p>
+            <p data-i18n="warn_msg">Keep app open after booking a ride to maintain a consistent connection with database and driver. Closing app might break connection, which could lead to errors.</p>
             <div style="font-size:14px; margin-bottom:20px;"><input type="checkbox" id="chk-warn"> <span data-i18n="dont_show">Do not show again</span></div>
             <button class="btn-red" style="background:white; color:#333;" onclick="dismissWarn()" data-i18n="close">Close</button>
         </div>
@@ -690,7 +693,7 @@
             <h3 style="margin:0 0 10px 0; color:#333;" data-i18n="confirm_booking">Confirm Booking?</h3>
             <p style="font-size:13px; color:#666; margin-bottom:20px;" id="confirm-text">Ride details...</p>
             <div style="display:flex; gap:10px;">
-                <button class="btn-red" style="background:#eee; color:#333;" onclick="closeConfirmModal()" data-i18n="close">Close</button>
+                <button class="btn-red" style="background:#eee; color:#333;" onclick="document.getElementById('confirm-modal-overlay').classList.remove('active')" data-i18n="close">Close</button>
                 <button class="btn-red" onclick="proceedToPinDrop()" data-i18n="confirm">Confirm</button>
             </div>
         </div>
@@ -729,14 +732,14 @@
     <!-- TERMS MODAL -->
     <div id="terms-modal" class="hidden">
         <div class="modal-card">
-            <button class="modal-close-btn" onclick="closeTerms()">&times;</button>
+            <button class="modal-close-btn" onclick="document.getElementById('terms-modal').style.display='none'">&times;</button>
             <h3 style="color:#D50000; margin-top:0;" data-i18n="terms">Terms & Conditions</h3>
             <div style="font-size:13px; color:#555; line-height:1.6; max-height:60vh; overflow-y:auto; margin-bottom:20px;">
                 <p><b>1. Acceptance</b><br><span data-i18n="t1">By using Speedo, you agree to our terms.</span></p>
                 <p><b>2. Lost Items</b><br><span data-i18n="t2">We care about your lost/stolen and other items. However, please ensure you check your belongings before leaving vehicle.</span></p>
                 <p><b>3. User Conduct</b><br><span data-i18n="t3">Respect drivers and follow laws.</span></p>
             </div>
-            <button class="btn-red" onclick="closeTerms()" style="margin-top:0;" data-i18n="close">Close</button>
+            <button class="btn-red" onclick="document.getElementById('terms-modal').style.display='none'" style="margin-top:0;" data-i18n="close">Close</button>
         </div>
     </div>
 
@@ -792,10 +795,10 @@
                 ride: "Ride", flash: "Flash", food: "Food", home:"Home", activity:"Activity", promotions:"Promotions", profile:"Profile", 
                 ongoing_title:"Ongoing Activities", ongoing_none:"No Ongoing Activities", ongoing:"Ongoing", completed:"Completed", 
                 book_ride:"Book a Ride", show_vehicles:"Show Vehicle Options", 
-                app_warn:"To keep connected with this service and the app, please do not close the app. If you close the app, it will affect your ride", 
+                app_warn:"To keep connected with this service and app, please do not close app. If you close app, it will affect your ride", 
                 edit_profile: "Edit Profile", saved_places:"Saved Places", payment:"Payment Methods", support:"Help & Support", emergency: "Emergency Services",
                 show_routes:"Find Best Route", loading_app:"Loading App", loc_perm_msg:"Please turn on your device's location to proceed",
-                important: "Important", warn_msg: "Keep app open after booking a ride to maintain a consistent connection with the database and driver. Closing the app might break the connection, which could lead to errors.",
+                important: "Important", warn_msg: "Keep app open after booking a ride to maintain a consistent connection with database and driver. Closing app might break connection, which could lead to errors.",
                 dont_show: "Do not show again", select_route: "Select Route", continue: "Continue", choose_vehicle: "Choose Vehicle", est_total: "Estimated Total", book: "Book",
                 select_loc: "Select Your Location", dropoff_loc: "Drop Off Location", set_location: "Set Location", search_placeholder: "Search places...", 
                 your_loc: "Your Location", pick_map: "Pick on Map", route_details: "Route Details", confirm_booking: "Confirm Booking?", confirm: "Confirm",
@@ -876,11 +879,12 @@
                 else {
                     document.getElementById('main-skeleton').classList.add('hidden');
                     document.getElementById('setup-wizard').classList.remove('hidden');
+                    document.getElementById('setup-wizard').style.display = 'flex'; // Ensure flex
                     initWizard();
                 }
             } catch(e) {
                 if(currentUser.profileCompleted) initUI();
-                else { document.getElementById('main-skeleton').classList.add('hidden'); document.getElementById('setup-wizard').classList.remove('hidden'); }
+                else { document.getElementById('main-skeleton').classList.add('hidden'); document.getElementById('setup-wizard').classList.remove('hidden'); document.getElementById('setup-wizard').style.display = 'flex'; }
             }
         });
 
@@ -908,6 +912,7 @@
         function initUI() {
             document.getElementById('main-skeleton').classList.add('hidden');
             document.getElementById('main-card').classList.remove('hidden');
+            document.getElementById('main-card').style.display = 'flex'; // Ensure flex
             const name = currentUser.fullName ? currentUser.fullName.split(' ')[0] : 'User';
             document.getElementById('ui-name').innerText = name;
             document.getElementById('prof-view-name').innerText = currentUser.fullName || 'User';
@@ -917,13 +922,12 @@
                 document.getElementById('prof-view-img').src = currentUser.profilePic;
             }
             
-            // Health button listener
-            document.querySelector('.profile-menu-item:nth-child(2)').onclick = () => {
-                document.getElementById('emergency-modal').classList.add('active');
-            };
-            
             updateLangState();
             fetchPromotions();
+        }
+
+        window.openEmergency = function() {
+            document.getElementById('emergency-modal').style.display = 'flex';
         }
 
         window.callAmbulance = function() {
@@ -955,7 +959,7 @@
 
         // --- FLASH LOGIC ---
         window.openFlashModal = function() {
-            document.getElementById('flash-modal').classList.add('active');
+            document.getElementById('flash-modal').style.display = 'flex';
         }
         window.selectFlashOpt = function(el, type) {
             document.querySelectorAll('.flash-opt').forEach(d => d.classList.remove('selected'));
@@ -965,7 +969,7 @@
         window.initFlashBooking = function() {
             if(!flashItem) return showToast("Select an item type");
             activeServiceType = 'flash';
-            document.getElementById('flash-modal').classList.remove('active');
+            document.getElementById('flash-modal').style.display = 'none';
             openRideOverlay(true); // true = flash mode
         }
 
@@ -983,7 +987,7 @@
 
             // Show App Warning if not dismissed
             if(!localStorage.getItem('warn_dismissed')) {
-                document.getElementById('app-warn-modal').classList.remove('hidden');
+                document.getElementById('app-warn-modal').style.display = 'flex';
             }
 
             if(!map) {
@@ -1001,7 +1005,7 @@
 
         window.dismissWarn = function() {
             if(document.getElementById('chk-warn').checked) localStorage.setItem('warn_dismissed', 'true');
-            document.getElementById('app-warn-modal').classList.add('hidden');
+            document.getElementById('app-warn-modal').style.display = 'none';
         }
 
         window.closeRideOverlay = function() {
@@ -1049,7 +1053,7 @@
         window.openSearch = function(type) {
             activeSearchType = type;
             document.getElementById('loc-search-modal').classList.remove('hidden');
-            setTimeout(() => document.getElementById('loc-search-modal').classList.add('active'), 10);
+            document.getElementById('loc-search-modal').classList.add('active');
             document.getElementById('search-title').innerText = type === 'pickup' ? i18n[currentLang].select_loc : i18n[currentLang].dropoff_loc;
             
             // Hide My Location button for Dropoff
@@ -1261,7 +1265,7 @@
                     ${route.name && route.name.toLowerCase().includes('expressway') ? i18n[currentLang].toll_warn : ''}
                 </div>
             `;
-            document.getElementById('route-info-fullscreen').classList.add('active');
+            document.getElementById('route-info-fullscreen').style.display = 'flex';
         }
 
         window.selectRoute = function(index, e) {
@@ -1317,27 +1321,14 @@
             // Bike 0.5km = 150, Tuk 250, Car 300, Van 500
             
             if (vehicleType === 'bike') {
-                // 150 for 0.5km -> Rate approx 150/km? Or Base 75 + 150/km?
-                // Let's do Linear: 150 for first 0.5. 
-                // If user requested 0.5km = 150. That is 300/km.
-                // Let's try: Base 100 + Rate * Dist.
-                // For 0.5km: 100 + R*0.5 = 150 -> R=100. 
-                // Wait, "Bike prices low". 
-                // Let's stick to explicit user request:
-                // 0.5km = 150.
-                // So Price = 150 + (ExtraDist > 0.5 ? (ExtraDist * Rate) : 0).
-                // Rate for bike: 150/km? That's high. Maybe 100/km.
-                // Let's implement: 150 fixed for 0.5km. Every additional km 100.
                 if(distKm <= 0.5) price = 150;
                 else price = 150 + ((distKm - 0.5) * 100);
 
             } else if (vehicleType === 'tuk') {
-                // 250 for 0.5km.
                 if(distKm <= 0.5) price = 250;
                 else price = 250 + ((distKm - 0.5) * 120); // Rate 120/km
 
             } else if (vehicleType === 'car_cheap') {
-                // 300 for 0.5km
                 if(distKm <= 0.5) price = 300;
                 else price = 300 + ((distKm - 0.5) * 140);
 
@@ -1346,7 +1337,6 @@
                 else price = 350 + ((distKm - 0.5) * 160);
 
             } else if (vehicleType === 'van') {
-                // 500 for 0.5km
                 if(distKm <= 0.5) price = 500;
                 else price = 500 + ((distKm - 0.5) * 200);
             }
@@ -1556,8 +1546,7 @@
             const f=e.target.files[0]; if(!f) return;
             const r=new FileReader(); r.onload=(ev)=>{ const i=new Image(); i.src=ev.target.result; i.onload=()=>{ const c=document.createElement('canvas'); c.width=200; c.height=200; c.getContext('2d').drawImage(i,0,0,200,200); base64Profile=c.toDataURL('image/jpeg',0.5); document.getElementById('wiz-img').src=base64Profile; document.getElementById('wiz-img').style.display='block'; document.getElementById('wiz-icon').style.display='none'; }}; r.readAsDataURL(f);
         }
-        window.openTerms = () => document.getElementById('terms-modal').classList.remove('hidden');
-        window.closeTerms = () => document.getElementById('terms-modal').classList.add('hidden');
+        window.openTerms = () => document.getElementById('terms-modal').style.display = 'flex';
         window.finishSetup = async () => {
             const err = document.getElementById('wizard-error');
             if(!base64Profile) return err.innerText = "Profile Picture is required";
@@ -1565,7 +1554,9 @@
             const up = { fullName: document.getElementById('inp-name').value, email: document.getElementById('inp-email').value, country:"Sri Lanka", province:document.getElementById('inp-province').value, district:document.getElementById('inp-district').value, profilePic:base64Profile, profileCompleted:true };
             await update(ref(db, 'users/'+currentUser.uid), up);
             currentUser={...currentUser,...up}; localStorage.setItem('speedo_user',JSON.stringify(currentUser));
-            document.getElementById('setup-wizard').classList.add('hidden'); initUI();
+            document.getElementById('setup-wizard').classList.add('hidden');
+            document.getElementById('setup-wizard').style.display = 'none';
+            initUI();
         }
     </script>
 </body>
