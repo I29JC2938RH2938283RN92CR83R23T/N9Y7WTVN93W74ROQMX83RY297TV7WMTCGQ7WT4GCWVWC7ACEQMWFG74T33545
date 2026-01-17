@@ -181,7 +181,7 @@
         .profile-upload-container { width:100px; height:100px; background:#f4f4f4; border-radius:50%; margin:0 auto 15px; overflow:hidden; position:relative; border: 2px dashed #ccc; }
         
         /* EMERGENCY, FLASH, TERMS, WARNING MODALS */
-        #emergency-modal, #block-permission-modal, #terms-modal, #flash-modal, #app-warn-modal, #confirm-modal-overlay {
+        #emergency-modal, #block-permission-modal, #terms-modal, #flash-modal, #app-warn-modal, #confirm-modal-overlay, #driver-msg-modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.6); z-index: 6000;
             display: none; justify-content: center; align-items: center;
@@ -470,6 +470,16 @@
         .driver-rating { color: #FFC107; font-weight: 700; font-size: 12px; }
         .trip-status-pill { background: #4CAF50; color: white; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-top: 5px; display: inline-block; }
 
+        /* DRIVER MSG MODAL */
+        #driver-msg-modal {
+             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 9500; display: none; justify-content: center; align-items: center;
+        }
+        .driver-msg-content {
+             background: white; width: 85%; padding: 20px; border-radius: 15px; text-align: center;
+             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
         /* FLASH MODAL STYLES */
         .flash-option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
         .flash-opt { border: 1px solid #eee; border-radius: 10px; padding: 10px; text-align: center; cursor: pointer; }
@@ -636,6 +646,10 @@
                     <p id="found-driver-vehicle">Toyota Vitz - CA-1234</p>
                     <span class="trip-status-pill">Arriving in 5 mins</span>
                 </div>
+                <!-- Message Button -->
+                <button class="btn-red" style="padding:8px 12px; font-size:12px; margin-left:auto;" onclick="openDriverMsgModal()">
+                    <i class="fa-solid fa-comment"></i>
+                </button>
             </div>
         </div>
 
@@ -837,6 +851,19 @@
         </div>
     </div>
 
+    <!-- DRIVER MSG MODAL -->
+    <div id="driver-msg-modal">
+        <div class="driver-msg-content">
+             <h3>Message Driver</h3>
+             <p style="font-size:12px; color:#666; margin-bottom:10px;">Send a message to your driver.</p>
+             <input type="text" id="msg-to-driver" class="search-input-box" style="margin-bottom:15px;" placeholder="Type your message here...">
+             <div style="display:flex; gap:10px;">
+                 <button class="btn-red" style="background:#eee; color:#333;" onclick="document.getElementById('driver-msg-modal').style.display='none'">Cancel</button>
+                 <button class="btn-red" onclick="sendMsgToDriver()">Send</button>
+             </div>
+        </div>
+    </div>
+
     <!-- PIN DROP OVERLAY (For Pickup / Dropoff / Home) -->
     <div id="pin-drop-overlay">
         <div id="pin-map"></div>
@@ -930,6 +957,7 @@
         let currentRideId = null;
         let rideListener = null;
         let searchTimer = null;
+        let driverMsgListener = null;
 
         // Pin Drop State
         let pinDropMode = null; // 'booking_pickup', 'booking_drop', 'set_home'
@@ -966,7 +994,7 @@
                 app_warn:"සේවාව සමග රැඳී සිටීමට කරුණාකර ඇප් එක වසන්න එපා.", 
                 edit_profile: "ගිණුම සකසන්න", saved_places:"සුරැකුම්", payment:"ගෙවීම් ක්‍රම", support:"උදව්", emergency: "අවදානම් සේවා",
                 show_routes:"හොඳම මාර්ගය සොයන්න", loading_app:"යෙදුම පූරණය වේ", loc_perm_msg:"ඉදිරිපත්තික ස්ථානය සක්‍රීය කරන්න",
-                important: "වැදගත්", warn_msg: "ගමන් වාරණයක් කිරීමෙන් පසු දත්ත මූලාශ්‍රය සහ රියදුරු සමඟ ස්ථාවර සම්බන්ධතාවක් පවත්වා ගැනීම සඳහා යෙදුම විවෘතව තබන්න.",
+                important: "වැදගත්", warn_msg: "ගමන් වාරණයක් කිරීමෙන් පසු දත්ත මූලාශ්‍රය සහ රියදුරු සමඟ ස්ථාවර ස්ථාවර සැකස් පවත්වා ගැනීම සඳහා යෙදුම විවෘතව තබන්න.",
                 dont_show: "නැවත නොපෙන්වන්න", select_route: "මාර්ගය තෝරන්න", continue: "ඉදිරිපත් කරන්න", choose_vehicle: "වාහනයක් තෝරන්න", est_total: "ඇස්තමික එකතුව", book: "දැන් ගන්න",
                 select_loc: "ඔබේ පිහිටුව තෝරන්න", dropoff_loc: "බැසීමේ ස්ථානය", set_location: "ස්ථානය සකසන්න", search_placeholder: "ස්ථාන සොයන්න...", 
                 your_loc: "ඔබේ පිහිටුව", pick_map: "සිතියමේ තෝරන්න", route_details: "මාර්ග විස්තර", confirm_booking: "දැන් ගන්නද?", confirm: "තහවුරු කරන්න",
@@ -984,18 +1012,18 @@
                 ride: "சவாரி", flash: "பிளாஷ்", food: "உணவு", home:"முகப்பு", activity:"செயல்பாடு", promotions:"சலுகைகள்", profile:"சுயவிவரம்", 
                 ongoing_title:"தற்போதைய", ongoing_none:"எதுவுமில்லை", ongoing:"தற்போதைய", completed:"முடிந்தது", 
                 book_ride:"சவாரி பதிவு", show_vehicles:"வாகனங்கள்", 
-                app_warn:"சேவையுடன் இணைந்திருக்க செயலியை மூட வேண்டாம்.", 
+                app_warn:"சேவையுடன் இணைந்திருக்க செல்லியை மூட வேண்டாம்.", 
                 edit_profile: "சுயவிவரம் திருத்து", saved_places:"சேமித்த இடங்கள்", payment:"கட்டண முறைகள்", support:"உதவி", emergency: "அவசர சேவைகள்",
                 show_routes:"சிறந்த வழியைக் கண்டறியவும்", loading_app:"செயலி ஏற்றப்படுகிறது", loc_perm_msg:"தொடர்ந்து செல்ல உங்கள் சாதனத்தின் இருப்பிடத்தை இயக்கவும்",
-                important: "முக்கியமானது", warn_msg: "பயணம் முடிந்தவுடன் டேட்டாபேஸ் மற்றும் ஓட்டுநருடன் நிலையான இணைப்பைப் பராமரிக்க செயலியைத் திறந்து வைக்கவும்.",
+                important: "முக்கியமானது", warn_msg: "பயணம் முடிந்தவுடன் டேட்டாபேஸ் மற்றும் ஓட்டுநருடன் நிலையான் இணைப்பைப் பராமரிக்க செயலியைத் தொடரவும்.",
                 dont_show: "மீண்டும் காட்ட வேண்டாம்", select_route: "வழியைத் தேர்வு செய்", continue: "தொடரவும்", choose_vehicle: "வாகனத்தைத் தேர்வு செய்", est_total: "மதிப்பிடப்பட்ட மொத்தம்", book: "முன்பதிவு செய்",
                 select_loc: "உங்கள் இருப்பிடத்தைத் தேர்வு செய்க", dropoff_loc: "இறங்குமிடம்", set_location: "இருப்பிடத்தை அமைக்கவும்", search_placeholder: "இடங்களைத் தேடவும்...", 
                 your_loc: "உங்கள் இருப்பிடம்", pick_map: "வரைபடத்தில் தேர்வு செய்", route_details: "வழி விவரங்கள்", confirm_booking: "முன்பதிவை உறுதிப்படுத்தவா?", confirm: "உறுதிப்படுத்து",
                 drag_map: "பிக்கப்பில் 500மீ ஆரத்திற்குள் பின்னை வைக்க வரைபடத்தை இழுக்கவும்.", book_now: "இப்போது முன்பதிவு செய்", calculating: "தூரம் கணக்கிறது...",
                 get_started: "தொடங்கு", full_name: "முழு பெயர்", email: "மின்னஞ்சல் முகவரி", country: "நாடு", province: "மாகாணம்", district: "மாவட்டம்", 
                 select_prov: "மாகாணத்தைத் தேர்வு செய்", select_dist: "மாவட்டத்தைத் தேர்வு செய்", next: "அடுத்தது", agree_terms: "ஒப்புக்கொள்", terms: "விதிமுறைகள் மற்றும் நிபந்தனைகள்", finish: "முடி",
-                logout: "வெளியேறு", promoted: "உந்தப்படுத்தப்பட்டது", loading_offers: "சலுகைகள் ஏற்றப்படுகின்றன...", no_records: "செயல்பாடு பதிவுகள் ஏதும் இல்லை",
-                recommended: "பரிந்துரைக்கப்படுகிறது", expressway: "விரைவுச்சாலை", tolls: "டோல் விலை பொருந்தும்", no_tolls: "டோல்கள் இல்லை", 
+                logout: "வெளியேறு", promoted: "உந்தப்படுத்தப்படுத்து", loading_offers: "சலுகைகள் ஏற்றப்படுகின்றன...", no_records: "செயல்பாடு பதிவுகள் ஏதும் இல்லை",
+                recommended: "பரிந்துரைக்கப்படுத்து", expressway: "விரைவுச்சாலை", tolls: "டோல் விலை பொருந்தும்", no_tolls: "டோல்கள் இல்லை", 
                 still_dev: "இன்னும் வளர்ச்சியில் உள்ளது", close: "மூடு", emergency_title: "அவசரம்", emergency_msg: "உடனடியாக 1990 ஆம்புலன்ஸை அழைக்க தட்டவும்.",
                 flash_service: "பிளாஷ் சேவை", update_home: "வீட்டு இடத்தைப் புதுப்பிக்கவும்", recent: "சமீபத்திய தேடல்கள்",
                 confirm_location: "இடத்தை உறுதிப்படுத்தவும்", set_home_title: "வீட்டு இடத்தை அமைக்கவும்", cancel: "ரத்து"
@@ -1175,6 +1203,9 @@
             document.getElementById('radar-container').style.display = 'none';
             document.getElementById('driver-found-overlay').classList.remove('active');
             document.getElementById('driver-ui-card').style.display = 'none';
+
+            // Stop Message Listener
+            if(driverMsgListener) driverMsgListener();
         }
 
         window.resetRoute = function() {
@@ -1513,6 +1544,8 @@
         function renderRouteOptions(routes) {
             const container = document.getElementById('route-options-container');
             container.innerHTML = '';
+            
+            // Force show if routes exist, even if just 1
             if(routes.length === 0) {
                 container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;" data-i18n="no_routes">No routes found.</div>';
                 return;
@@ -1756,6 +1789,40 @@
             document.getElementById('btn-final-pin').innerText = "Confirm & Book";
         }
 
+        // --- MESSAGE LOGIC ---
+        window.openDriverMsgModal = () => {
+             document.getElementById('driver-msg-modal').style.display = 'flex';
+        }
+        window.sendMsgToDriver = async () => {
+            const txt = document.getElementById('msg-to-driver').value;
+            if(!txt) return;
+            
+            if(currentRideId) {
+                await push(ref(db, `rides/${currentRideId}/messages`), {
+                    sender: 'user',
+                    text: txt,
+                    timestamp: Date.now()
+                });
+                document.getElementById('driver-msg-modal').style.display = 'none';
+                showToast("Message Sent!");
+            }
+        }
+        // Listen for driver messages
+        function listenForDriverMessages() {
+            driverMsgListener = onValue(ref(db, `rides/${currentRideId}/messages`), (snapshot) => {
+                const msgs = snapshot.val();
+                if(msgs) {
+                    const last = Object.values(msgs).pop();
+                    if(last && last.sender === 'driver') { // Driver sent message
+                         // Show full screen notification
+                         const fs = document.getElementById('driver-found-overlay'); // Reusing this overlay for msgs too or create new one
+                         // We'll use a toast or update driver-found text for simplicity
+                         showToast(`Driver: ${last.text}`);
+                    }
+                }
+            });
+        }
+
         // --- REAL DB BOOKING LOGIC (Fixed to connect with Rider App) ---
         const originalFinalize = window.finalizePinAction;
         window.finalizePinAction = async function() {
@@ -1768,17 +1835,11 @@
         }
 
         window.startDriverSearch = async function() {
-            // 1. Map internal vehicle types to Rider App categories
-            let mappedVehicleType = selectedVehicleType;
-            if(mappedVehicleType === 'tuk') mappedVehicleType = 'Tuk Tuk';
-            else if(mappedVehicleType === 'car_cheap') mappedVehicleType = 'Car';
-            else if(mappedVehicleType === 'car') mappedVehicleType = 'Car';
-
-            // 2. Prepare Data
+            // Vehicle Types: send raw type to DB to ensure rider app sees it
             const rideData = {
                 serviceType: activeServiceType,
                 status: 'requesting', // CRITICAL: Rider App listens for this
-                vehicleType: mappedVehicleType, // CRITICAL: Rider App filters by this
+                vehicleType: selectedVehicleType, // CRITICAL: Rider App filters by this (e.g., 'car_cheap')
                 pickup: { lat: pinDropLat || pickupLatLng.lat, lng: pinDropLng || pickupLatLng.lng, addr: pickupAddr },
                 dropoff: { lat: dropoffLatLng.lat, lng: dropoffLatLng.lng, addr: dropoffAddr },
                 price: document.getElementById('total-price-display').innerText,
@@ -1788,19 +1849,19 @@
                 note: activeServiceType==='flash' ? document.getElementById('flash-note').value : ''
             };
 
-            // 3. Push to DB immediately
             try {
                 const newRideRef = await push(ref(db, 'rides'), rideData);
                 currentRideId = newRideRef.key;
                 
-                // 4. Start Listening for Driver Response
+                // Start Listening for Driver Response AND Messages
                 listenForDriverResponse();
+                listenForDriverMessages();
                 
-                // 5. Show UI
+                // Show UI
                 document.getElementById('searching-driver-overlay').classList.add('active');
                 document.getElementById('radar-container').style.display = 'block';
                 
-                // 6. Timer to update text (UX only)
+                // Timer to update text (UX only)
                 let searchPhase = 0;
                 document.getElementById('search-main-text').innerText = "Finding closest partner...";
                 document.getElementById('search-status-text').innerText = "Searching...";
@@ -1852,7 +1913,6 @@
 
                     // Map Logic: Draw Route
                     // (Optional: Add marker for driver if coordinates provided, else just show route)
-                    // Assuming driver coordinates update later in a real app
                     
                     showToast("Driver Found!");
                 }
@@ -1871,6 +1931,7 @@
         function cancelSearchUI() {
             if(searchTimer) clearInterval(searchTimer);
             if(rideListener) rideListener();
+            if(driverMsgListener) driverMsgListener(); // Stop listening to messages
             
             currentRideId = null;
             document.getElementById('searching-driver-overlay').classList.remove('active');
