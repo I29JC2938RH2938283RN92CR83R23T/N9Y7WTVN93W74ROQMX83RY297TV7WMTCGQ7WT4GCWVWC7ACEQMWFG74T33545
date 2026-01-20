@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Speedo - Book a Ride</title>
+    
+    <!-- Leaflet & CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-red: #D32F2F;
+            --green: #4CAF50;
+            --blue: #2196F3;
+            --white: #ffffff;
+            --gray-light: #f5f5f5;
+            --text-dark: #333;
+            --font-main: 'Poppins', sans-serif;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+        body { font-family: var(--font-main); background: var(--gray-light); height: 100vh; overflow: hidden; }
+        .hidden { display: none !important; }
+
+        /* TOAST */
+        #toast-container { position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; pointer-events: none; }
+        .toast { background: rgba(0,0,0,0.85); color: white; padding: 12px 24px; border-radius: 50px; text-align: center; margin-bottom: 10px; font-size: 14px; animation: fadeUp 0.3s; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+        /* FULL SCREEN CALC LOADER */
+        #calc-loader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.95); z-index: 9999;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .linear-spinner { width: 200px; height: 4px; background: #eee; overflow: hidden; border-radius: 2px; margin-top: 20px; }
+        .linear-bar { width: 100%; height: 100%; background: var(--primary-red); animation: slideLoad 1.5s infinite ease-in-out; transform: translateX(-100%); }
+        @keyframes slideLoad { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        /* MAP */
+        #main-map-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; }
+        #main-map { width: 100%; height: 100%; background: #e5e5e5; }
+        
+        /* BLACK PIN ICONS */
+        .black-pin { color: black; font-size: 40px; text-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+
+        /* INPUT WIZARD */
+        #input-section { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; padding: 20px; display: flex; flex-direction: column; }
+        .input-group { margin-bottom: 15px; position: relative; display: flex; align-items: center; }
+        .input-icon-box { position: absolute; left: 15px; z-index: 2; pointer-events: none; display: flex; align-items: center; }
+        .addr-input { width: 100%; padding: 15px 15px 15px 50px; background: #f9f9f9; border: 1px solid #eee; border-radius: 12px; font-size: 15px; font-family: var(--font-main); text-overflow: ellipsis; white-space: nowrap; overflow: hidden; font-weight: 500; }
+        
+        /* HEADER with Filter */
+        .wiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .filter-btn { padding: 8px; background: #f5f5f5; border-radius: 8px; cursor: pointer; }
+
+        /* SEARCH OVERLAY */
+        #search-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 6000; display: flex; flex-direction: column; }
+        .search-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; gap: 10px; align-items: center; }
+        .search-bar { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #ddd; background: #f5f5f5; font-size: 16px; font-family: var(--font-main); }
+        .action-row { display: flex; gap: 10px; padding: 15px; border-bottom: 1px solid #eee; }
+        .action-btn { flex: 1; padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 5px; cursor: pointer; }
+        
+        .results-list { flex: 1; overflow-y: auto; background: white; padding: 0 15px; }
+        .result-item { padding: 15px 0; border-bottom: 1px solid #eee; cursor: pointer; }
+        .res-name { font-weight: 700; font-size: 15px; color: #333; margin-bottom: 2px; }
+        .res-addr { font-size: 12px; color: #777; }
+
+        /* SKELETON LOADER */
+        .skel-item { padding: 15px 0; border-bottom: 1px solid #eee; }
+        .skel-line { height: 12px; background: #eee; border-radius: 6px; margin-bottom: 8px; position: relative; overflow: hidden; }
+        .skel-line.short { width: 60%; }
+        .skel-line::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent); animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        /* FILTER POPUP */
+        #filter-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9100; display: none; justify-content: center; align-items: center; }
+        .filter-card { background: white; width: 85%; padding: 25px; border-radius: 20px; }
+        .f-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; margin: 10px 0; background: #fff; }
+
+        /* BOTTOM SHEET */
+        #bottom-sheet { position: fixed; bottom: 0; left: 0; width: 100%; background: white; border-top-left-radius: 24px; border-top-right-radius: 24px; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); z-index: 500; padding: 20px; transition: transform 0.3s; }
+        .vehicle-row { display: flex; justify-content: space-between; gap: 5px; padding-bottom: 10px; }
+        .vehicle-opt { flex: 1; padding: 10px 5px; border: 2px solid #eee; border-radius: 12px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
+        .vehicle-opt.active { border-color: var(--primary-red); background: #fff0f0; }
+        .v-icon { font-size: 28px; margin-bottom: 5px; color: #555; }
+        .vehicle-opt.active .v-icon { color: var(--primary-red); }
+
+        /* DRIVERS LIST */
+        #drivers-window { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f5f5f5; z-index: 6000; display: flex; flex-direction: column; }
+        .d-card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; cursor: pointer; }
+        .d-card-top { display: flex; align-items: center; justify-content: space-between; }
+        .d-info-row { display: flex; align-items: center; }
+        .d-price-big { font-size: 22px; font-weight: 800; color: var(--primary-red); }
+        .d-dist-centered { text-align: center; font-size: 13px; color: #666; font-weight: 600; margin-top: 5px; width: 100%; }
+        .d-plate-box {
+            background: #fff; border: 2px solid #333; border-radius: 6px; padding: 4px 8px; 
+            text-align: center; font-weight: 700; font-size: 12px; text-transform: uppercase;
+            display: inline-block; margin-top: 5px; min-width: 80px; box-shadow: 2px 2px 0px #eee;
+        }
+        
+        /* INFO POPUP (Green) */
+        #green-info-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 8000; display: flex; justify-content: center; align-items: center; }
+        .green-card { background: white; width: 90%; max-width: 400px; border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; }
+        .gc-header { background: var(--green); padding: 20px; color: white; text-align: center; }
+        .gc-stars { color: #FFD700; font-size: 20px; margin: 5px 0; }
+        .gc-stars .gray { color: rgba(255,255,255,0.4); }
+        .gc-imgs { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; padding: 10px; }
+        .gc-img { width: 100%; height: 80px; object-fit: cover; border-radius: 4px; }
+
+        /* REVIEWS POPUP */
+        #reviews-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 8500; display: none; flex-direction: column; }
+        .rev-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 18px; }
+        .rev-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .rev-item { background: #f9f9f9; padding: 12px; border-radius: 8px; margin-bottom: 10px; }
+        .rev-stars { color: #FFD700; font-size: 14px; }
+        .rev-txt { font-size: 13px; color: #555; margin-top: 5px; }
+
+        /* TRACKING / IN-RIDE UI */
+        #arrival-card { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 95%; background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); z-index: 8000; text-align: center; display: none; }
+        .ac-status { font-size: 18px; font-weight: 700; color: var(--primary-red); margin-bottom: 5px; }
+        .ac-sub { font-size: 13px; color: #555; }
+        .ac-driver-row { display: flex; align-items: center; justify-content: space-between; margin-top: 15px; padding: 0 10px; }
+        .ac-driver-info { display: flex; align-items: center; gap: 10px; text-align: left; }
+        .ac-thumb { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #eee; }
+        .ac-plate-box { border:1px solid #333; background:#eee; padding:2px 6px; border-radius:4px; font-weight:700; font-size:11px; margin-top:2px; display:inline-block; }
+        .ac-actions { display: flex; gap: 10px; }
+        .comm-btn { width: 40px; height: 40px; border-radius: 50%; background: #f0f0f0; display: flex; align-items: center; justify-content: center; color: #333; text-decoration: none; cursor: pointer; }
+        .comm-btn:active { background: #ddd; }
+
+        /* CHAT MODAL */
+        #chat-modal { position: fixed; bottom: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9900; display: none; flex-direction: column; }
+        .chat-header { padding: 15px; background: #eee; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
+        .chat-footer { padding: 10px; display: flex; gap: 10px; border-top: 1px solid #ddd; background: white; }
+        .chat-input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
+        .msg-bubble { max-width: 70%; padding: 8px 12px; border-radius: 12px; font-size: 14px; }
+        .msg-me { align-self: flex-end; background: var(--primary-red); color: white; border-bottom-right-radius: 2px; }
+        .msg-them { align-self: flex-start; background: white; border: 1px solid #eee; border-bottom-left-radius: 2px; }
+
+        /* END TRIP / BILL */
+        #bill-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9500; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 30px; text-align: center; }
+        .bill-amount { font-size: 56px; font-weight: 800; color: var(--green); margin: 20px 0; }
+        .bill-row { display: flex; justify-content: space-between; width: 100%; max-width: 300px; margin-bottom: 10px; font-size: 14px; color: #555; }
+        
+        /* REVIEW */
+        #review-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 9600; display: none; flex-direction: column; justify-content: center; align-items: center; padding: 30px; }
+        .review-card { background: white; width: 100%; padding: 25px; border-radius: 24px; text-align: center; }
+        .star-row { font-size: 32px; color: #ddd; margin: 15px 0; cursor: pointer; }
+        .star-row .active { color: #FFC107; }
+        
+        /* BUTTONS */
+        .btn-full { width: 100%; padding: 15px; background: var(--primary-red); color: white; border: none; border-radius: 12px; font-weight: 700; margin-top: 15px; }
+        
+        /* POPUP (Happy Journey) */
+        #journey-popup {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9); color: white; padding: 20px 40px; border-radius: 50px;
+            z-index: 9999; font-size: 18px; font-weight: 600; display: none; animation: popIn 0.3s;
+        }
+        @keyframes popIn { from { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+
+        /* CONFIRM MODAL */
+        #confirm-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9000; display: none; justify-content: center; align-items: center; }
+        .conf-card { background: white; width: 85%; padding: 25px; border-radius: 20px; text-align: center; }
+        .conf-btns { display: flex; gap: 10px; margin-top: 20px; }
+
+        /* LOADER SPINNER ROTATION FIX */
+        @keyframes spinnerRotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .loading-spinner { width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-red); border-radius: 50%; animation: spinnerRotate 1s linear infinite; }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+    <div id="journey-popup">Trip Started! Happy Journey 🚗</div>
+    
+    <!-- CALC LOADER (Full Screen) -->
+    <div id="calc-loader">
+        <h2 style="font-weight:700; color:#333;">Calculating Best Route...</h2>
+        <div class="linear-spinner">
+            <div class="linear-bar"></div>
+        </div>
+    </div>
+
+    <!-- MAIN MAP -->
+    <div id="main-map-container" class="hidden">
+        <div id="main-map"></div>
+    </div>
+
+    <!-- TRACKING UI -->
+    <div id="arrival-card">
+        <h3 id="arr-header" style="color:var(--green); margin-bottom:5px; font-size:14px; font-weight:700;">DRIVER ACCEPTED</h3>
+        <h2 class="ac-status" id="arr-status">Driver is Arriving</h2>
+        <div class="ac-sub" id="arr-eta">Tracking...</div>
+        
+        <div class="ac-driver-row">
+            <div class="ac-driver-info">
+                <img id="arr-img" src="" class="ac-thumb">
+                <div>
+                    <div id="arr-name" style="font-weight:700;">Driver</div>
+                    <div class="ac-plate-box" id="arr-plate">...</div>
+                    <div style="font-size:11px; color:#555;" id="arr-model">Vehicle</div>
+                </div>
+            </div>
+            <div class="ac-actions">
+                <a id="btn-call" href="#" class="comm-btn"><span class="material-icons">call</span></a>
+                <div class="comm-btn" onclick="openChat()"><span class="material-icons">chat</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHAT MODAL -->
+    <div id="chat-modal">
+        <div class="chat-header">
+            <span>Message Driver</span>
+            <span class="material-icons" onclick="document.getElementById('chat-modal').style.display='none'">close</span>
+        </div>
+        <div class="chat-body" id="chat-box">
+            <!-- Messages go here -->
+        </div>
+        <div class="chat-footer">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message...">
+            <button class="comm-btn" style="background:var(--primary-red); color:white;" onclick="sendMessage()"><span class="material-icons">send</span></button>
+        </div>
+    </div>
+
+    <!-- INPUT WIZARD -->
+    <div id="input-section">
+        <div class="wiz-header">
+            <h2 style="margin:0;">Where to?</h2>
+            <div class="filter-btn" onclick="openFilterModal()"><span class="material-icons">tune</span></div>
+        </div>
+        <div class="input-group">
+            <div class="input-icon-box"><span class="material-icons" style="color:black;">place</span></div>
+            <input type="text" id="inp-pickup" class="addr-input" placeholder="Loading..." readonly onclick="openSearch('pickup')">
+        </div>
+        <div class="input-group">
+            <div class="input-icon-box"><span class="material-icons" style="color:black;">place</span></div>
+            <input type="text" id="inp-drop" class="addr-input" placeholder="Select Destination" readonly onclick="openSearch('drop')">
+        </div>
+        <button class="btn-full" onclick="startRouteCalculation()">Calculate Route</button>
+    </div>
+
+    <!-- FILTER MODAL -->
+    <div id="filter-modal" onclick="if(event.target===this) this.style.display='none'">
+        <div class="filter-card">
+            <h3>Filter Drivers</h3>
+            <p style="margin-top:10px; font-size:14px; color:#555;">Search Radius (Max 15km)</p>
+            <input type="number" id="f-radius" class="f-input" placeholder="Radius in KM" value="5" max="15">
+            
+            <p style="margin-top:10px; font-size:14px; color:#555;">Sort By</p>
+            <select id="f-sort" class="f-input">
+                <option value="price_asc">Price: Low to High</option>
+                <option value="price_desc">Price: High to Low</option>
+                <option value="stars_asc">Stars: Lowest First</option>
+                <option value="stars_desc">Stars: Highest First</option>
+            </select>
+            
+            <button class="btn-full" onclick="applyFilters()">Save & Reload</button>
+        </div>
+    </div>
+
+    <!-- SEARCH OVERLAY -->
+    <div id="search-overlay" class="hidden">
+        <div class="search-header">
+            <span class="material-icons" onclick="closeSearch()">arrow_back</span>
+            <input type="text" id="search-bar" class="search-bar" placeholder="Search places..." oninput="handleSearchInput(this.value)">
+        </div>
+        <div class="action-row">
+            <div class="action-btn" id="btn-curr-loc" onclick="useCurrentLocation()">
+                <span class="material-icons" style="color:var(--blue);">my_location</span> Current
+            </div>
+            <div class="action-btn" onclick="openMapSelector()">
+                <span class="material-icons" style="color:var(--primary-red);">map</span> Map
+            </div>
+        </div>
+        <div class="results-list hidden" id="results-list"></div>
+    </div>
+
+    <!-- MAP SELECTOR -->
+    <div id="map-selector" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:7000;" class="hidden">
+        <div id="selector-map-obj" style="width:100%; height:100%;"></div>
+        <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:7001; font-size:30px; color:black;">+</div>
+        <button onclick="confirmMapSelection()" style="position:absolute; bottom:30px; left:50%; transform:translateX(-50%); width:90%; padding:15px; background:black; color:white; border:none; border-radius:12px; z-index:7002;">Confirm Location</button>
+        <div onclick="document.getElementById('map-selector').classList.add('hidden')" style="position:absolute; top:15px; left:15px; z-index:7002; background:white; padding:8px; border-radius:50%;"><span class="material-icons">close</span></div>
+    </div>
+
+    <!-- BOTTOM SHEET (Vehicle Select) -->
+    <div id="bottom-sheet" class="hidden">
+        <h3 style="margin-bottom:15px; text-align:center;">Select Vehicle</h3>
+        <div class="vehicle-row">
+            <div class="vehicle-opt" onclick="selectVehicle('bike', this)"><span class="material-icons v-icon">two_wheeler</span><span style="font-size:12px;">Bike</span></div>
+            <div class="vehicle-opt" onclick="selectVehicle('tuk', this)"><span class="material-icons v-icon">electric_rickshaw</span><span style="font-size:12px;">Tuk</span></div>
+            <div class="vehicle-opt" onclick="selectVehicle('car', this)"><span class="material-icons v-icon">directions_car</span><span style="font-size:12px;">Car</span></div>
+            <div class="vehicle-opt" onclick="selectVehicle('van', this)"><span class="material-icons v-icon">airport_shuttle</span><span style="font-size:12px;">Van</span></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:10px 0; border-top:1px solid #eee; margin-top:10px;">
+            <div style="text-align:center;"><div id="stat-dist" style="font-weight:700;">0 km</div><div style="font-size:11px;">Distance</div></div>
+            <div style="text-align:center;"><div id="stat-time" style="font-weight:700;">0 min</div><div style="font-size:11px;">Time</div></div>
+        </div>
+        <button id="btn-show-drivers" onclick="showNearbyDrivers()" style="width:100%; padding:15px; background:#ccc; color:white; border:none; border-radius:12px; margin-top:10px; pointer-events:none;">Show Nearby Drivers</button>
+    </div>
+
+    <!-- DRIVERS LIST -->
+    <div id="drivers-window" class="hidden">
+        <div style="background:white; padding:15px; display:flex; gap:10px; align-items:center; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+            <span class="material-icons" onclick="document.getElementById('drivers-window').classList.add('hidden')">arrow_back</span>
+            <h3>Nearby Drivers</h3>
+        </div>
+        <div id="drivers-list" style="padding:15px; overflow-y:auto;"></div>
+    </div>
+
+    <!-- INFO POPUP (With Stars) -->
+    <div id="green-info-modal" class="hidden" onclick="if(event.target===this) this.classList.add('hidden')">
+        <div class="green-card">
+            <div class="gc-header">
+                <h2 id="gi-name">Driver</h2>
+                <div class="gc-stars" id="gi-stars"></div>
+            </div>
+            <div class="gc-imgs" id="gi-imgs"></div>
+            <div style="padding:15px; text-align:center;">
+                <button id="btn-reviews-open" style="background:#eee; border:none; padding:8px 20px; border-radius:20px; font-weight:600;">Reviews</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REVIEWS MODAL -->
+    <div id="reviews-modal">
+        <div class="rev-header">
+            <span>Reviews</span>
+            <span class="material-icons" onclick="document.getElementById('reviews-modal').style.display='none'">close</span>
+        </div>
+        <div class="rev-list" id="rev-list-cont"></div>
+    </div>
+
+    <!-- CONFIRM HIRE -->
+    <div id="confirm-modal">
+        <div class="conf-card">
+            <span class="material-icons" style="font-size:50px; color:var(--green);">check_circle</span>
+            <h3>Hire Confirmation</h3>
+            <p id="conf-text" style="color:#555; margin:10px 0;">Confirm?</p>
+            <div class="conf-btns">
+                <button onclick="document.getElementById('confirm-modal').style.display='none'" style="flex:1; padding:10px; background:#333; color:white; border:none; border-radius:8px;">No</button>
+                <button onclick="confirmHire()" style="flex:1; padding:10px; background:var(--green); color:white; border:none; border-radius:8px;">Yes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WAITING SCREEN -->
+    <div id="waiting-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9500; display:none; flex-direction:column; justify-content:center; align-items:center;">
+        <div class="loading-spinner"></div>
+        <div style="font-size:24px; font-weight:700; margin-top:20px;" id="wait-timer">60</div>
+        <h3 style="margin-top:10px;">Waiting for driver...</h3>
+    </div>
+
+    <!-- BILL MODAL -->
+    <div id="bill-modal">
+        <span class="material-icons" style="font-size:60px; color:var(--green);">check_circle</span>
+        <h2>Trip Ended</h2>
+        <div class="bill-amount" id="bill-final">Rs 0</div>
+        <div class="bill-row"><span>Estimated</span><span class="bill-val" id="bill-est">0</span></div>
+        <div class="bill-row"><span id="bill-act-label">Actual (Based on Travel)</span><span class="bill-val" id="bill-act">0</span></div>
+        <button class="btn-full" onclick="openReview()">Done</button>
+    </div>
+
+    <!-- REVIEW MODAL -->
+    <div id="review-modal">
+        <div class="review-card">
+            <img id="rev-img" src="" style="width:60px; height:60px; border-radius:50%; margin-bottom:10px;">
+            <h3 id="rev-name">Driver</h3>
+            <p>What do you think about the driver?</p>
+            <div class="star-row">
+                <span onclick="rate(1)">★</span><span onclick="rate(2)">★</span><span onclick="rate(3)">★</span><span onclick="rate(4)">★</span><span onclick="rate(5)">★</span>
+            </div>
+            <textarea id="rev-comment" placeholder="Comment (Optional)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-top:10px;"></textarea>
+            <button class="btn-full" onclick="submitReview()">Submit</button>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, get, set, update, onValue, push, child } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyC3Rf4x5a_L1cYVa6soADfYktQK5WyMN-4", authDomain: "speedo-acb7c.firebaseapp.com", databaseURL: "https://speedo-acb7c-default-rtdb.asia-southeast1.firebasedatabase.app", projectId: "speedo-acb7c", storageBucket: "speedo-acb7c.firebasestorage.app", messagingSenderId: "31066493782", appId: "1:31066493782:web:e3e9dfa209fa855bc17cf7" };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        window.fbDb = db; window.fbRef = ref; window.fbGet = get; window.fbSet = set; window.fbUpdate = update; window.fbOnValue = onValue; window.fbPush = push; window.fbChild = child;
+    </script>
+
+    <script>
+        // GLOBAL STATE
+        let myLoc = null, pickupLoc = null, dropLoc = null;
+        let mainMap = null, selectMap = null, routeLine = null, driverMarker = null;
+        let routeData = { dist: 0, time: 0 };
+        let selectedVehicleType = null;
+        let selectedDriver = null; // Object
+        let currentRideId = null;
+        let starRating = 5;
+        let tripStatus = 'idle';
+        let actualDist = 0;
+        let lastTrackedLoc = null;
+        
+        let currentUserName = "Guest";
+
+        // Filters
+        let filterRadius = 15; // default max
+        let filterSort = 'price_asc';
+
+        // Black Pin Icon
+        const BlackIcon = L.divIcon({
+            className: 'material-icons black-pin',
+            html: 'location_on',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+        });
+
+        window.onload = function() {
+            checkLocation();
+            fetchUserProfile();
+        };
+
+        async function fetchUserProfile() {
+            const uid = localStorage.getItem('speedo_user_id');
+            if(uid) {
+                try {
+                    const snap = await window.fbGet(window.fbChild(window.fbRef(window.fbDb), `users/${uid}/name`));
+                    if(snap.exists()) {
+                        currentUserName = snap.val();
+                    }
+                } catch(e) {
+                    console.log("User fetch error", e);
+                }
+            }
+        }
+
+        function showToast(msg) {
+            const c = document.getElementById('toast-container');
+            const d = document.createElement('div'); d.className='toast'; d.innerText=msg; c.appendChild(d);
+            setTimeout(()=>d.remove(), 3000);
+        }
+
+        function checkLocation() {
+            const intv = setInterval(() => {
+                if(navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(pos => {
+                        clearInterval(intv);
+                        myLoc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                        document.getElementById('input-section').classList.remove('hidden');
+                        
+                        // Reverse Geocode
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${myLoc.lat}&lon=${myLoc.lng}`)
+                        .then(r => r.json()).then(d => {
+                            pickupLoc = { lat: myLoc.lat, lng: myLoc.lng, address: d.display_name };
+                            document.getElementById('inp-pickup').value = d.display_name.split(',')[0];
+                        });
+                    }, () => {}, { enableHighAccuracy:true });
+                }
+            }, 1000);
+        }
+
+        // FILTER
+        window.openFilterModal = function() {
+            document.getElementById('filter-modal').style.display = 'flex';
+        }
+        window.applyFilters = function() {
+            const r = parseFloat(document.getElementById('f-radius').value);
+            filterRadius = r > 15 ? 15 : (r > 0 ? r : 15); // max 15
+            filterSort = document.getElementById('f-sort').value;
+            document.getElementById('filter-modal').style.display = 'none';
+            // Reload if window open
+            if(!document.getElementById('drivers-window').classList.contains('hidden')) {
+                showNearbyDrivers();
+            }
+        }
+
+        // SEARCH
+        let debounce;
+        window.openSearch = function(mode) {
+            window.searchMode = mode;
+            document.getElementById('search-overlay').classList.remove('hidden');
+            document.getElementById('search-bar').value = '';
+            document.getElementById('results-list').classList.add('hidden');
+        }
+        window.closeSearch = function() { document.getElementById('search-overlay').classList.add('hidden'); }
+        
+        window.handleSearchInput = function(q) {
+            const list = document.getElementById('results-list');
+            list.classList.remove('hidden');
+            
+            // Show Skeleton
+            list.innerHTML = '';
+            for(let i=0; i<3; i++) {
+                list.innerHTML += `<div class="skel-item"><div class="skel-line"></div><div class="skel-line short"></div></div>`;
+            }
+
+            if(q.length < 3) return;
+            clearTimeout(debounce);
+            debounce = setTimeout(() => {
+                fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${q}&countrycodes=lk&limit=5`)
+                .then(r => r.json()).then(data => {
+                    list.innerHTML = '';
+                    data.forEach(p => {
+                        const div = document.createElement('div'); div.className = 'result-item';
+                        div.innerHTML = `<div class="res-name">${p.display_name.split(',')[0]}</div><div class="res-addr">${p.display_name}</div>`;
+                        div.onclick = () => selectResult(p);
+                        list.appendChild(div);
+                    });
+                });
+            }, 600);
+        }
+        function selectResult(p) {
+            const loc = { lat: parseFloat(p.lat), lng: parseFloat(p.lon), address: p.display_name };
+            if(window.searchMode === 'pickup') { pickupLoc = loc; document.getElementById('inp-pickup').value = loc.address.split(',')[0]; }
+            else { dropLoc = loc; document.getElementById('inp-drop').value = loc.address.split(',')[0]; }
+            closeSearch();
+        }
+        window.useCurrentLocation = function() {
+            if(myLoc) { pickupLoc = { ...myLoc, address: document.getElementById('inp-pickup').value }; closeSearch(); }
+        }
+
+        // MAP SELECTOR
+        window.openMapSelector = function() {
+            document.getElementById('map-selector').classList.remove('hidden');
+            if(!selectMap) { selectMap = L.map('selector-map-obj', {zoomControl:false}).setView([myLoc.lat,myLoc.lng], 15); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(selectMap); }
+        }
+        window.confirmMapSelection = function() {
+            const c = selectMap.getCenter();
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${c.lat}&lon=${c.lng}`)
+            .then(r => r.json()).then(d => {
+                selectResult({lat:c.lat, lon:c.lng, display_name:d.display_name});
+                document.getElementById('map-selector').classList.add('hidden');
+            });
+        }
+
+        // ROUTE CALCULATION
+        window.startRouteCalculation = function() {
+            if(!pickupLoc || !dropLoc) { showToast("Select locations"); return; }
+            document.getElementById('input-section').classList.add('hidden');
+            document.getElementById('calc-loader').style.display = 'flex';
+            
+            fetch(`https://router.project-osrm.org/route/v1/driving/${pickupLoc.lng},${pickupLoc.lat};${dropLoc.lng},${dropLoc.lat}?overview=full&geometries=geojson`)
+            .then(r => r.json()).then(d => {
+                const r = d.routes[0]; routeData.dist = r.distance; routeData.time = r.duration;
+                document.getElementById('stat-dist').innerText = (r.distance/1000).toFixed(1) + ' km';
+                document.getElementById('stat-time').innerText = Math.ceil(r.duration/60) + ' min';
+                
+                document.getElementById('calc-loader').style.display = 'none';
+                document.getElementById('main-map-container').classList.remove('hidden');
+                document.getElementById('bottom-sheet').classList.remove('hidden');
+
+                if(!mainMap) { mainMap = L.map('main-map', {zoomControl:false}).setView([pickupLoc.lat, pickupLoc.lng], 13); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mainMap); }
+                
+                const path = r.geometry.coordinates.map(c => [c[1],c[0]]);
+                if(routeLine) mainMap.removeLayer(routeLine);
+                routeLine = L.polyline(path, {color:'black', weight:4}).addTo(mainMap);
+                
+                L.marker([pickupLoc.lat, pickupLoc.lng], {icon:BlackIcon}).addTo(mainMap);
+                L.marker([dropLoc.lat, dropLoc.lng], {icon:BlackIcon}).addTo(mainMap);
+                
+                mainMap.fitBounds(routeLine.getBounds(), {padding:[50,50]});
+            });
+        }
+
+        window.selectVehicle = function(t, el) {
+            selectedVehicleType = t;
+            document.querySelectorAll('.vehicle-opt').forEach(v => v.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('btn-show-drivers').style.background = 'var(--primary-red)'; 
+            document.getElementById('btn-show-drivers').style.pointerEvents = 'auto';
+        }
+
+        // SHOW DRIVERS (Modified)
+        window.showNearbyDrivers = async function() {
+            const list = document.getElementById('drivers-list');
+            list.innerHTML = '<p style="text-align:center;">Searching for nearby drivers...</p>';
+            document.getElementById('drivers-window').classList.remove('hidden');
+            
+            const snap = await window.fbGet(window.fbChild(window.fbRef(window.fbDb), `vehicles/${selectedVehicleType}`));
+            if(!snap.exists()) { list.innerHTML = '<p style="text-align:center;">No drivers found. Try adjusting the radius.</p>'; return; }
+            
+            const ve = snap.val();
+            let driversArr = [];
+
+            // Process Drivers
+            for(let vid in ve) {
+                const v = ve[vid];
+                if(v.onlinestatus && v.available) {
+                    // Check Distance for Radius Filter
+                    const dDist = getDist(pickupLoc.lat, pickupLoc.lng, v.location.latitude, v.location.longitude);
+                    if(dDist <= filterRadius) {
+                        // Get Driver Info
+                        let dName = "Driver", dSelfie = "https://via.placeholder.com/50", dPhone = "", dRating = 5, dModel = "Vehicle", dBrand = "";
+                        if(v.ownerId) {
+                            const ds = await window.fbGet(window.fbChild(window.fbRef(window.fbDb), `drivers/${v.ownerId}`));
+                            if(ds.exists()) { 
+                                const dVal = ds.val();
+                                dName = dVal.name; dSelfie = dVal.selfie; dPhone = dVal.phone; 
+                                dRating = parseFloat(dVal.rating || 5);
+                            }
+                        }
+                        const price = calcPrice(routeData.dist);
+                        driversArr.push({
+                            vid, v, price, dName, dSelfie, dPhone, dRating, dDist,
+                            model: v.model || "Model", brand: v.brand || "Brand", plate: v.numberplate
+                        });
+                    }
+                }
+            }
+
+            if(driversArr.length === 0) {
+                list.innerHTML = '<p style="text-align:center; margin-top:50px;">No drivers found. Try adjusting the radius.</p>';
+                return;
+            }
+
+            // Sort
+            if(filterSort === 'price_asc') driversArr.sort((a,b) => a.price - b.price);
+            else if(filterSort === 'price_desc') driversArr.sort((a,b) => b.price - a.price);
+            else if(filterSort === 'stars_asc') driversArr.sort((a,b) => a.dRating - b.dRating);
+            else if(filterSort === 'stars_desc') driversArr.sort((a,b) => b.dRating - a.dRating);
+
+            // Render
+            list.innerHTML = '';
+            driversArr.forEach(d => {
+                const card = document.createElement('div'); card.className = 'd-card';
+                card.innerHTML = `
+                    <div class="d-card-top">
+                        <div class="d-info-row">
+                            <img src="${d.dSelfie}" style="width:50px; height:50px; border-radius:50%; margin-right:15px; border:2px solid #eee;">
+                            <div>
+                                <div style="font-weight:700; font-size:16px;">${d.dName}</div>
+                                <div class="d-price-big">${d.price.toLocaleString()} Rs</div>
+                            </div>
+                        </div>
+                        <div style="text-align:right;">
+                            <button onclick="event.stopPropagation(); showInfo('${d.dName}', ${d.dRating}, '${d.v.ownerId}', ['${d.v.out1}','${d.v.in1}'])" style="border:none; background:#eee; padding:5px 15px; border-radius:12px; font-weight:600;">Info</button>
+                            <div class="d-plate-box">${d.brand} ${d.model}<br>${d.plate}</div>
+                        </div>
+                    </div>
+                    <div class="d-dist-centered">${d.dDist.toFixed(1)} km away</div>
+                `;
+                card.onclick = () => promptHire(d);
+                list.appendChild(card);
+            });
+        }
+
+        function calcPrice(dist) {
+            let base = selectedVehicleType==='bike'?100 : selectedVehicleType==='tuk'?150 : selectedVehicleType==='car'?250 : 700;
+            if(dist <= 1000) return base;
+            let rate = selectedVehicleType==='bike'?5 : selectedVehicleType==='tuk'?8 : selectedVehicleType==='car'?15 : 25; 
+            return base + Math.ceil((dist-1000)/100)*rate;
+        }
+
+        window.showInfo = function(name, rating, uid, imgs) {
+            document.getElementById('gi-name').innerText = name;
+            
+            // Show Stars
+            const starCount = Math.floor(rating);
+            let starsHTML = '';
+            for(let i=0; i<5; i++) {
+                if(i < starCount) starsHTML += '★';
+                else starsHTML += '<span class="gray">★</span>';
+            }
+            document.getElementById('gi-stars').innerHTML = starsHTML;
+
+            const ib = document.getElementById('gi-imgs'); ib.innerHTML='';
+            imgs.forEach(i => { if(i) ib.innerHTML += `<img src="${i}" class="gc-img">`; });
+            
+            // Setup Review Button
+            document.getElementById('btn-reviews-open').onclick = () => openReviews(uid);
+
+            document.getElementById('green-info-modal').classList.remove('hidden');
+        }
+
+        window.openReviews = async function(uid) {
+            document.getElementById('reviews-modal').style.display = 'flex';
+            const cont = document.getElementById('rev-list-cont');
+            cont.innerHTML = 'Loading...';
+            
+            const snap = await window.fbGet(window.fbChild(window.fbRef(window.fbDb), `drivers/${uid}/reviews`));
+            cont.innerHTML = '';
+            if(!snap.exists()) { cont.innerHTML = 'No reviews yet.'; return; }
+            
+            const revs = Object.values(snap.val());
+            // Get last 5
+            const last5 = revs.slice(-5).reverse();
+            
+            last5.forEach(r => {
+                let sHtml = '';
+                for(let i=0; i<5; i++) sHtml += (i<r.stars ? '★' : '<span style="color:#ddd">★</span>');
+                
+                const div = document.createElement('div');
+                div.className = 'rev-item';
+                div.innerHTML = `<div class="rev-stars">${sHtml}</div><div class="rev-txt">"${r.comment || ''}"</div><div style="font-size:10px; color:#aaa; margin-top:4px;">- ${r.user}</div>`;
+                cont.appendChild(div);
+            });
+        }
+
+        // CONFIRM
+        window.promptHire = function(dObj) {
+            selectedDriver = dObj; // store full obj
+            document.getElementById('conf-text').innerText = `Select ${dObj.dName} for Rs ${dObj.price}?`;
+            document.getElementById('confirm-modal').style.display = 'flex';
+        }
+
+        window.confirmHire = async function() {
+            document.getElementById('confirm-modal').style.display = 'none';
+            document.getElementById('drivers-window').classList.add('hidden');
+            document.getElementById('bottom-sheet').classList.add('hidden');
+            
+            const rideRef = window.fbPush(window.fbChild(window.fbRef(window.fbDb), 'rides'));
+            currentRideId = rideRef.key;
+            
+            // Get Passenger First Name from Global state (fetched from DB)
+            const firstName = currentUserName.split(' ')[0];
+
+            const rideData = {
+                status: 'pending',
+                passengerName: firstName,
+                driverId: selectedDriver.v.ownerId,
+                vehicleId: selectedDriver.vid,
+                vehicleType: selectedVehicleType,
+                userId: localStorage.getItem('speedo_user_id') || 'guest',
+                price: selectedDriver.price,
+                distance: routeData.dist,
+                pickup: pickupLoc,
+                drop: dropLoc,
+                timestamp: Date.now()
+            };
+            await window.fbSet(rideRef, rideData);
+            await window.fbSet(window.fbChild(window.fbRef(window.fbDb), `vehicles/${selectedVehicleType}/${selectedDriver.vid}/currentride`), currentRideId);
+
+            document.getElementById('waiting-screen').style.display = 'flex';
+            let t=60; const ti=setInterval(()=>{ t--; document.getElementById('wait-timer').innerText=t; if(t<=0){clearInterval(ti); location.reload();} }, 1000);
+
+            // Listen for Status
+            window.fbOnValue(window.fbChild(window.fbRef(window.fbDb), `rides/${currentRideId}/status`), (snap) => {
+                const s = snap.val();
+                if(s === 'accepted') {
+                    clearInterval(ti);
+                    document.getElementById('waiting-screen').style.display='none';
+                    startTrackingMode();
+                } else if(s === 'declined') {
+                    clearInterval(ti);
+                    showToast("Driver Declined");
+                    setTimeout(()=>location.reload(), 2000);
+                }
+            });
+        }
+
+        // TRACKING
+        function startTrackingMode() {
+            document.getElementById('arrival-card').style.display = 'block';
+            document.getElementById('arr-name').innerText = selectedDriver.dName;
+            document.getElementById('arr-img').src = selectedDriver.dSelfie;
+            document.getElementById('arr-plate').innerText = selectedDriver.plate;
+            document.getElementById('arr-model').innerText = `${selectedDriver.brand} ${selectedDriver.model}`;
+            
+            document.getElementById('btn-call').href = `tel:${selectedDriver.dPhone}`;
+            
+            // Chat & Location Listeners
+            window.fbOnValue(window.fbChild(window.fbRef(window.fbDb), `rides/${currentRideId}/messages`), (snap) => {
+                const msgs = snap.val();
+                const box = document.getElementById('chat-box');
+                box.innerHTML = '';
+                if(msgs) {
+                    Object.values(msgs).forEach(m => {
+                        const div = document.createElement('div');
+                        div.className = `msg-bubble ${m.sender === 'user' ? 'msg-me' : 'msg-them'}`;
+                        div.innerText = m.text;
+                        box.appendChild(div);
+                    });
+                    box.scrollTop = box.scrollHeight;
+                }
+            });
+
+            window.fbOnValue(window.fbChild(window.fbRef(window.fbDb), `vehicles/${selectedVehicleType}/${selectedDriver.vid}/location`), (snap) => {
+                const l = snap.val();
+                if(l) {
+                    if(driverMarker) mainMap.removeLayer(driverMarker);
+                    driverMarker = L.circleMarker([l.latitude, l.longitude], {radius:8, color:'red', fillColor:'red', fillOpacity:1}).addTo(mainMap);
+                    
+                    if(tripStatus === 'started') {
+                        if(lastTrackedLoc) {
+                            actualDist += getDist(lastTrackedLoc.lat, lastTrackedLoc.lng, l.latitude, l.longitude) * 1000;
+                        }
+                        lastTrackedLoc = { lat: l.latitude, lng: l.longitude };
+                        mainMap.setView([l.latitude, l.longitude], 17);
+                    }
+                }
+            });
+
+            // Lifecycle
+            window.fbOnValue(window.fbChild(window.fbRef(window.fbDb), `rides/${currentRideId}/status`), (snap) => {
+                const s = snap.val();
+                if(s === 'arrived') {
+                    document.getElementById('arr-status').innerText = "Driver Arrived";
+                    document.getElementById('arr-eta').innerText = "Meet at pickup point";
+                    showToast("Driver has arrived!");
+                }
+                if(s === 'started') {
+                    tripStatus = 'started';
+                    const popup = document.getElementById('journey-popup');
+                    popup.style.display = 'block';
+                    setTimeout(() => popup.style.display='none', 2000);
+                    
+                    document.getElementById('arr-header').innerText = "IN RIDE";
+                    document.getElementById('arr-status').innerText = "Heading to Destination";
+                    document.getElementById('arr-eta').innerText = "Happy Journey";
+                    
+                    if(routeLine) mainMap.removeLayer(routeLine);
+                    fetch(`https://router.project-osrm.org/route/v1/driving/${pickupLoc.lng},${pickupLoc.lat};${dropLoc.lng},${dropLoc.lat}?overview=full&geometries=geojson`)
+                    .then(r=>r.json()).then(d=>{
+                        const path = d.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+                        routeLine = L.polyline(path, {color:'blue', weight:6}).addTo(mainMap);
+                    });
+                }
+                if(s === 'ended') {
+                    document.getElementById('arrival-card').style.display='none';
+                    showBill();
+                }
+            });
+        }
+
+        // CHAT
+        window.openChat = function() { document.getElementById('chat-modal').style.display='flex'; }
+        window.sendMessage = async function() {
+            const txt = document.getElementById('chat-input').value;
+            if(!txt) return;
+            await window.fbPush(window.fbChild(window.fbRef(window.fbDb), `rides/${currentRideId}/messages`), {
+                text: txt, sender: 'user', time: Date.now()
+            });
+            document.getElementById('chat-input').value = '';
+        }
+
+        // BILL
+        function showBill() {
+            const finalP = calcPrice(actualDist);
+            
+            document.getElementById('bill-modal').style.display = 'flex';
+            document.getElementById('bill-est').innerText = selectedDriver.price;
+            document.getElementById('bill-act-label').innerText = `Actual (${(actualDist/1000).toFixed(1)} km)`;
+            document.getElementById('bill-act').innerText = "Rs " + finalP.toLocaleString(); 
+            document.getElementById('bill-final').innerText = "Rs " + finalP.toLocaleString();
+        }
+
+        window.openReview = function() {
+            document.getElementById('bill-modal').style.display = 'none';
+            document.getElementById('review-modal').style.display = 'flex';
+            document.getElementById('rev-name').innerText = selectedDriver.dName;
+            document.getElementById('rev-img').src = selectedDriver.dSelfie;
+        }
+
+        window.rate = function(n) {
+            starRating = n;
+            const stars = document.querySelectorAll('.star-row span');
+            stars.forEach((s, i) => s.className = i < n ? 'active' : '');
+        }
+
+        window.submitReview = async function() {
+            const comment = document.getElementById('rev-comment').value;
+            // Save Review
+            await window.fbPush(window.fbChild(window.fbRef(window.fbDb), `drivers/${selectedDriver.v.ownerId}/reviews`), {
+                stars: starRating,
+                comment: comment,
+                user: currentUserName
+            });
+
+            // Update Rating Logic
+            const dRef = window.fbChild(window.fbRef(window.fbDb), `drivers/${selectedDriver.v.ownerId}`);
+            const dSnap = await window.fbGet(dRef);
+            if(dSnap.exists()) {
+                const d = dSnap.val();
+                let oldR = parseFloat(d.rating || 5);
+                
+                let newR = ((oldR * 10) + starRating) / 11;
+                if(starRating < 3) newR -= 0.1; 
+                else newR += 0.1;
+
+                if(newR > 5) newR = 5;
+                if(newR < 0) newR = 0;
+
+                await window.fbUpdate(dRef, { rating: newR.toFixed(1) });
+            }
+
+            showToast("Review Submitted!");
+            setTimeout(() => {
+                window.location.href = 'main.html';
+            }, 1000);
+        }
+
+        function getDist(lat1,lon1,lat2,lon2) {
+            var R = 6371; var dLat = (lat2-lat1)*(Math.PI/180); var dLon = (lon2-lon1)*(Math.PI/180);
+            var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(lat1*(Math.PI/180))*Math.cos(lat2*(Math.PI/180)) * Math.sin(dLon/2)*Math.sin(dLon/2);
+            var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R*c;
+        }
+    </script>
+</body>
+</html>
